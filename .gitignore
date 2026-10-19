@@ -1,0 +1,8 @@
+node_modules/
+.next/
+.dart_tool/
+build/
+.env
+.env.*
+!.env.example
+*.log

@@ -1,0 +1,14 @@
+name: ghahvehto
+description: Ghahvehto consumer foundation, unpublished.
+publish_to: none
+version: 0.0.1+1
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  http: ^1.2.0
+flutter:
+  uses-material-design: true
