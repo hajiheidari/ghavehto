@@ -21,3 +21,5 @@ Next increment: execute remote PostgreSQL/mobile/native CI, fix failures, comple
 Risk register: R1 critical store/region eligibility (founder/support); R2 high Iranian service reachability (physical tests); R3 high reward fraud/tenant escape (transactional invariants); R4 high source rights (permission review); R5 high reward funding (disabled until approved inventory); R6 medium operational load (bounded workers/manual oversight); R7 high incomplete toolchains (M1 build gates).
 
 Cloud host verification for this increment: `pnpm typecheck`, `pnpm build`, generated-contract test, client drift check, OpenAPI export/no-diff and real Next→Nest smoke all PASS. No local database/native/container execution is implied.
+
+Cloud CI 39405670299 on 945de93: web-api-database and mobile-source PASS. The development image successfully built Node/pnpm/Flutter and passed builds/unit/contract checks, then failed at Git diff inside the host-owned bind mount. Scoped Git safe.directory to the explicit workspace for that command; full container rerun pending.

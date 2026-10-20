@@ -15,7 +15,9 @@ pnpm test
 node --test packages/contracts/client.test.ts
 pnpm contracts:export
 node scripts/generate-clients.mjs --check
-git diff --exit-code -- packages/contracts/openapi.json
+# The checkout belongs to the host user when bind-mounted into this container.
+# Trust only this explicit workspace for this command, never all repositories.
+git -c safe.directory="$PWD" diff --exit-code -- packages/contracts/openapi.json
 pnpm --filter @ghahvehto/api test:db
 node scripts/smoke-web.mjs
 # Flutter's integration test calls an actual Nest process.
