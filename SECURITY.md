@@ -1,6 +1,6 @@
 # Security and privacy checklist
 
-Current code is read-only loopback development tooling, not a secure production backend. No auth endpoints, real customer data or secrets.
+Current code is read-only loopback development tooling, not a secure production backend. Nest dashboard APIs fail closed; no login, OTP sending, real customer data or secrets. Initial DB schema has tenant/branch RLS for a restricted NOLOGIN role, without enabling runtime identity. Pure permission checks are tested but not a substitute for authenticated context. PostgreSQL migration execution is tracked separately.
 
 - M1: OTP hash/expiry/send+attempt throttles, generic responses; rotating sessions/revocation; tenant and branch guards; input validation; TLS; CSRF where cookies apply; CSP/XSS defenses; parameterized SQL; least privilege; secrets excluded from repository.
 - M2: claim evidence access and manual verification; unclaimed offers forbidden; correction/takedown workflow; provenance/media rights; customer PII never exported to unrelated cafés.

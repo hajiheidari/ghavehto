@@ -1,0 +1,16 @@
+packages:
+  - apps/api
+  - apps/web
+  - packages/*
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+minimumReleaseAgeStrict: true
+networkConcurrency: 2
+fetchRetries: 4
+fetchRetryMintimeout: 2000
+fetchRetryMaxtimeout: 15000
+fetchTimeout: 120000
