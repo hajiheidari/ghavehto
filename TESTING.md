@@ -25,3 +25,11 @@ M2–6 acceptance includes: unrelated café read/write denial; unclaimed café o
 Cloud host verification for this increment: `pnpm typecheck`, `pnpm build`, generated-contract test, client drift check, OpenAPI export/no-diff and real Next→Nest smoke all PASS. No local database/native/container execution is implied.
 
 Cloud CI 39405670299 on 945de93: web-api-database and mobile-source PASS. The development image successfully built Node/pnpm/Flutter and passed builds/unit/contract checks, then failed at Git diff inside the host-owned bind mount. Scoped Git safe.directory to the explicit workspace for that command; full container rerun pending.
+
+## Verified cloud checkpoint · 2026-10-20
+
+Code commit `8ffa53c279fc011fd5138bdf70ff781eacbb6ad7` passed Foundation validation [39406101771](https://github.com/hajiheidari/ghavehto/actions/runs/39406101771) in ALL FIVE jobs: web-api-database, mobile-source, cloud-development, Android debug build and iOS simulator debug build. Read-back of cloud-development logs confirmed the development image was built from its recipe, the pinned Node/pnpm/Flutter checks passed, frozen install/build/typecheck/7 Node tests/2 real PostgreSQL tests/client drift/OpenAPI/Next→Nest smoke passed, Flutter analyze found no issues and all 4 Flutter tests passed including actual Nest communication. The mount-specific Git fix was validated by this complete rerun. No physical-device, signed-store, browser visual or production-readiness claim is made.
+
+This final documentation update changes no executable code. The exact tested code commit is recorded above; later CI outcomes must be checked independently. Main remains at the reviewed M0 baseline and PR #1 stays draft.
+
+Next bounded increment: persistent OTP challenges with expiry, attempts, send cooldown and per-identity/IP limits; atomic single-use consumption and verified-user/session issuance; least-privilege identity DB role; then authenticated server-side tenant/branch API integration. Keep delivery disabled and HTTP login closed until these gates pass. Checked-in native platform projects and browser visual QA also remain M1 work. M1 is NOT complete.
