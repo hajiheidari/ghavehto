@@ -1,5 +1,15 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "rootDir": ".", "outDir": ".test-build" },
-  "include": ["src/nest/**/*.ts", "test/nest.test.ts", "test/domain.test.ts", "test/database.test.ts", "test/sessions.test.ts"]
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".test-build"
+  },
+  "include": [
+    "src/nest/**/*.ts",
+    "test/nest.test.ts",
+    "test/domain.test.ts",
+    "test/database.test.ts",
+    "test/sessions.test.ts",
+    "test/otp.test.ts"
+  ]
 }

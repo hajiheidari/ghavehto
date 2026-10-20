@@ -100,3 +100,15 @@ jobs:
         if: matrix.platform == 'ios'
         run: flutter build ios --simulator --debug --no-codesign --dart-define=API_BASE_URL=http://127.0.0.1:4101
         working-directory: apps/mobile
+  cloud-development:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LOCAL_DB_PASSWORD: disposable-cloud-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the cloud development container against disposable PostgreSQL
+        run: docker compose -f infra/compose.yaml --profile tools run --build --rm dev bash scripts/validate-cloud.sh
+      - name: Remove disposable containers and volumes
+        if: always()
+        run: docker compose -f infra/compose.yaml --profile tools down --volumes

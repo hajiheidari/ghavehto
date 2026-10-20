@@ -14,5 +14,25 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  dev:
+    profiles: [tools]
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.dev
+    working_dir: /workspace/ghavehto
+    volumes:
+      - ..:/workspace/ghavehto
+      - dev_node_modules:/workspace/ghavehto/node_modules
+      - dev_pnpm_store:/root/.local/share/pnpm/store
+      - dev_pub_cache:/root/.pub-cache
+    environment:
+      DATABASE_URL: postgresql://ghahvehto:${LOCAL_DB_PASSWORD:?Set LOCAL_DB_PASSWORD for the local database}@postgres:5432/ghahvehto
+      API_BASE_URL: http://127.0.0.1:4101
+    depends_on:
+      postgres:
+        condition: service_healthy
 volumes:
+  dev_node_modules:
+  dev_pnpm_store:
+  dev_pub_cache:
   pgdata:

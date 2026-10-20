@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-20 · Cloud continuation
+
+- Re-read PR #1/head and confirmed handoff CI 39402649968 fully successful, including session DB tests and both native debug/simulator jobs.
+- Reproduced frozen dependency installation in a clean cloud checkout. Added tested internal keyed OTP cryptography and a disabled delivery adapter; no public login or SMS enabled.
+- Added optional pinned-version development container, shared cloud validation command and a dedicated CI job; container execution awaits its own result.
+- Permanent-free commitments, empty commercial dataset and deferred independent loyalty journals are unchanged.
+
 ## 2026-10-20 · M1 foundation increment
 
 - Added buildable pnpm workspace, NestJS API and Next.js Persian RTL SSR public site with honest empty/error states.

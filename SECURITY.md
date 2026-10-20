@@ -14,3 +14,9 @@ Internal session service issues 256-bit opaque credentials only to already verif
 Threats: malicious staff, replay after network retry, account farms, stolen sessions, cross-tenant reads, source poisoning and prompt injection in research. Treat source content as untrusted data; it cannot grant agents permissions. Separate founder/admin privileges, log privileged access, require step-up authentication for sensitive changes. Audit retains reasons while minimizing PII.
 
 Operational targets proposed for pilot: daily encrypted backup, RPO 24 hours/RTO 8 hours subject to founder acceptance; verify by restore, not backup-job success alone. No recovery guarantee exists yet.
+
+## OTP preparation (internal only)
+
+`OtpCrypto` uses cryptographically random six-digit codes and a keyed HMAC-SHA256 digest bound to a random challenge UUID, login purpose and normalized phone. Provision a separate random secret of at least 32 bytes through a secret manager before integration; no default key exists. Key rotation must invalidate outstanding challenges or preserve explicit key versions for their short lifetime. A plain code hash is insufficient against offline enumeration. `DisabledOtpProvider` refuses every delivery without including code/phone in the error.
+
+These primitives are deliberately not registered as an HTTP login flow. Before enabling any OTP route: transactional persistent challenges and single-use consumption; expiry and bounded attempts; per-identity/IP send limits and cooldown; generic responses against enumeration; encrypted phone storage and keyed lookup; provider failure/retry semantics; least-privilege database role; redacted logs; atomic verified-user/session issuance; approval for real sending. No code, destination or key belongs in analytics/audit metadata.
