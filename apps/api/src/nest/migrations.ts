@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,14 +17,19 @@ export async function migrate(pool: Pool) {
       if (parent === root) throw new Error('Workspace migration directory not found');
       root = parent;
     }
-    const sql = await readFile(join(root, 'infra/migrations/001_foundation.sql'), 'utf8');
-    const checksum = createHash('sha256').update(sql).digest('hex');
-    const existing = await client.query('SELECT checksum FROM schema_migrations WHERE version = $1', ['001_foundation']);
-    if (existing.rowCount) {
-      if (existing.rows[0].checksum !== checksum) throw new Error('Applied migration checksum mismatch');
-    } else {
-      await client.query(sql);
-      await client.query('INSERT INTO schema_migrations(version,checksum) VALUES($1,$2)', ['001_foundation', checksum]);
+    const folder = join(root,'infra/migrations');
+    const files = (await readdir(folder)).filter(name => /^\d{3}_[a-z0-9_]+\.sql$/.test(name)).sort();
+    for (const file of files) {
+      const version = file.slice(0,-4);
+      const sql = await readFile(join(folder,file),'utf8');
+      const checksum = createHash('sha256').update(sql).digest('hex');
+      const existing = await client.query('SELECT checksum FROM schema_migrations WHERE version=$1',[version]);
+      if (existing.rowCount) {
+        if (existing.rows[0].checksum !== checksum) throw new Error(`Applied migration checksum mismatch: ${version}`);
+      } else {
+        await client.query(sql);
+        await client.query('INSERT INTO schema_migrations(version,checksum) VALUES($1,$2)',[version,checksum]);
+      }
     }
     await client.query('COMMIT');
   } catch(error) { await client.query('ROLLBACK'); throw error; }

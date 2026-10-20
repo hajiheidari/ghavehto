@@ -7,6 +7,8 @@
 - Added default-deny dashboard API guards, permission/normalization tests, initial PostgreSQL/PostGIS migration with RLS, advisory-lock/checksum migration runner and disposable database integration test.
 - Added Flutter source tests, real-backend integration test and CI native scaffold/build jobs; native execution pending.
 - Local builds/typechecks, 5 combined tests and live Next→Nest smoke passed. Browser visual inspection timed out. M1 remains incomplete: real authentication, database execution and mobile/native results are open.
+- CI 39401295349 subsequently confirmed PostgreSQL/PostGIS, Flutter analyze and 4 tests including shared-backend communication, Android debug and iOS simulator builds successful.
+- Added a separate internal session lifecycle increment: hashed opaque access/refresh tokens, atomic family rotation/replay and logout locks, expiry/deleted-user checks and audited transitions. No login or SMS endpoint enabled; new database tests await execution.
 
 ## 2026-10-19
 
