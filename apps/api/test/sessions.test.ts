@@ -1,0 +1,65 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { randomBytes,randomUUID } from 'node:crypto';
+import pg from 'pg';
+import { migrate } from '../src/nest/migrations.js';
+import { SessionService } from '../src/nest/sessions.js';
+
+test('real database sessions rotate atomically, reject reuse/deletion/expiry and store only token hashes', async () => {
+  assert.ok(process.env.DATABASE_URL,'Disposable PostgreSQL DATABASE_URL required');
+  const pool = new pg.Pool({connectionString:process.env.DATABASE_URL});
+  const userId = randomUUID();
+  const unverified = randomUUID();
+  try {
+    await migrate(pool);
+    await pool.query('INSERT INTO users(id,phone_hash,phone_ciphertext,phone_verified_at) VALUES($1,$2,$3,now()),($4,$5,$6,null)',[userId,randomBytes(32),Buffer.from('TEST ONLY'),unverified,randomBytes(32),Buffer.from('TEST ONLY')]);
+    const service = new SessionService(pool);
+    await assert.rejects(service.issue(unverified),/Verified active user/);
+    const original = await service.issue(userId);
+    assert.equal((await service.authenticate(original.accessToken))?.userId,userId);
+    assert.equal(await service.authenticate('forged'),null);
+    assert.equal(await service.authenticate(original.refreshToken),null);
+    assert.equal(await service.rotate(original.accessToken),null);
+    const storage = await pool.query('SELECT refresh_token_hash,access_token_hash FROM sessions WHERE user_id=$1',[userId]);
+    assert.equal(storage.rows[0].access_token_hash.length,32);
+    assert.notEqual(storage.rows[0].access_token_hash.toString(),original.accessToken);
+    assert.notEqual(storage.rows[0].refresh_token_hash.toString(),original.refreshToken);
+    const rotated = await service.rotate(original.refreshToken);
+    assert.ok(rotated);
+    assert.equal(await service.authenticate(original.accessToken),null);
+    assert.ok(await service.authenticate(rotated.accessToken));
+    assert.equal(await service.rotate(original.refreshToken),null);
+    assert.equal(await service.authenticate(rotated.accessToken),null,'Refresh replay must revoke descendants');
+    const concurrent = await service.issue(userId);
+    const results = await Promise.all([service.rotate(concurrent.refreshToken),service.rotate(concurrent.refreshToken)]);
+    assert.equal(results.filter(Boolean).length,1);
+    assert.equal(await service.authenticate(results.find(Boolean)!.accessToken),null,'Second simultaneous rotation is conservatively treated as reuse');
+    const ancestor = await service.issue(userId);
+    const child = await service.rotate(ancestor.refreshToken);
+    assert.ok(child);
+    const descendant = await service.rotate(child.refreshToken);
+    assert.ok(descendant);
+    const [, attemptedDescendant] = await Promise.all([service.rotate(ancestor.refreshToken),service.rotate(descendant.refreshToken)]);
+    if (attemptedDescendant) assert.equal(await service.authenticate(attemptedDescendant.accessToken),null,'Ancestor replay cannot race a descendant into remaining active');
+    const logout = await service.issue(userId);
+    await service.revoke(logout.accessToken);
+    assert.equal(await service.authenticate(logout.accessToken),null);
+    const racingLogout = await service.issue(userId);
+    const [racingRotation] = await Promise.all([service.rotate(racingLogout.refreshToken),service.revoke(racingLogout.accessToken)]);
+    if (racingRotation) assert.equal(await service.authenticate(racingRotation.accessToken),null,'Concurrent logout must revoke a rotated descendant');
+    const expired = await service.issue(userId);
+    await pool.query("UPDATE sessions SET access_expires_at=now()-interval '1 second' WHERE user_id=$1",[userId]);
+    assert.equal(await service.authenticate(expired.accessToken),null);
+    await pool.query("UPDATE sessions SET expires_at=now()-interval '1 second' WHERE user_id=$1",[userId]);
+    assert.equal(await service.rotate(expired.refreshToken),null);
+    const deleted = await service.issue(userId);
+    await pool.query('UPDATE users SET deleted_at=now() WHERE id=$1',[userId]);
+    assert.equal(await service.authenticate(deleted.accessToken),null);
+    assert.equal(await service.rotate(deleted.refreshToken),null);
+  } finally {
+    await pool.query('DELETE FROM audit_events WHERE actor_id=ANY($1::uuid[])',[[userId,unverified]]);
+    await pool.query('DELETE FROM sessions WHERE user_id=ANY($1::uuid[])',[[userId,unverified]]);
+    await pool.query('DELETE FROM users WHERE id=ANY($1::uuid[])',[[userId,unverified]]);
+    await pool.end();
+  }
+});

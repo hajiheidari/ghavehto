@@ -1,0 +1,155 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "FoundationController_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "FoundationController_ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    },
+    "/v1/bootstrap": {
+      "get": {
+        "operationId": "FoundationController_getBootstrap",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BootstrapDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    },
+    "/v1/dashboards/cafe": {
+      "get": {
+        "operationId": "FoundationController_cafe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    },
+    "/v1/dashboards/admin": {
+      "get": {
+        "operationId": "FoundationController_admin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    },
+    "/v1/dashboards/agents": {
+      "get": {
+        "operationId": "FoundationController_agents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "foundation"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Ghahvehto Foundation API",
+    "description": "Local read-only foundation. Authentication and business transactions are not enabled.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "BootstrapDto": {
+        "type": "object",
+        "properties": {
+          "brand": {
+            "type": "string",
+            "example": "قهوه‌تو"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "fa-IR"
+            ]
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "rtl"
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "development"
+            ]
+          },
+          "dataMode": {
+            "type": "string",
+            "enum": [
+              "empty"
+            ]
+          },
+          "loyaltyEnabled": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        },
+        "required": [
+          "brand",
+          "locale",
+          "direction",
+          "environment",
+          "dataMode",
+          "loyaltyEnabled"
+        ]
+      }
+    }
+  }
+}

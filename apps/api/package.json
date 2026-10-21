@@ -1,0 +1,35 @@
+{
+  "name": "@ghahvehto/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/nest/main.ts",
+    "start": "node dist/nest/main.js",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/test/nest.test.js .test-build/test/domain.test.js .test-build/test/otp.test.js",
+    "db:migrate": "tsx src/nest/migrate.ts",
+    "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js",
+    "contracts:export": "tsc -p tsconfig.json && node dist/nest/export-openapi.js"
+  },
+  "dependencies": {
+    "@ghahvehto/contracts": "workspace:*",
+    "@nestjs/common": "11.1.17",
+    "@nestjs/core": "11.1.17",
+    "@nestjs/platform-express": "11.1.17",
+    "@nestjs/swagger": "11.4.7",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "helmet": "8.3.0",
+    "pg": "8.23.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
