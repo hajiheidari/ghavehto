@@ -35,3 +35,12 @@ test('default OTP provider refuses delivery without exposing the payload', async
   await assert.rejects(provider.send({ destination: '+989120000000', code: '000000' }),
     error => error instanceof Error && error.message === 'OTP delivery is disabled');
 });
+
+test('OTP lookup buckets canonicalize identities and IP representations', () => {
+  const crypto = new OtpCrypto(randomBytes(32));
+  assert.deepEqual(crypto.fingerprint('phone', '09120000000'), crypto.fingerprint('phone', '+989120000000'));
+  assert.deepEqual(crypto.fingerprint('ip', '192.0.2.1'), crypto.fingerprint('ip', '::ffff:192.0.2.1'));
+  assert.deepEqual(crypto.fingerprint('ip', '2001:db8::1'), crypto.fingerprint('ip', '2001:0DB8:0:0:0:0:0:1'));
+  assert.throws(() => crypto.fingerprint('ip', 'arbitrary-header'), /Invalid client IP/);
+  assert.throws(() => crypto.fingerprint('ip', 'fe80::1%eth0'), /Invalid client IP/);
+});

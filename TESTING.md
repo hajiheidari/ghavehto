@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Persistent OTP increment · 2026-10-21
+
+Baseline head d75c471: Foundation CI 39406739601 and probe 39406739563 read back as SUCCESS. Local `pnpm test` passed 7 selected tests including canonical IP/phone fingerprint tests; workspace typecheck passed. New real-PostgreSQL OTP tests are wired into `test:db` and the existing full cloud validator; execution is pending this increment's own CI. Coverage includes disabled-provider zero writes, hash-only storage, café-role denial, wrong identity/code, concurrent single-use consumption, persistent attempt exhaustion, expiry, concurrent cooldown, resend invalidation, phone caps across IPs, IP caps across identities, verification budgets, provider failure and pending/late delivery. No real SMS is sent. This is not completed login or atomic user/session issuance.
+
 Run `node --test apps/api/test/*.test.ts`. The local suite checks actual HTTP bootstrap contract, method/path rejection and RTL harness. Native TypeScript stripping executes code but is not static typechecking.
 
 Executed 2026-10-19 on Node 24.19.0: `node --test apps/api/test/server.test.ts` → 1 passed, 0 failed. The test opened a real ephemeral loopback server. No native, database, browser visual, production-security or remote CI result is implied.

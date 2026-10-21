@@ -10,6 +10,7 @@
     "test/domain.test.ts",
     "test/database.test.ts",
     "test/sessions.test.ts",
-    "test/otp.test.ts"
+    "test/otp.test.ts",
+    "test/otp-challenges.test.ts"
   ]
 }

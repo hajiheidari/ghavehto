@@ -1,6 +1,8 @@
-# Development status · 2026-10-20
+# Development status · 2026-10-21
 
 M0 planning delivered with unresolved external feasibility items. M1 NOT complete.
+
+Current continuation: re-read PR #1 and verified head d75c4719b3dab335e4e1047e35e04fd091634971; Foundation CI 39406739601 and probe 39406739563 both completed SUCCESS. Added migration 003 and an unregistered internal persistent OTP challenge service: 5-minute expiry, 5 guesses, resend cooldown, identity/IP reservation caps, persistent IP verification caps, concurrent single-use consumption, resend supersession and provider-failure handling. Default sending remains disabled before storage writes; no HTTP/login/session issuance is exposed. Local `pnpm test` (7 selected tests) and `pnpm typecheck` passed before final integration-test additions; new database tests await their own CI. Remaining M1 work includes atomic verified-user/session issuance, encrypted private identity data, least-privilege identity role and real tenant API guards, native project check-in and visual QA.
 
 Environment: initially empty directory, no local Git repository. Node 24.19 and Git found; bundled pnpm 11.25.0 located and used successfully. Flutter/Dart/Docker/psql/Android SDK unavailable locally. Official Flutter manifest returned AccessDenied: service not available in your location. GitHub connector authenticated as hajiheidari. Main contains the M0 foundation commit b8875041aa9f35351ac0463c9b1d36288a36f264. Its connectivity-probe GitHub Actions run 39257434879 was subsequently verified successful. New work is an M1 increment, not completion of M1.
 

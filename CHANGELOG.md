@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-21 · Persistent internal OTP challenges
+
+- Re-read PR/head and confirmed d75c471 CI fully successful.
+- Added private OTP migration 003, expiry/attempts/cooldown and persisted identity/IP limits under transactional locks; single-use and resend/failure states remain internal.
+- Added domain-separated keyed phone/IP fingerprints with canonical IP buckets and real-DB lifecycle/concurrency tests; no sending provider or public login enabled.
+- Local unit/type checks passed; new migration/integration execution awaits its own CI. M1 remains incomplete.
+
 ## 2026-10-20 · Cloud continuation
 
 - Re-read PR #1/head and confirmed handoff CI 39402649968 fully successful, including session DB tests and both native debug/simulator jobs.
