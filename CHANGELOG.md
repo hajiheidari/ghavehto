@@ -2,6 +2,8 @@
 
 ## 2026-10-21 · Persistent internal OTP challenges
 
+- Verified code 353f543 in CI 39552323784: all five jobs SUCCESS, including full development container and Android/iOS debug/simulator builds. Both real-DB runs passed all seven new OTP subtests; the runner reports 10 tests including suite accounting and existing tests. No public login/SMS enabled; remaining M1 gates are unchanged.
+
 - Re-read PR/head and confirmed d75c471 CI fully successful.
 - Added private OTP migration 003, expiry/attempts/cooldown and persisted identity/IP limits under transactional locks; single-use and resend/failure states remain internal.
 - Added domain-separated keyed phone/IP fingerprints with canonical IP buckets and real-DB lifecycle/concurrency tests; no sending provider or public login enabled.
