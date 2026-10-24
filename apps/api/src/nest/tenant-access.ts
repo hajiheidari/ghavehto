@@ -6,12 +6,14 @@ import { normalizePersian } from './normalization.js';
 
 /** Runtime pool must use a separately provisioned non-owner login, never migration credentials. */
 export async function validateRuntimePool(pool: Pool): Promise<void> {
-  const result = await pool.query(`SELECT NOT(r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.rolcreatedb)
+  const result = await pool.query(`SELECT NOT(r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.rolcreatedb OR r.rolinherit)
     AND current_user=session_user
     AND pg_has_role(session_user,'ghahvehto_identity','MEMBER')
     AND pg_has_role(session_user,'ghahvehto_app','MEMBER')
+    AND NOT pg_has_role(session_user,'ghahvehto_identity','USAGE')
+    AND NOT pg_has_role(session_user,'ghahvehto_app','USAGE')
     AND NOT EXISTS(SELECT 1 FROM pg_database WHERE datname=current_database() AND datdba=r.oid)
-    AND NOT EXISTS(SELECT 1 FROM pg_class WHERE relname IN ('users','sessions','cafes') AND relowner=r.oid) AS allowed
+    AND NOT EXISTS(SELECT 1 FROM pg_class WHERE relname IN ('users','sessions','cafes') AND pg_has_role(session_user,relowner,'MEMBER')) AS allowed
     FROM pg_roles r WHERE rolname=session_user`);
   if (!result.rows[0]?.allowed) throw new Error('Restricted identity runtime database login required');
 }

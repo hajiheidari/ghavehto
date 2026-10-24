@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25 · Runtime validation and HTTP test ordering
+
+- Tightened runtime login validation to require non-inheriting role membership and no table-owner role membership.
+- Corrected an HTTP test ordering expectation after intentional credential rotation/revocation; denials remain strict. Fresh CI pending.
+
 ## 2026-10-25 · Existing-session HTTP lifecycle
 
 - Added bearer session status, strict rotating refresh and idempotent logout endpoints; no initial login or SMS route.

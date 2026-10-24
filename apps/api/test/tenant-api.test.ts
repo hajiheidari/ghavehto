@@ -33,6 +33,12 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     const connection = new URL(process.env.DATABASE_URL); connection.username = login; connection.password = password;
     runtime = new pg.Pool({ connectionString: connection.toString(), max: 2 });
     await validateRuntimePool(runtime);
+    await admin.query(`ALTER ROLE ${login} INHERIT`);
+    try { await assert.rejects(validateRuntimePool(runtime), /Restricted identity runtime/); }
+    finally { await admin.query(`ALTER ROLE ${login} NOINHERIT`); }
+    await admin.query(`GRANT ghahvehto_identity TO ${login} WITH INHERIT TRUE`);
+    try { await assert.rejects(validateRuntimePool(runtime), /Restricted identity runtime/); }
+    finally { await admin.query(`GRANT ghahvehto_identity TO ${login} WITH INHERIT FALSE`); }
     let code = '';
     const otp = new OtpChallengeService(runtime, crypto, { enabled: true, async send(input) { code = input.code; } });
     const identity = new IdentityService(runtime, otp, vault);
@@ -66,6 +72,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(path)).status, 401);
     assert.equal((await request(path, 'a'.repeat(43))).status, 401);
     assert.equal((await request(path, owner.tokens.refreshToken)).status, 401);
+    assert.equal((await request(path, consumer.tokens.accessToken)).status, 404);
     const ownSession = await request('/v1/session', owner.tokens.accessToken);
     assert.equal(ownSession.status, 200);
     assert.equal((await ownSession.json()).userId, owner.userId);
@@ -78,7 +85,6 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request('/v1/session', newTokens.accessToken)).status, 200);
     assert.equal((await request('/v1/session/refresh', undefined, 'POST', {refreshToken:consumer.tokens.refreshToken})).status, 401);
     assert.equal((await request('/v1/session', newTokens.accessToken)).status, 401, 'HTTP refresh reuse revokes the descendant family');
-    assert.equal((await request(path, consumer.tokens.accessToken)).status, 404);
     const response = await request(path, owner.tokens.accessToken);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
