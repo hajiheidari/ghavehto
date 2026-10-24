@@ -11,6 +11,8 @@ import { identityTransaction } from './identity-transaction.js';
 import { schemaReady } from './migrations.js';
 import { SessionController } from './session-controller.js';
 import { SessionService } from './sessions.js';
+import { randomUUID } from 'node:crypto';
+import { ApiErrorDto, SafeHttpErrors } from './http-errors.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -65,10 +67,22 @@ export async function createApp(options: { runtimePool?: pg.Pool } = {}) {
     { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },
   ] }, { logger: false });
   app.use(helmet());
+  app.use((request: {ghRequestId?:string}, response: {setHeader:(name:string,value:string)=>void}, next:()=>void) => {
+    request.ghRequestId = randomUUID();
+    response.setHeader('X-Request-ID',request.ghRequestId);
+    next();
+  });
+  app.useGlobalFilters(new SafeHttpErrors());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: false }));
   const document = SwaggerModule.createDocument(app, new DocumentBuilder()
     .setTitle('Ghahvehto Foundation API').setVersion('0.1.0').addBearerAuth()
-    .setDescription('Development foundation with optional restricted bearer-authenticated café scopes. Public login and SMS are disabled.').build());
+    .setDescription('Development foundation with optional restricted bearer-authenticated café scopes. Public login and SMS are disabled.').build(), {extraModels:[ApiErrorDto]});
+  for (const path of Object.values(document.paths)) {
+    for (const operation of Object.values(path ?? {})) {
+      if (!operation || typeof operation !== 'object' || !('responses' in operation)) continue;
+      for (const status of ['400','401','403','404','500','503']) operation.responses[status] ??= {description:'Rejected request',content:{'application/json':{schema:{$ref:'#/components/schemas/ApiErrorDto'}}}};
+    }
+  }
   SwaggerModule.setup('docs', app, document);
   return { app, document };
 }

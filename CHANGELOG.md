@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 · Verified foundation checkpoint and safe HTTP errors
+
+- Confirmed 495eaba / Foundation CI 40142933728 successful in all five jobs: real database/HTTP checks, Flutter, complete container and checked-in Android/iOS debug/simulator builds.
+- Standardized generic Persian error responses and server-generated request IDs without raw exception/SQL/credential output; local validation passed, own full CI required.
+- Consolidated current status/API/security/development instructions and documented the explicit provider/real-send activation gate. M1 remains open; no purchase, initial login or SMS activation.
+
 ## 2026-10-25 · Runtime validation and HTTP test ordering
 
 - Tightened runtime login validation to require non-inheriting role membership and no table-owner role membership.

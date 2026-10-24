@@ -1,5 +1,13 @@
 # Test plan and execution
 
+## Verified 2026-10-25 checkpoint
+
+Exact code 495eaba5e112211d43d89585564ed986ae4f87c2 passed Foundation CI 40142933728 in ALL FIVE jobs, including both checked-in native projects and the complete cloud development container. Dedicated logs confirmed 17 PostgreSQL tests (including nested suite accounting) with no failures, actual restricted-login HTTP authorization/session lifecycle, and Flutter analyze with no issues plus 6 tests passed. Probe CI 40142933741 also passed. Earlier test-order and Dart regex failures are corrected in this checkpoint; historical notes below retain their original scope.
+
+The following HTTP error/request-ID increment passed local Nest/domain/vault/probe tests (8 selected), workspace typecheck, 3 generated-contract tests, OpenAPI export and client drift. It tests generated correlation IDs, rejection of client-supplied IDs, generic Persian unauthorized responses, absence of submitted credential text and malformed-JSON handling. Its own full head CI must be read from [PR checks](https://github.com/hajiheidari/ghavehto/pull/1/checks); the earlier checkpoint is not extrapolated to executable changes.
+
+Browser visual QA remains unverified: the Cloud Browser could not reach the local preview (net::ERR_CONNECTION_REFUSED). Debug/simulator builds are not physical-device or signed-store evidence. No real SMS was sent. Initial sign-in and secure web/mobile credential persistence remain activation work after approved provider selection.
+
 Session checkpoint 35b60cf / CI 40142745178: Flutter job passed; database HTTP test found a test-order expectation (consumer credential had already been rotated/revoked, so correctly returned 401 instead of the earlier 404 assertion). Moved the unprivileged-consumer 404 check before rotation; no security denial was weakened. Runtime login validation now rejects INHERIT attributes, inherited role usage and membership in table-owner roles; the real restricted-login fixture tests both inheritance failure modes. Fresh full CI is required for this correction.
 
 Session HTTP increment: extended real restricted-login HTTP suite for status, strict refresh input, old-access rejection after rotation, refresh replay-family revocation, no-store, idempotent logout and single audit transition. Added TS/Dart credential/canonical-date parser checks; generation/drift/local checks are recorded separately from new CI results. Checked-in native/readiness checkpoint 420191b has passed web/API/database, cloud container and Flutter jobs so far; native jobs were still running at read-back.

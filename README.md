@@ -2,7 +2,7 @@
 
 دنیای قهوه، به سلیقه تو
 
-Milestone 0 research and incremental Milestone 1 foundation: NestJS API, Next.js Persian RTL web, OpenAPI-derived TypeScript/Dart bootstrap clients and an initial PostgreSQL/PostGIS migration. This is not a launch-ready application. No production data, accounts, messages, spending, or public deployment.
+Incremental Milestone 1 foundation: Persian RTL Next/Nest/Flutter, validated TypeScript/Dart contracts, PostgreSQL/PostGIS migrations, atomic internal OTP/identity/session issuance, restricted tenant APIs and checked-in Android/iOS projects. M1 and end-user login are not complete. No real sending provider, commercial data, spending or public deployment is enabled.
 
 Start with [development status](DEVELOPMENT_STATUS.md), [architecture](ARCHITECTURE.md), [requirements](REQUIREMENTS.md), and [research](docs/RESEARCH.md).
 
@@ -19,10 +19,12 @@ pnpm dev:api
 pnpm dev:web
 ```
 
-Open http://127.0.0.1:3000 for Next.js. Nest listens at http://127.0.0.1:4101; `/docs` exposes OpenAPI, `/v1/bootstrap` is the shared read-only API, `/health/live` is liveness and `/health/ready` requires the migrated database. SSR calls Nest server-side; no permissive browser CORS is needed. Both development listeners bind loopback. Dashboard API routes reject all access while real authentication is unfinished.
+Open http://127.0.0.1:3000 for Next.js. Nest listens at http://127.0.0.1:4101; `/docs` exposes OpenAPI and `/v1/bootstrap` is shared bootstrap. `/health/live` is liveness; `/health/ready` needs a restricted runtime pool and all migration checksums. Both listeners bind loopback. Legacy dashboard/admin/agent routes deny all requests. Existing-session and café/branch APIs require actual opaque credentials plus restricted runtime configuration; see API_SPEC.md. Initial OTP/login routes and SMS remain closed.
 
-`node scripts/smoke-web.mjs` checks built Next → Nest communication. `pnpm contracts:export` then `node scripts/generate-clients.mjs` refreshes clients; `--check` detects drift. The generator deliberately supports only this flat read-only bootstrap contract and rejects unsupported schema shapes. Extend it or adopt a full generator before business endpoints.
+`node scripts/smoke-web.mjs` checks built Next → Nest communication. `pnpm contracts:export` then `node scripts/generate-clients.mjs` refreshes validated flat bootstrap/access/session models and reviewed request helpers; `--check` detects drift. Nested business APIs need explicit generator extension. Run `node --test packages/contracts/client.test.ts packages/contracts/access-client.test.ts` for contract checks.
 
 For the database, set LOCAL_DB_PASSWORD, run `docker compose -f infra/compose.yaml up -d`, then set DATABASE_URL and run `pnpm db:migrate`. Migration administration requires extension/role privileges; the migration credential must not become the runtime application credential. `pnpm --filter @ghahvehto/api test:db` requires a disposable database, not production.
 
-The original dependency-free M0 probe remains available through `node apps/api/src/server.ts` at port 4100 for diagnostics. Flutter SDK/Android toolchain are absent and the official Flutter download returned a location denial. Native project generation/build remains open; see TESTING.md and DEVELOPMENT_STATUS.md.
+Set IDENTITY_DATABASE_URL only to a distinct restricted non-owner login as described in infra/README.md; privileged/inherited credentials are rejected. No identity keys or runtime passwords have defaults. Environment variables must be supplied through the shell or the development container, not committed secrets.
+
+The original M0 probe remains at port 4100 for diagnostics. Optional Dev Container/Compose tooling and the full cloud validator are documented in infra/README.md. Native sources are checked in; pinned CI executes Android debug and iOS simulator debug builds. Signing, device checks and initial sign-in remain gated. The next external input is documented in docs/AUTH_ACTIVATION_GATE.md.

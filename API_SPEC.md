@@ -1,23 +1,26 @@
 # API specification
 
-Existing session lifecycle: `GET /v1/session` returns only the authenticated user/session UUIDs; `POST /v1/session/refresh` accepts only `{refreshToken}` and returns a rotated pair (201), rejects invalid/reused refresh credentials (401), and invalidates descendants on reuse. `POST /v1/session/logout` uses the access bearer and returns `{revoked:true}` (201) idempotently. Every response is no-store. Repeated logout/replay does not append duplicate revocation audit transitions. There is no initial public login or OTP issuance route. Cookies are not accepted as authority; authenticated TS helpers omit cookies and reject redirects, and Dart lifecycle helpers disable redirects and bound the complete request/body read. Clients must serialize refresh and use platform-secure secret storage before login UI activation.
+Nest binds loopback (4101). Swagger/OpenAPI is at /docs and /docs-json. This is a development API, without an initial public login or sending provider.
 
-Readiness now requires the restricted IDENTITY_DATABASE_URL pool and matching checksums for every migration in this application version. `/health/live` only checks process liveness. Missing runtime configuration, unapplied/mismatched migrations or DB failure yield readiness 503. The API never uses DATABASE_URL migration credentials for health checks.
+| Method / path | Behavior |
+|---|---|
+| GET /health/live | Process liveness only |
+| GET /health/ready | Restricted runtime DB plus all known migration checksums; otherwise 503 |
+| GET /v1/bootstrap | Validated Persian RTL development/empty bootstrap; loyalty disabled |
+| GET /v1/session | Authenticated user/session UUIDs only |
+| POST /v1/session/refresh | Strict {refreshToken}; rotates existing opaque credentials (201), invalid/reuse 401 |
+| POST /v1/session/logout | Access bearer; idempotent {revoked:true} (201) |
+| GET /v1/cafes/:cafeId/access | Membership-scoped café ID/name |
+| GET /v1/cafes/:cafeId/branches/:branchId/access | Branch-scoped IDs/name |
+| PATCH /v1/cafes/:cafeId/profile | Strict {name}, owner-only, atomic audit |
+| GET /v1/dashboards/cafe, /admin, /agents | Legacy shells remain 401 for every caller |
 
-Authenticated café scope increment: `GET /v1/cafes/:cafeId/access`, `GET /v1/cafes/:cafeId/branches/:branchId/access`, and owner-only `PATCH /v1/cafes/:cafeId/profile` (body `{name}` only). Real opaque access bearer tokens are authenticated within the same transaction as RLS-scoped queries; user IDs in headers/body never set tenant context. Invalid tokens return 401; inaccessible records return 404; unknown/invalid body fields return 400. Responses are private/no-store. Profile updates and owner audit append are atomic. No cookies, token issuance/login or SMS route is exposed. Legacy dashboard/admin/agent shells remain deny-all.
+Bearer tokens are random opaque credentials, not submitted actor/role IDs. Tenant operations authenticate, lock session/identity state, check wall-clock expiry, set the server-derived actor locally and switch to café RLS. Missing/invalid credentials yield 401; inaccessible café/branch data yields 404. Unknown body fields and invalid bounded names are rejected. Phone possession does not grant café ownership.
 
-Set `IDENTITY_DATABASE_URL` only to a separately provisioned non-owner/NOBYPASSRLS runtime login with SET ROLE membership in `ghahvehto_identity` and `ghahvehto_app`; privileged migration/database-owner credentials are rejected at startup. Without this pool, café scope endpoints return 401. OpenAPI models generate validated TS/Dart access DTOs and TS request helpers; the generator remains deliberately limited to the reviewed flat response schemas. Broader business schemas still require explicit generator work.
+Authenticated responses and errors are no-store. Refresh replay revokes descendants; duplicate logout/replay does not duplicate audit transitions. Clients must serialize refresh. No cookies are accepted as API authority; future web-cookie integration must include CSRF controls. TS lifecycle helpers omit cookies and reject redirects; Dart lifecycle helpers disable redirects and bound the full request/body read. No token is stored in localStorage or a repository default.
 
-## Milestone 1 Nest API · loopback 4101
+Every request receives a server-generated X-Request-ID. Errors are flat {code,message,requestId}, with generic Persian text and no raw exception/SQL/credential details. The OpenAPI error schema and reviewed flat response schemas are exported. The custom generator supports only reviewed flat bootstrap/access/session responses; nested business APIs need explicit generator work.
 
-Implemented: GET `/v1/bootstrap` using shared contract; GET `/health/live`; GET `/health/ready` verifies database connectivity and migration presence; `/docs` and `/docs-json` provide Swagger/OpenAPI. GET `/v1/dashboards/cafe`, `/admin`, `/agents` deliberately return 401 for every caller, including forged bearer tokens. No login or privileged data endpoint is enabled. Helmet supplies baseline response headers. No production rate limiting/auth/session flow is claimed.
+IDENTITY_DATABASE_URL must point to a distinct non-owner NOINHERIT/NOBYPASSRLS/NOSUPERUSER/NOCREATEDB/NOCREATEROLE login with non-inheriting SET ROLE membership in ghahvehto_identity and ghahvehto_app. Privileged, inherited or table-owner credentials are rejected at startup. Without that pool, authenticated routes deny access and readiness is 503. DATABASE_URL is for migration/tests, never runtime health queries.
 
-Generated schema is `packages/contracts/openapi.json`. TypeScript client and Dart DTO come from `scripts/generate-clients.mjs`; CI checks drift. Business schemas, pagination and API error/request-ID standards remain M1 work.
-
-## Historical M0 probe · loopback 4100
-
-Implemented read-only local probe: GET /health → 200 `{status:"ok"}`; GET /v1/bootstrap → 200 contract in packages/contracts/bootstrap.ts. Unknown routes return 404 JSON; unsupported methods return 405 with Allow: GET. No cookies, business writes or CORS wildcard. GET / serves a static Persian RTL connectivity harness.
-
-Bootstrap reports `environment: development`, `dataMode: empty`, `loyaltyEnabled: false`; empty directory is not seeded commercial data. Process health deliberately makes no persistence claim.
-
-M1 must introduce versioned OpenAPI, generated clients, uniform error/request IDs, schema validation, pagination and contract drift CI before adding business APIs. Suggested domains are documented in ARCHITECTURE.md; they are not live endpoints.
+The historical dependency-free probe at 4100 is read-only diagnostics and is not the Nest identity backend.
