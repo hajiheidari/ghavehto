@@ -218,7 +218,7 @@
   },
   "info": {
     "title": "Ghahvehto Foundation API",
-    "description": "Local read-only foundation. Authentication and business transactions are not enabled.",
+    "description": "Development foundation with optional restricted bearer-authenticated café scopes. Public login and SMS are disabled.",
     "version": "0.1.0",
     "contact": {}
   },

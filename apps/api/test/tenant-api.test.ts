@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import pg from 'pg';
-import { migrate } from '../src/nest/migrations.js';
+import { migrate, schemaReady } from '../src/nest/migrations.js';
 import { createApp } from '../src/nest/app.js';
 import { OtpCrypto } from '../src/nest/otp.js';
 import { OtpChallengeService } from '../src/nest/otp-challenges.js';
@@ -55,6 +55,14 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const path = `/v1/cafes/${cafeA}/access`, profile = `/v1/cafes/${cafeA}/profile`;
+    assert.equal((await request('/health/ready')).status, 200);
+    const readinessFixture = await admin.connect();
+    try {
+      await readinessFixture.query('BEGIN');
+      await readinessFixture.query("UPDATE schema_migrations SET checksum='test-mismatch' WHERE version='007_runtime_readiness'");
+      await readinessFixture.query('SET LOCAL ROLE ghahvehto_identity');
+      assert.equal(await schemaReady(readinessFixture), false);
+    } finally { await readinessFixture.query('ROLLBACK'); readinessFixture.release(); }
     assert.equal((await request(path)).status, 401);
     assert.equal((await request(path, 'a'.repeat(43))).status, 401);
     assert.equal((await request(path, owner.tokens.refreshToken)).status, 401);

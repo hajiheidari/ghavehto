@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ApiProperty, ApiTags, ApiResponse, SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -7,6 +7,8 @@ import pg from 'pg';
 import { bootstrap } from '@ghahvehto/contracts';
 import { TenantController } from './tenant-controller.js';
 import { TenantAccessService, validateRuntimePool } from './tenant-access.js';
+import { identityTransaction } from './identity-transaction.js';
+import { schemaReady } from './migrations.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -26,19 +28,16 @@ export class PendingIdentityGuard implements CanActivate {
 @ApiTags('foundation')
 @Controller()
 export class FoundationController {
+  constructor(@Inject('RUNTIME_POOL') private readonly pool: pg.Pool | null) {}
   @Get('health/live') live() { return { status: 'ok' }; }
 
   @Get('health/ready')
   async ready() {
-    if (!process.env.DATABASE_URL) throw new ServiceUnavailableException('Database not configured');
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 2000, max: 1 });
+    if (!this.pool) throw new ServiceUnavailableException('Runtime database not configured');
     try {
-      await pool.query('SELECT 1');
-      const result = await pool.query("SELECT version FROM schema_migrations WHERE version = '001_foundation'");
-      if (!result.rowCount) throw new Error('Pending migrations');
+      if (!await identityTransaction(this.pool, schemaReady)) throw new Error('Pending or mismatched migrations');
       return { status: 'ready' };
     } catch { throw new ServiceUnavailableException('Database is not ready'); }
-    finally { await pool.end(); }
   }
 
   @Get('v1/bootstrap')
@@ -59,13 +58,14 @@ export class AppModule {}
 export async function createApp(options: { runtimePool?: pg.Pool } = {}) {
   if (options.runtimePool) await validateRuntimePool(options.runtimePool);
   const app = await NestFactory.create({ module: AppModule, providers: [
+    { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },
     { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },
   ] }, { logger: false });
   app.use(helmet());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: false }));
   const document = SwaggerModule.createDocument(app, new DocumentBuilder()
     .setTitle('Ghahvehto Foundation API').setVersion('0.1.0').addBearerAuth()
-    .setDescription('Local read-only foundation. Authentication and business transactions are not enabled.').build());
+    .setDescription('Development foundation with optional restricted bearer-authenticated café scopes. Public login and SMS are disabled.').build());
   SwaggerModule.setup('docs', app, document);
   return { app, document };
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-25 · Checked-in native sources and runtime readiness
+
+- Recovered and checksum-verified official pinned Flutter platform source; checked in Android/iOS projects, Persian native names and debug-only Android HTTP; release signing remains unset.
+- Changed CI to build the repository's native projects directly.
+- Readiness checks all migration checksums through restricted runtime credentials (migration 007); no migration admin pool is used by the API health route.
+- Local Node/type/client checks passed; new native/database CI pending. Browser preview could not access localhost, so visual QA remains unverified.
+
 ## 2026-10-25 · OTP operations and client fix
 
 - Verified actual restricted-login tenant HTTP/database tests; corrected the Dart regex literal found by Flutter CI.
