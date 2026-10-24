@@ -52,8 +52,8 @@ export class SessionService {
       session.db_now = (await client.query('SELECT clock_timestamp() AS instant')).rows[0].instant;
       if (session.revoked_at || session.replaced_by || session.expires_at <= session.db_now || session.deleted_at || !session.phone_verified_at) {
         // Replay revokes the entire family, including a successfully rotated descendant.
-        await client.query('UPDATE sessions SET revoked_at=coalesce(revoked_at,now()) WHERE family_id=$1', [session.family_id]);
-        await client.query('INSERT INTO audit_events(actor_id,action,reason) VALUES($1,$2,$3)',[session.user_id,'session.family_revoked','Refresh reuse or invalid identity/session state']);
+        const revoked = await client.query('UPDATE sessions SET revoked_at=clock_timestamp() WHERE family_id=$1 AND revoked_at IS NULL', [session.family_id]);
+        if (revoked.rowCount) await client.query('INSERT INTO audit_events(actor_id,action,reason) VALUES($1,$2,$3)',[session.user_id,'session.family_revoked','Refresh reuse or invalid identity/session state']);
         await client.query('COMMIT');
         return null;
       }
@@ -77,8 +77,8 @@ export class SessionService {
       if (result.rowCount) {
         const family = result.rows[0].family_id;
         await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[`session:${family}`]);
-        await client.query('UPDATE sessions SET revoked_at=coalesce(revoked_at,now()) WHERE family_id=$1',[family]);
-        await client.query('INSERT INTO audit_events(actor_id,action,reason) VALUES($1,$2,$3)',[result.rows[0].user_id,'session.revoked','Authenticated session family logout']);
+        const revoked = await client.query('UPDATE sessions SET revoked_at=clock_timestamp() WHERE family_id=$1 AND revoked_at IS NULL',[family]);
+        if (revoked.rowCount) await client.query('INSERT INTO audit_events(actor_id,action,reason) VALUES($1,$2,$3)',[result.rows[0].user_id,'session.revoked','Authenticated session family logout']);
       }
       await client.query('COMMIT');
     } catch(error) { await client.query('ROLLBACK'); throw error; }

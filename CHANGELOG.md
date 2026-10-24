@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 · Existing-session HTTP lifecycle
+
+- Added bearer session status, strict rotating refresh and idempotent logout endpoints; no initial login or SMS route.
+- Generated validated TS/Dart session contracts and client helpers; redirect/cookie behavior and full-request deadlines are explicit.
+- Added real HTTP rotation/replay/logout-audit tests and canonical expiry validation. New CI pending.
+
 ## 2026-10-25 · Checked-in native sources and runtime readiness
 
 - Recovered and checksum-verified official pinned Flutter platform source; checked in Android/iOS projects, Persian native names and debug-only Android HTTP; release signing remains unset.

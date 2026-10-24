@@ -18,6 +18,7 @@ test('Nest API serves shared contract; privileged routes fail closed', async () 
       assert.equal((await fetch(`${base}/v1/dashboards/${role}`, { headers: { authorization: 'Bearer forged' } })).status, 401);
     }
     assert.equal((await fetch(`${base}/v1/cafes/20000000-0000-4000-8000-000000000001/access`)).status, 401);
+    assert.equal((await fetch(`${base}/v1/session`)).status, 401);
     assert.equal((await fetch(`${base}/v1/bootstrap`, { method: 'POST' })).status, 404);
     assert.equal((await fetch(`${base}/health/live`)).status, 200);
     const previous = process.env.DATABASE_URL;

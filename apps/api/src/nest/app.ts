@@ -9,6 +9,8 @@ import { TenantController } from './tenant-controller.js';
 import { TenantAccessService, validateRuntimePool } from './tenant-access.js';
 import { identityTransaction } from './identity-transaction.js';
 import { schemaReady } from './migrations.js';
+import { SessionController } from './session-controller.js';
+import { SessionService } from './sessions.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -52,13 +54,14 @@ export class FoundationController {
   agents() { return {}; }
 }
 
-@Module({ controllers: [FoundationController, TenantController], providers: [PendingIdentityGuard] })
+@Module({ controllers: [FoundationController, TenantController, SessionController], providers: [PendingIdentityGuard] })
 export class AppModule {}
 
 export async function createApp(options: { runtimePool?: pg.Pool } = {}) {
   if (options.runtimePool) await validateRuntimePool(options.runtimePool);
   const app = await NestFactory.create({ module: AppModule, providers: [
     { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },
+    { provide: SessionService, useValue: options.runtimePool ? new SessionService(options.runtimePool) : null },
     { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },
   ] }, { logger: false });
   app.use(helmet());
