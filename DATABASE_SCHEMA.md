@@ -33,3 +33,5 @@ QR tokens store hashed high-entropy nonce, consumer, café/program, expiry, cons
 Agent jobs: type/state/scheduled_at/lease_until/attempts/max_attempts/budget/source IDs/config version. Approval binds immutable payload hash, action, reviewer, expiry and execution id. Outbox has unique event ID and dispatched state. Audit records actor/tenant/action/reason/subject/correlation, with minimized personal data.
 
 M1 must deliver numbered transactional migrations and clean-install/upgrade tests against PostgreSQL/PostGIS. This diagram is not proof of implemented constraints.
+
+Implemented internal increment (migration 003): `otp_challenges` stores UUID, phone/IP keyed fingerprints, code HMAC, delivery/consumption state, attempts and UTC expiry/consumption instants. A partial unique index permits one pending/sent challenge per phone fingerprint. `otp_verification_limits` stores bounded IP verification windows. Both tables enable RLS and grant no access to the café application role. No raw private phone/IP/OTP is stored; no user/session issuance or public endpoint is enabled. Actual execution evidence is recorded in TESTING.md, separately from this schema description.

@@ -1,24 +1,26 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 void main() => runApp(const GhahvehtoApp());
 
 class GhahvehtoApp extends StatelessWidget {
-  const GhahvehtoApp({super.key});
+  const GhahvehtoApp({super.key, this.loader});
+  final Future<String> Function()? loader;
   @override
   Widget build(BuildContext context) => MaterialApp(
     locale: const Locale('fa'),
     supportedLocales: const [Locale('fa'), Locale('en')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     theme: ThemeData(colorSchemeSeed: const Color(0xff173c38)),
-    home: const BootstrapScreen(),
+    home: BootstrapScreen(loader: loader),
   );
 }
 
 class BootstrapScreen extends StatefulWidget {
-  const BootstrapScreen({super.key});
+  const BootstrapScreen({super.key, this.loader});
+  final Future<String> Function()? loader;
   @override
   State<BootstrapScreen> createState() => _BootstrapScreenState();
 }
@@ -27,21 +29,14 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
   late Future<String> connection;
   Future<String> load() async {
     const base = String.fromEnvironment('API_BASE_URL');
-    final uri = Uri.tryParse(base);
-    if (uri == null || !uri.hasAuthority || !['http', 'https'].contains(uri.scheme)) {
-      throw StateError('Configure API_BASE_URL for this development target');
-    }
     final client = http.Client();
     try {
-      final response = await client.get(uri.resolve('/v1/bootstrap')).timeout(const Duration(seconds: 10));
-      if (response.statusCode != 200) throw StateError('API unavailable');
-      final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      if (data['locale'] != 'fa-IR' || data['dataMode'] != 'empty') throw StateError('Unexpected contract');
-      return '${data['brand']} · ارتباط با API برقرار است';
+      final data = await GhahvehtoApi(base, client).bootstrap();
+      return '${data.brand} · ارتباط با API برقرار است';
     } finally { client.close(); }
   }
   @override
-  void initState() { super.initState(); connection = load(); }
+  void initState() { super.initState(); connection = widget.loader?.call() ?? load(); }
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('قهوه‌تو · محیط توسعه')),
@@ -50,7 +45,7 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
       builder: (context, snapshot) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('دنیای قهوه، به سلیقه تو'),
         Text(snapshot.hasError ? 'ارتباط برقرار نشد؛ تنظیمات توسعه را بررسی کنید.' : snapshot.data ?? 'در حال اتصال…'),
-        TextButton(onPressed: () => setState(() { connection = load(); }), child: const Text('تلاش دوباره')),
+        TextButton(onPressed: () => setState(() { connection = widget.loader?.call() ?? load(); }), child: const Text('تلاش دوباره')),
       ]),
     )),
   );

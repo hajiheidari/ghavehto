@@ -1,0 +1,13 @@
+{
+  "name": "ghahvehto", "private": true, "packageManager": "pnpm@11.25.0",
+  "engines": { "node": ">=24.19.0" },
+  "scripts": {
+    "build": "pnpm --filter @ghahvehto/contracts build && pnpm --filter @ghahvehto/api build && pnpm --filter @ghahvehto/web build",
+    "test": "pnpm --filter @ghahvehto/contracts build && pnpm --filter @ghahvehto/api test && node --test apps/api/test/server.test.ts",
+    "typecheck": "pnpm --filter @ghahvehto/contracts build && pnpm -r --if-present typecheck",
+    "dev:api": "pnpm --filter @ghahvehto/api dev",
+    "dev:web": "pnpm --filter @ghahvehto/web dev",
+    "db:migrate": "pnpm --filter @ghahvehto/api db:migrate",
+    "contracts:export": "pnpm --filter @ghahvehto/api contracts:export"
+  }
+}
