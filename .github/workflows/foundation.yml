@@ -63,6 +63,11 @@ jobs:
           cache: true
       - run: flutter pub get
         working-directory: apps/mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-dependency-lock
+          path: apps/mobile/pubspec.lock
+          retention-days: 3
       - run: flutter analyze
         working-directory: apps/mobile
       - run: flutter test --dart-define=RUN_API_INTEGRATION=true --dart-define=API_BASE_URL=http://127.0.0.1:4101

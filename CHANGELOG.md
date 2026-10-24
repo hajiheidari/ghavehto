@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-25 · Dart dependency reproducibility
+
+- Verified 34221b1 / Foundation CI 40143606737 in all five jobs.
+- Found the mobile dependency lock was not yet committed; added a narrow CI artifact of the actual Flutter-generated pubspec.lock so it can be recovered and enforced without invented hashes or a local SDK workaround. Frozen validation follows after recovery.
+
 ## 2026-10-25 · Verified foundation checkpoint and safe HTTP errors
 
 - Confirmed 495eaba / Foundation CI 40142933728 successful in all five jobs: real database/HTTP checks, Flutter, complete container and checked-in Android/iOS debug/simulator builds.
