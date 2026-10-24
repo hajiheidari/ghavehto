@@ -36,7 +36,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
-      - run: node --test packages/contracts/client.test.ts
+      - run: node --test packages/contracts/client.test.ts packages/contracts/access-client.test.ts
       - run: pnpm contracts:export
       - run: node scripts/generate-clients.mjs --check
       - run: git diff --exit-code -- packages/contracts/openapi.json
@@ -92,6 +92,15 @@ jobs:
       - name: Generate pinned Flutter platform scaffolds
         run: flutter create --platforms=android,ios --project-name=ghahvehto --org=com.ghahvehto .
         working-directory: apps/mobile
+      - name: Archive native source without generated caches or machine paths
+        if: matrix.platform == 'android'
+        run: git ls-files --cached --others --exclude-standard -z -- apps/mobile/android apps/mobile/ios | tar --null -T - -czf native-platforms.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'android'
+        with:
+          name: pinned-native-source
+          path: native-platforms.tar.gz
+          retention-days: 3
       - name: Android debug build only
         if: matrix.platform == 'android'
         run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:4101

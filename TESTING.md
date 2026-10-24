@@ -1,5 +1,7 @@
 # Test plan and execution
 
+2026-10-25 verified atomic identity checkpoint eb4e6a7: Foundation CI 40141130409 SUCCESS in all five jobs. Database logs show 15 tests passed with no failures, including four identity subtests. New tenant HTTP test exercises real OTP→identity→session tokens using an actual restricted runtime login; cross-café/branch access, spoofed identity headers, owner/staff mutations, strict input, no-store, audit, revocation, deletion and pool context cleanup are covered. TS access parser tests and Dart DTO checks added; execution of new HTTP/database/native cases awaits their own CI. A local Next rebuild encountered a generated Turbopack persistence-cache error; fresh builds are checked separately, not inferred from the cache failure.
+
 2026-10-25 authoring snapshot: `pnpm test` passed 8 selected tests (including authenticated phone encryption/key rotation/tamper checks); workspace `pnpm typecheck` passed. New real-DB identity tests cover same-phone concurrency across OTP epochs, replay, encrypted persistence, absence of memberships, rollback of OTP/user/session/audit, deleted-user denial, restricted-role denials and pooled-role reset. Migration 004 and these cases await this exact increment's CI; prior green runs are not applied to new code.
 
 ## Persistent OTP increment · 2026-10-21

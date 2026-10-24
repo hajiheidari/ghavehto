@@ -21,3 +21,4 @@ for (const [path, content] of outputs) {
     if (await readFile(target,'utf8') !== content) throw new Error(`Generated client drift: ${path}`);
   } else { await mkdir(new URL('./',target), { recursive:true }); await writeFile(target,content); }
 }
+await import('./generate-access-clients.mjs');

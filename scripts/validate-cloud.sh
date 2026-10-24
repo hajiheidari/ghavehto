@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm build
 pnpm typecheck
 pnpm test
-node --test packages/contracts/client.test.ts
+node --test packages/contracts/client.test.ts packages/contracts/access-client.test.ts
 pnpm contracts:export
 node scripts/generate-clients.mjs --check
 # The checkout belongs to the host user when bind-mounted into this container.

@@ -13,6 +13,7 @@
     "test/otp.test.ts",
     "test/otp-challenges.test.ts",
     "test/phone-vault.test.ts",
-    "test/identity.test.ts"
+    "test/identity.test.ts",
+    "test/tenant-api.test.ts"
   ]
 }

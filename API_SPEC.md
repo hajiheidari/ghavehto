@@ -1,5 +1,9 @@
 # API specification
 
+Authenticated café scope increment: `GET /v1/cafes/:cafeId/access`, `GET /v1/cafes/:cafeId/branches/:branchId/access`, and owner-only `PATCH /v1/cafes/:cafeId/profile` (body `{name}` only). Real opaque access bearer tokens are authenticated within the same transaction as RLS-scoped queries; user IDs in headers/body never set tenant context. Invalid tokens return 401; inaccessible records return 404; unknown/invalid body fields return 400. Responses are private/no-store. Profile updates and owner audit append are atomic. No cookies, token issuance/login or SMS route is exposed. Legacy dashboard/admin/agent shells remain deny-all.
+
+Set `IDENTITY_DATABASE_URL` only to a separately provisioned non-owner/NOBYPASSRLS runtime login with SET ROLE membership in `ghahvehto_identity` and `ghahvehto_app`; privileged migration/database-owner credentials are rejected at startup. Without this pool, café scope endpoints return 401. OpenAPI models generate validated TS/Dart access DTOs and TS request helpers; the generator remains deliberately limited to the reviewed flat response schemas. Broader business schemas still require explicit generator work.
+
 ## Milestone 1 Nest API · loopback 4101
 
 Implemented: GET `/v1/bootstrap` using shared contract; GET `/health/live`; GET `/health/ready` verifies database connectivity and migration presence; `/docs` and `/docs-json` provide Swagger/OpenAPI. GET `/v1/dashboards/cafe`, `/admin`, `/agents` deliberately return 401 for every caller, including forged bearer tokens. No login or privileged data endpoint is enabled. Helmet supplies baseline response headers. No production rate limiting/auth/session flow is claimed.

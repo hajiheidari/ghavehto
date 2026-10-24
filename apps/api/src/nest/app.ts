@@ -1,10 +1,12 @@
 import 'reflect-metadata';
-import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ApiProperty, ApiTags, ApiResponse, SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import pg from 'pg';
 import { bootstrap } from '@ghahvehto/contracts';
+import { TenantController } from './tenant-controller.js';
+import { TenantAccessService, validateRuntimePool } from './tenant-access.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -51,14 +53,18 @@ export class FoundationController {
   agents() { return {}; }
 }
 
-@Module({ controllers: [FoundationController], providers: [PendingIdentityGuard] })
+@Module({ controllers: [FoundationController, TenantController], providers: [PendingIdentityGuard] })
 export class AppModule {}
 
-export async function createApp() {
-  const app = await NestFactory.create(AppModule, { logger: false });
+export async function createApp(options: { runtimePool?: pg.Pool } = {}) {
+  if (options.runtimePool) await validateRuntimePool(options.runtimePool);
+  const app = await NestFactory.create({ module: AppModule, providers: [
+    { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },
+  ] }, { logger: false });
   app.use(helmet());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: false }));
   const document = SwaggerModule.createDocument(app, new DocumentBuilder()
-    .setTitle('Ghahvehto Foundation API').setVersion('0.1.0')
+    .setTitle('Ghahvehto Foundation API').setVersion('0.1.0').addBearerAuth()
     .setDescription('Local read-only foundation. Authentication and business transactions are not enabled.').build());
   SwaggerModule.setup('docs', app, document);
   return { app, document };

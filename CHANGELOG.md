@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-25 · Authenticated tenant APIs
+
+- Verified atomic identity increment eb4e6a7 in all five CI jobs.
+- Added restricted runtime login validation, session-derived transactional RLS for café/branch reads and owner-only audited profile edits; no actor header/body authority.
+- Added generated validated TS/Dart scoped response contracts and real HTTP authorization tests; new results pending CI.
+- Added CI archive of pinned native source for check-in; no signed build or publication.
+
 ## 2026-10-25 · Atomic internal identity
 
 - Composed OTP consumption, encrypted phone identity, audit and session issuance atomically; no ownership/admin membership is inferred.
