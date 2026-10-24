@@ -8,9 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx src/nest/main.ts",
     "start": "node dist/nest/main.js",
-    "test": "tsc -p tsconfig.test.json && node --test .test-build/test/nest.test.js .test-build/test/domain.test.js .test-build/test/otp.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/test/nest.test.js .test-build/test/domain.test.js .test-build/test/otp.test.js .test-build/test/phone-vault.test.js",
     "db:migrate": "tsx src/nest/migrate.ts",
-    "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js",
+    "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js .test-build/test/identity.test.js",
     "contracts:export": "tsc -p tsconfig.json && node dist/nest/export-openapi.js"
   },
   "dependencies": {

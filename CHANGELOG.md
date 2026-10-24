@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 · Atomic internal identity
+
+- Composed OTP consumption, encrypted phone identity, audit and session issuance atomically; no ownership/admin membership is inferred.
+- Added authenticated private-phone encryption with separate lookup/key-ring secrets and dedicated restricted database role (migration 004).
+- Added rollback, concurrency, deletion and least-privilege tests; local unit/type checks pass, new database CI pending. HTTP login/SMS remain closed.
+
 ## 2026-10-21 · Persistent internal OTP challenges
 
 - Verified code 353f543 in CI 39552323784: all five jobs SUCCESS, including full development container and Android/iOS debug/simulator builds. Both real-DB runs passed all seven new OTP subtests; the runner reports 10 tests including suite accounting and existing tests. No public login/SMS enabled; remaining M1 gates are unchanged.

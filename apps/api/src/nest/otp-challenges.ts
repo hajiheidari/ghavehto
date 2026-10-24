@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { DisabledOtpProvider, OtpCrypto, type OtpProvider } from './otp.js';
 import { normalizeIranMobile } from './normalization.js';
+import { identityTransaction } from './identity-transaction.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -45,17 +46,23 @@ export class OtpChallengeService {
     if (!reserved) return { challengeId };
     try {
       await this.provider.send({ destination: phone, code });
-      await this.pool.query(`UPDATE otp_challenges SET status='sent'
-        WHERE id=$1 AND status='pending' AND expires_at > clock_timestamp()`, [challengeId]);
+      await this.transaction(client => client.query(`UPDATE otp_challenges SET status='sent'
+        WHERE id=$1 AND status='pending' AND expires_at > clock_timestamp()`, [challengeId]));
     } catch {
       // Provider errors can contain PII/credentials; never propagate or persist them.
-      await this.pool.query("UPDATE otp_challenges SET status='failed' WHERE id=$1 AND status='pending'", [challengeId]);
+      await this.transaction(client => client.query("UPDATE otp_challenges SET status='failed' WHERE id=$1 AND status='pending'", [challengeId]));
     }
     return { challengeId };
   }
 
   async consume(challengeId: string, destination: string, code: string, clientIp: string): Promise<boolean> {
-    if (!uuid.test(challengeId)) return false;
+    return (await this.complete(challengeId, destination, code, clientIp, async () => true)) === true;
+  }
+
+  /** Trusted composition only: callback and OTP consumption share the same transaction. */
+  async complete<T>(challengeId: string, destination: string, code: string, clientIp: string,
+    verified: (client: PoolClient, normalizedPhone: string) => Promise<T>): Promise<T | null> {
+    if (!uuid.test(challengeId)) return null;
     const phone = normalizeIranMobile(destination);
     const phoneHash = this.crypto.fingerprint('phone', phone);
     const ipHash = this.crypto.fingerprint('ip', clientIp);
@@ -68,17 +75,17 @@ export class OtpChallengeService {
         attempts=CASE WHEN otp_verification_limits.window_started_at <= $2::timestamptz-interval '5 minutes' THEN 1 ELSE otp_verification_limits.attempts+1 END
         WHERE otp_verification_limits.window_started_at <= $2::timestamptz-interval '5 minutes' OR otp_verification_limits.attempts < 20
         RETURNING attempts`, [ipHash, now]);
-      if (!budget.rowCount) return false;
+      if (!budget.rowCount) return null;
       const result = await client.query('SELECT * FROM otp_challenges WHERE id=$1 AND phone_hash=$2 FOR UPDATE', [challengeId, phoneHash]);
       const challenge = result.rows[0];
       // A competing consumer can hold the row lock; re-check expiry after waiting.
       const checkedAt = (await client.query('SELECT clock_timestamp() AS instant')).rows[0].instant as Date;
-      if (!challenge || challenge.status !== 'sent' || challenge.expires_at <= checkedAt || challenge.attempts >= 5) return false;
+      if (!challenge || challenge.status !== 'sent' || challenge.expires_at <= checkedAt || challenge.attempts >= 5) return null;
       const valid = this.crypto.matches(challengeId, phone, code, challenge.code_digest);
       await client.query(`UPDATE otp_challenges SET attempts=attempts+1,
         status=CASE WHEN $2 THEN 'consumed' ELSE status END,
         consumed_at=CASE WHEN $2 THEN $3::timestamptz ELSE NULL END WHERE id=$1`, [challengeId, valid, checkedAt]);
-      return valid;
+      return valid ? verified(client, phone) : null;
     });
   }
 
@@ -87,15 +94,6 @@ export class OtpChallengeService {
   }
 
   private async transaction<T>(operation: (client: PoolClient) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
-    try {
-      await client.query('BEGIN');
-      const result = await operation(client);
-      await client.query('COMMIT');
-      return result;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally { client.release(); }
+    return identityTransaction(this.pool, operation);
   }
 }

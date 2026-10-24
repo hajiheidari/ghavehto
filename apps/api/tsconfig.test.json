@@ -11,6 +11,8 @@
     "test/database.test.ts",
     "test/sessions.test.ts",
     "test/otp.test.ts",
-    "test/otp-challenges.test.ts"
+    "test/otp-challenges.test.ts",
+    "test/phone-vault.test.ts",
+    "test/identity.test.ts"
   ]
 }

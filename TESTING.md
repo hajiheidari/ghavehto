@@ -1,5 +1,7 @@
 # Test plan and execution
 
+2026-10-25 authoring snapshot: `pnpm test` passed 8 selected tests (including authenticated phone encryption/key rotation/tamper checks); workspace `pnpm typecheck` passed. New real-DB identity tests cover same-phone concurrency across OTP epochs, replay, encrypted persistence, absence of memberships, rollback of OTP/user/session/audit, deleted-user denial, restricted-role denials and pooled-role reset. Migration 004 and these cases await this exact increment's CI; prior green runs are not applied to new code.
+
 ## Persistent OTP increment · 2026-10-21
 
 Observed result: code `353f5439b092aabe4efdcd676ea270427d48b581` passed [Foundation CI 39552323784](https://github.com/hajiheidari/ghavehto/actions/runs/39552323784) in all five jobs, and probe CI 39552323876 passed. Read-back of web-api-database job 119064079733 and cloud-development job 119064079599 logs confirms all seven OTP subtests PASS. The database runner reports 10 tests total (seven OTP subtests, their parent suite, and two existing migration/session tests). Migration repeatability/RLS/session checks, builds, contract drift and actual Next→Nest smoke PASS; Flutter analyze has no issues and all four Flutter tests PASS. Android debug and iOS simulator debug jobs PASS. No SMS/network provider, physical device, signed release or browser visual execution is implied. The pending statements below describe the pre-CI authoring snapshot; this observed result supersedes them for the exact code commit above.
