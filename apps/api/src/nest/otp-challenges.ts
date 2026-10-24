@@ -14,7 +14,10 @@ export class OtpChallengeService {
     private readonly pool: Pool,
     private readonly crypto: OtpCrypto,
     private readonly provider: OtpProvider = new DisabledOtpProvider(),
-  ) {}
+    private readonly deliveryTimeoutMs = 5000,
+  ) {
+    if (!Number.isInteger(deliveryTimeoutMs) || deliveryTimeoutMs < 1 || deliveryTimeoutMs > 30_000) throw new Error('Invalid delivery timeout');
+  }
 
   async request(destination: string, clientIp: string): Promise<{ challengeId: string }> {
     // Fail before any DB write or code generation when sending is not approved.
@@ -44,14 +47,19 @@ export class OtpChallengeService {
     });
     // Same opaque receipt for throttled requests; no account lookup or enumeration.
     if (!reserved) return { challengeId };
+    const cancellation = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      await this.provider.send({ destination: phone, code });
+      await Promise.race([
+        this.provider.send({ destination: phone, code, signal: cancellation.signal }),
+        new Promise<never>((_resolve, reject) => { timer = setTimeout(() => { cancellation.abort(); reject(new Error('Delivery deadline')); }, this.deliveryTimeoutMs); }),
+      ]);
       await this.transaction(client => client.query(`UPDATE otp_challenges SET status='sent'
         WHERE id=$1 AND status='pending' AND expires_at > clock_timestamp()`, [challengeId]));
     } catch {
       // Provider errors can contain PII/credentials; never propagate or persist them.
       await this.transaction(client => client.query("UPDATE otp_challenges SET status='failed' WHERE id=$1 AND status='pending'", [challengeId]));
-    }
+    } finally { if (timer) clearTimeout(timer); }
     return { challengeId };
   }
 

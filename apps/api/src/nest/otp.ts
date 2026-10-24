@@ -5,7 +5,7 @@ import { normalizeIranMobile } from './normalization.js';
 /** Delivery is a privileged boundary. No implementation may log a code or destination. */
 export interface OtpProvider {
   readonly enabled: boolean;
-  send(input: Readonly<{ destination: string; code: string }>): Promise<void>;
+  send(input: Readonly<{ destination: string; code: string; signal?: AbortSignal }>): Promise<void>;
 }
 
 /** Default composition must use this adapter until provider and sending are approved. */

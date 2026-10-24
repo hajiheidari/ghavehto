@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-25 · OTP operations and client fix
+
+- Verified actual restricted-login tenant HTTP/database tests; corrected the Dart regex literal found by Flutter CI.
+- Added delivery deadline/cancellation and fixed bounded expiry cleanup (migration 006), with privilege/late-delivery/live-data tests.
+- Fresh local Next build/SSR smoke passed after isolating a generated cache error. New operation/Flutter results await their own CI.
+
 ## 2026-10-25 · Authenticated tenant APIs
 
 - Verified atomic identity increment eb4e6a7 in all five CI jobs.

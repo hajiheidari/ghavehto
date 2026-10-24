@@ -14,7 +14,7 @@ for (const [name, schemaName] of models) {
   for (const [key, field] of fields) ts += `  if (typeof value.${key} !== 'string'${field.format === 'uuid' ? ` || !new RegExp(${JSON.stringify(uuid)}).test(value.${key} as string)` : ''}) throw new Error('Invalid ${key}');\n`;
   ts += `  return value as unknown as ${name}Response;\n}\n`;
   dart += `class ${name}Response {\n${fields.map(([key]) => `  final String ${key};`).join('\n')}\n  const ${name}Response({${fields.map(([key]) => `required this.${key}`).join(', ')}});\n  factory ${name}Response.fromJson(Map<String, dynamic> value) {\n`;
-  for (const [key, field] of fields) dart += `    if (value['${key}'] is! String${field.format === 'uuid' ? ` || !RegExp(${JSON.stringify(uuid)}).hasMatch(value['${key}'] as String)` : ''}) throw const FormatException('Invalid ${key}');\n`;
+  for (const [key, field] of fields) dart += `    if (value['${key}'] is! String${field.format === 'uuid' ? ` || !RegExp(r${JSON.stringify(uuid)}).hasMatch(value['${key}'] as String)` : ''}) throw const FormatException('Invalid ${key}');\n`;
   dart += `    return ${name}Response(${fields.map(([key]) => `${key}: value['${key}'] as String`).join(', ')});\n  }\n}\n`;
 }
 // Narrow helpers for these reviewed paths; not a general business-schema generator.
