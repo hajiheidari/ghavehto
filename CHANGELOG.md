@@ -1,5 +1,9 @@
 # Changelog
 
+## Branch staff access
+
+- Owners can set branch-specific staff access for an existing verified account. Repeat requests are safe, and real changes are audited.
+
 ## Owner access lifecycle
 
 - Added an operator-only owner grant and revocation separate from evidence review, with audit and replay protection.

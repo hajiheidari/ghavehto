@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Headers, Header, Inject, Param, ParseUUIDPipe, Patch, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Header, Inject, Param, ParseUUIDPipe, Patch, Put, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsString, MaxLength, MinLength } from 'class-validator';
 import { TenantAccessService } from './tenant-access.js';
 
 export class CafeAccessDto {
@@ -15,6 +15,9 @@ export class BranchAccessDto {
 export class UpdateCafeDto {
   @ApiProperty({ type: String, minLength: 1, maxLength: 120 })
   @IsString() @MinLength(1) @MaxLength(120) name!: string;
+}
+class BranchStaffDto {
+  @ApiProperty({type:Boolean}) @IsBoolean() enabled!: boolean;
 }
 
 @ApiTags('authenticated-cafe') @ApiBearerAuth()
@@ -47,5 +50,13 @@ export class TenantController {
     const name = body.name.trim();
     if (!name) throw new BadRequestException('Name required');
     return this.access!.updateCafe(token, cafeId, name);
+  }
+  @Put(':cafeId/branches/:branchId/staff/:userId') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiResponse({status:200,type:BranchStaffDto})
+  staff(@Headers('authorization') header:string|undefined, @Param('cafeId',new ParseUUIDPipe()) cafeId:string,
+    @Param('branchId',new ParseUUIDPipe()) branchId:string, @Param('userId',new ParseUUIDPipe()) userId:string,
+    @Body() body:BranchStaffDto): Promise<BranchStaffDto> {
+    const token = this.token(header);
+    return this.access!.changeBranchStaff(token,cafeId,branchId,userId,body.enabled);
   }
 }

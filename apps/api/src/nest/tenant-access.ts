@@ -42,6 +42,15 @@ export class TenantAccessService {
       return result.rows[0];
     });
   }
+  changeBranchStaff(token:string, cafeId:string, branchId:string, userId:string, enabled:boolean): Promise<{enabled:boolean}> {
+    return this.withVerifiedActor(token, async client => {
+      const {rows:[row]} = await client.query('SELECT public.change_branch_staff($1,$2,$3,$4) AS allowed',
+        [cafeId,branchId,userId,enabled]);
+      if (!row.allowed) throw new NotFoundException();
+      return {enabled};
+    });
+  }
+
   async withVerifiedActor<T>(token: string, operation: (client: PoolClient, userId: string) => Promise<T>): Promise<T> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new UnauthorizedException();
     return identityTransaction(this.pool, async client => {

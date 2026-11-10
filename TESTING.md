@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Branch staff integration covers strict payload validation, owner-only writes, cross-café denial, idempotence, immediate revocation and preservation of access to other branches.
+
 Ownership access integration checks reviewer/runtime denial, existing-owner protection, idempotent grant, café scope, revocation with the same session, and replay rejection.
 
 Ownership review integration checks operator-only execution, withdrawn-claim rejection, queue removal, audited verification, claimant status and unchanged tenant access.

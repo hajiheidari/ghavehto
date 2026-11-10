@@ -181,6 +181,20 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(`/v1/cafes/${cafeB}/access`, owner.tokens.accessToken)).status, 404);
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchA}/access`, staff.tokens.accessToken)).status, 200);
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchOther}/access`, staff.tokens.accessToken, 'GET', undefined, {'x-user-id':owner.userId})).status, 404);
+    const staffPath = `/v1/cafes/${cafeA}/branches/${branchOther}/staff/${staff.userId}`;
+    const branchAccess = `/v1/cafes/${cafeA}/branches/${branchOther}/access`;
+    assert.equal((await request(staffPath,staff.tokens.accessToken,'PUT',{enabled:true})).status,404);
+    assert.equal((await request(staffPath,owner.tokens.accessToken,'PUT',{enabled:true,role:'owner'})).status,400);
+    assert.equal((await request(staffPath,owner.tokens.accessToken,'PUT',{enabled:'false'})).status,400);
+    assert.equal((await request(staffPath.replace(cafeA,cafeB),owner.tokens.accessToken,'PUT',{enabled:true})).status,404);
+    for (const enabled of [true,true,false,false]) {
+      const changed = await request(staffPath,owner.tokens.accessToken,'PUT',{enabled});
+      assert.equal(changed.status,200);
+      assert.deepEqual(await changed.json(),{enabled});
+      assert.equal((await request(branchAccess,staff.tokens.accessToken)).status,enabled?200:404);
+    }
+    assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchA}/access`,staff.tokens.accessToken)).status,200);
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('branch.staff_granted','branch.staff_revoked')",[cafeA])).rowCount,2);
     assert.equal((await request(`/v1/cafes/${cafeB}/branches/${branchA}/access`, staff.tokens.accessToken)).status, 404);
     assert.equal((await request(profile, staff.tokens.accessToken, 'PATCH', {name:'TEST FORBIDDEN'})).status, 404);
     assert.equal((await request(profile, owner.tokens.accessToken, 'PATCH', {name:'TEST', userId:owner.userId, role:'owner'})).status, 400);

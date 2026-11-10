@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Branch staff administration is available through an owner-only API (migration 013). It requires a known verified user ID; account discovery, invitations and a management UI are not included.
+
 Ownership access now has a separate restricted operator command (migration 012). It cannot replace an existing owner or replay a revoked grant. Operational accounts and reassessment are still pending.
 
 Ownership requests now have a private operator queue and verified/rejected decisions (migration 011). The database stores an opaque reference to a separately reviewed evidence case. Provisioning a reviewer, collecting evidence and granting or revoking operational ownership remain separate.
