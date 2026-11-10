@@ -1,5 +1,11 @@
 # Test plan and execution
 
+## Flutter lock checkpoint
+
+Foundation CI 40143950028 for `a2ba5bd` passed all five jobs. A rerun of mobile-source produced the Flutter lock archive (artifact 13798924144); its SHA256 matched GitHub metadata. The follow-up checks enforce this lock and check for drift in mobile-source, both native builds and cloud development. Results for that follow-up are tracked separately in live PR checks.
+
+This environment's headless Chromium startup failed on a denied system socket. Shared Chrome also refused the loopback connection, so browser visual QA remains unverified.
+
 ## Verified 2026-10-25 checkpoint
 
 Exact code 495eaba5e112211d43d89585564ed986ae4f87c2 passed Foundation CI 40142933728 in ALL FIVE jobs, including both checked-in native projects and the complete cloud development container. Dedicated logs confirmed 17 PostgreSQL tests (including nested suite accounting) with no failures, actual restricted-login HTTP authorization/session lifecycle, and Flutter analyze with no issues plus 6 tests passed. Probe CI 40142933741 also passed. Earlier test-order and Dart regex failures are corrected in this checkpoint; historical notes below retain their original scope.

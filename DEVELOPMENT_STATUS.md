@@ -1,4 +1,4 @@
-# Development status · 2026-10-25
+# Development status · 2026-11-10
 
 M0 planning is documented, with external feasibility questions still open. M1 is IN PROGRESS; no production launch or completed end-user login is claimed.
 
@@ -8,7 +8,7 @@ Source of truth: https://github.com/hajiheidari/ghavehto, branch `codex/m1-found
 
 Code `495eaba5e112211d43d89585564ed986ae4f87c2` passed [Foundation CI 40142933728](https://github.com/hajiheidari/ghavehto/actions/runs/40142933728) in all five jobs: web/API/database, mobile source/integration, complete cloud development container, checked-in Android debug and checked-in iOS simulator debug. Logs confirmed 17 PostgreSQL tests including parent-suite accounting and 6 Flutter tests, with Flutter analyze reporting no issues. Local unit/type/contract/drift/build/SSR checks also ran successfully as recorded in TESTING.md.
 
-This subsequent increment standardizes Persian API errors and server-generated request IDs with executed local tests; its own complete validation is visible in PR checks. Prior green results are never assigned to later executable code.
+The subsequent Persian HTTP error/request-ID checkpoint `34221b1` passed all five jobs in Foundation CI 40143606737. The lock capture checkpoint `a2ba5bd` also passed all five jobs in CI 40143950028. Dart dependencies are now checked in and enforced alongside the pinned pnpm lock. See live PR checks for the enforcing commit's separate results.
 
 ## Implemented M1 foundations
 

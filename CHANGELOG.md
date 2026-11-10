@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-10 · Enforce the Flutter dependency lock
+
+- Recovered the actual Flutter 3.47.5 lock from a refreshed CI artifact, verified the archive checksum, and committed the lock without local paths.
+- Enforced the lock and checked for drift in Flutter source, native and cloud development validation.
+
 ## 2026-10-25 · Dart dependency reproducibility
 
 - Verified 34221b1 / Foundation CI 40143606737 in all five jobs.

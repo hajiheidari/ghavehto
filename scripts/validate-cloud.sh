@@ -18,6 +18,7 @@ node scripts/generate-clients.mjs --check
 # The checkout belongs to the host user when bind-mounted into this container.
 # Trust only this explicit workspace for this command, never all repositories.
 git -c safe.directory="$PWD" diff --exit-code -- packages/contracts/openapi.json
+cloud_repo_root=$PWD
 pnpm --filter @ghahvehto/api test:db
 node scripts/smoke-web.mjs
 # Flutter's integration test calls an actual Nest process.
@@ -36,6 +37,7 @@ for (let attempt = 0; attempt < 50; attempt++) {
 throw new Error('Nest failed to become ready');
 JS
 cd apps/mobile
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter analyze
 flutter test --dart-define=RUN_API_INTEGRATION=true --dart-define=API_BASE_URL=http://127.0.0.1:4101
+git -C "$cloud_repo_root" -c safe.directory="$cloud_repo_root" diff --exit-code -- apps/mobile/pubspec.lock
