@@ -26,9 +26,9 @@ The subsequent Persian HTTP error/request-ID checkpoint `34221b1` passed all fiv
 
 Initial public OTP/login routes and SMS delivery are NOT enabled. The only enabled delivery implementation in application defaults is the disabled adapter; capturing providers and synthetic identities exist solely in disposable tests. No fixed OTP, bypass/demo token or consumer PII seed exists.
 
-To continue genuine sign-in: identify an approved SMS provider/account and template/sender; provide credentials through secure configuration (never chat/Git); separately authorize a narrowly scoped real test send. The founder has not authorized purchases, external account creation or unapproved sending.
+The founder selected SMS.ir. Its Verify Send adapter is implemented and tested with an injected offline transport; it is not wired to startup. Genuine sign-in still needs an existing account and approved template, secure credentials (never chat/Git), and separate authorization for a narrowly scoped real test send.
 
-After provider selection: implement/review that adapter, compose secret/key configuration, complete the actual initial login transport, web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the full real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
+Next: review the approved template, compose secret/key configuration, complete initial login transport, web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
 ## Other open gates
 

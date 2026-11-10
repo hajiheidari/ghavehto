@@ -1,5 +1,9 @@
 # Changelog
 
+## SMS.ir provider preparation
+
+- Added an internal verification adapter and offline tests for request format, receipt validation, cancellation and sanitized failures. Application defaults remain disabled; no real message is sent.
+
 ## 2026-11-10 · Enforce the Flutter dependency lock
 
 - Recovered the actual Flutter 3.47.5 lock from a refreshed CI artifact, verified the archive checksum, and committed the lock without local paths.

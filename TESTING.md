@@ -1,5 +1,7 @@
 # Test plan and execution
 
+SMS.ir adapter tests run under `pnpm test` with an injected offline transport. They exercise the exact template payload, receipt validation, rejected inputs, cancellation, sanitized failures and absence of automatic retries. They do not establish API credentials, delivery acceptance by SMS.ir or handset receipt.
+
 ## Flutter lock checkpoint
 
 Foundation CI 40143950028 for `a2ba5bd` passed all five jobs. A rerun of mobile-source produced the Flutter lock archive (artifact 13798924144); its SHA256 matched GitHub metadata. The follow-up checks enforce this lock and check for drift in mobile-source, both native builds and cloud development. Results for that follow-up are tracked separately in live PR checks.
