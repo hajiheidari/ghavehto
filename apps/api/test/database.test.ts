@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import pg from 'pg';
 import { migrate } from '../src/nest/migrations.js';
-import { readDirectory } from '../src/nest/directory-controller.js';
+import { readDirectory, readDirectoryBranch } from '../src/nest/directory-controller.js';
 
 // Use a disposable local/CI database only. Fixtures are explicitly synthetic and rolled back.
 test('PostgreSQL migrations are repeatable; RLS isolates café and branch access', async () => {
@@ -31,6 +31,8 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
         id:ids.branchA,cafeName:'تست كافه',branchName:'شعبه ۲',province:'آزمایشی',city:'شهر تست',neighborhood:'',
       }],hasMore:false});
       assert.equal((await readDirectory(client,'شعبه 2',1)).items.length,1);
+      assert.equal((await readDirectoryBranch(client,ids.branchA))?.branchName,'شعبه ۲');
+      assert.equal(await readDirectoryBranch(client,ids.branchB),null);
       assert.equal((await readDirectory(client,"' OR 1=1 --",1)).items.length,0);
       assert.equal((await readDirectory(client,'',2)).items.length,0);
       await client.query('RESET ROLE');
@@ -64,6 +66,7 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
         [{action:'directory.publish',revision:'2'},{action:'directory.withdraw',revision:'3'}]);
       await client.query('SET LOCAL ROLE ghahvehto_identity');
       assert.deepEqual(await readDirectory(client,'اصلاح',1), {items:[],hasMore:false});
+      assert.equal(await readDirectoryBranch(client,ids.branchA),null);
       await client.query('RESET ROLE');
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);

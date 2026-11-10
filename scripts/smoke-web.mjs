@@ -33,6 +33,10 @@ try {
   const cafes = await fetch(base+'/cafes?q=smoke');
   assert.equal(cafes.status,200);
   assert.match(await cafes.text(), /فهرست کافه‌ها فعلاً در دسترس نیست/);
+  assert.equal((await fetch(base+'/cafes/not-a-uuid')).status,404);
+  const branch = await fetch(base+'/cafes/30000000-0000-4000-8000-000000000001');
+  assert.equal(branch.status,200);
+  assert.match(await branch.text(), /اطلاعات شعبه فعلاً در دسترس نیست/);
   for (const kind of ['cafe','admin','agents']) {
     const page = await fetch(`${base}/dashboard/${kind}`);
     assert.equal(page.status,200);

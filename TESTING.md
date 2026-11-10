@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Branch detail coverage verifies that reviewed entries are readable, unpublished/withdrawn entries stay hidden, and SSR handles invalid identifiers and unavailable API responses separately.
+
 Directory review: the disposable PostgreSQL fixture checks role separation, rejection of denied provenance, audited correction and withdrawal, stale revision rejection, and disappearance from public search. The operator CLI is never run against a production database by CI.
 
 Directory increment: disposable PostgreSQL tests cover published projection, Persian normalization, parameterized search, pagination and denial of source rights. The default HTTP suite covers malformed search and missing runtime DB, and SSR smoke covers the unavailable state. Exact-head database results are tracked in PR checks.

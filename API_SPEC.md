@@ -27,4 +27,6 @@ The historical dependency-free probe at 4100 is read-only diagnostics and is not
 
 ## Public directory discovery
 
+`GET /v1/directory/branches/:id` returns one item from the same reviewed projection. A missing, withdrawn or otherwise unpublished branch returns 404. Invalid UUIDs return 400 and an unavailable runtime database returns 503. Responses are not cached.
+
 `GET /v1/directory?q=<text>&page=<1–100>` returns `{items,hasMore}`. Each item has `id` (branch UUID), `cafeName`, `branchName`, `province`, `city`, and `neighborhood`. Search is optional, literal and capped at 80 characters; page size is 24. Results contain only reviewed branch snapshots with permitted provenance, never private contacts or unreviewed tenant data. Returns 400 for invalid query and 503 when the restricted database is unavailable; an empty published result is 200. Responses are not cached. This early directory contract is consumed by web SSR; mobile binding follows after the directory contract is stable.

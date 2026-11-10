@@ -1,5 +1,9 @@
 # Changelog
 
+## Public branch pages
+
+- Added linkable Persian branch pages and an API read constrained to the same reviewed projection as directory search.
+
 ## M2 directory review
 
 - Added an operator-only publish/correct/withdraw command backed by a restricted PostgreSQL capability, revision conflict detection and transactional audit.

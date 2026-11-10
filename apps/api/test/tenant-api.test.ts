@@ -46,6 +46,9 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     const directory = await fetch(`${base}/v1/directory?q=unpublished-fixture`);
     assert.equal(directory.status, 200);
     assert.deepEqual(await directory.json(), {items:[],hasMore:false});
+    const unknownBranch = await fetch(`${base}/v1/directory/branches/${branchA}`);
+    assert.equal(unknownBranch.status,404);
+    assert.equal(unknownBranch.headers.get('cache-control'),'no-store');
     const loginRequest = (route: string, body: object) => fetch(`${base}/v1/auth/otp/${route}`, {
       method: 'POST', headers: {'Content-Type':'application/json', 'X-Forwarded-For':'not-a-valid-ip'},
       body: JSON.stringify(body),
