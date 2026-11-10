@@ -17,7 +17,7 @@ The template ID and parameter name are sufficient for review. Do not paste API k
 
 - Review the SMS.ir template against the adapter and preserve disabled defaults, persisted budgets, request deadlines and safe error responses.
 - Provision separate OTP HMAC, stable private lookup and authenticated encryption keys in secure runtime configuration; define rotation/recovery.
-- Compose initial request/verification transport, genuine web HttpOnly/Secure/SameSite cookie plus CSRF handling and mobile platform-secure token storage. Never store credentials in localStorage or add a fake successful login.
+- Review the opt-in HTTP handlers and configure trusted ingress before composing them at startup. Add genuine web HttpOnly/Secure/SameSite cookies plus CSRF handling and mobile platform-secure token storage. Never store credentials in localStorage or add a fake successful login.
 - Test delivery acceptance separately from observed receipt, then complete the real sign-in/rotation/logout flow on intended devices and networks.
 - Finish visual QA, publisher/region feasibility and remaining security/operational gates before any separately approved public deployment/store action.
 

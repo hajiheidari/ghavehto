@@ -5,9 +5,7 @@ import pg from 'pg';
 import { migrate, schemaReady } from '../src/nest/migrations.js';
 import { createApp } from '../src/nest/app.js';
 import { OtpCrypto } from '../src/nest/otp.js';
-import { OtpChallengeService } from '../src/nest/otp-challenges.js';
 import { PhoneVault } from '../src/nest/phone-vault.js';
-import { IdentityService } from '../src/nest/identity.js';
 import { SessionService } from '../src/nest/sessions.js';
 import { validateRuntimePool } from '../src/nest/tenant-access.js';
 import { fetchCafeAccess, fetchBranchAccess, updateCafeProfile } from '@ghahvehto/contracts/access-client';
@@ -18,7 +16,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
   const login = `gh_test_${randomBytes(8).toString('hex')}`, password = randomBytes(24).toString('hex');
   let runtime: pg.Pool | undefined, server: Awaited<ReturnType<typeof createApp>> | undefined;
   const vault = new PhoneVault(randomBytes(32), new Map([['test', randomBytes(32)]]), 'test');
-  const crypto = new OtpCrypto(randomBytes(32)), ip = '192.0.2.20';
+  const crypto = new OtpCrypto(randomBytes(32)), ip = '127.0.0.1';
   const cafeA = randomUUID(), cafeB = randomUUID(), branchA = randomUUID(), branchOther = randomUUID();
   const identities: string[] = [];
   const phones = ['+989120000001', '+989120000002', '+989120000003'];
@@ -40,22 +38,39 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     try { await assert.rejects(validateRuntimePool(runtime), /Restricted identity runtime/); }
     finally { await admin.query(`GRANT ghahvehto_identity TO ${login} WITH INHERIT FALSE`); }
     let code = '';
-    const otp = new OtpChallengeService(runtime, crypto, { enabled: true, async send(input) { code = input.code; } });
-    const identity = new IdentityService(runtime, otp, vault);
+    server = await createApp({ runtimePool: runtime, initialLogin: {
+      crypto, vault, provider: { enabled: true, async send(input) { code = input.code; } },
+    } });
+    await server.app.listen(0, '127.0.0.1');
+    const base = await server.app.getUrl();
+    const loginRequest = (route: string, body: object) => fetch(`${base}/v1/auth/otp/${route}`, {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-Forwarded-For':'not-a-valid-ip'},
+      body: JSON.stringify(body),
+    });
+    assert.equal((await loginRequest('request', {mobile:phones[0], ip:'192.0.2.20'})).status, 400);
+    assert.equal((await loginRequest('request', {mobile:'invalid-mobile'})).status, 400);
     const verified = [];
     for (const phone of phones) {
-      const receipt = await otp.request(phone, ip);
-      const result = await identity.verify(receipt.challengeId, phone, code, ip);
-      assert.ok(result); identities.push(result.userId); verified.push(result);
+      const challenge = await loginRequest('request', {mobile:phone});
+      assert.equal(challenge.status, 201);
+      assert.equal(challenge.headers.get('cache-control'), 'no-store');
+      const {challengeId} = await challenge.json() as {challengeId:string};
+      const proof = {challengeId, mobile:phone, code};
+      const verification = await loginRequest('verify', proof);
+      assert.equal(verification.status, 201);
+      assert.equal(verification.headers.get('cache-control'), 'no-store');
+      const tokens = await verification.json() as Awaited<ReturnType<SessionService['issueInTransaction']>>;
+      const status = await fetch(`${base}/v1/session`, {headers:{Authorization:`Bearer ${tokens.accessToken}`}});
+      assert.equal(status.status, 200);
+      const {userId} = await status.json() as {userId:string};
+      identities.push(userId); verified.push({userId, tokens});
+      assert.equal((await loginRequest('verify', proof)).status, 401);
     }
     const [owner, staff, consumer] = verified;
     await admin.query("INSERT INTO cafes(id,name,normalized_name,slug) VALUES($1,'TEST A','test a',$3),($2,'TEST B','test b',$4)", [cafeA, cafeB, `test-${cafeA}`, `test-${cafeB}`]);
     await admin.query("INSERT INTO branches(id,cafe_id,name,province,city) VALUES($1,$3,'TEST FIRST','TEST','TEST'),($2,$3,'TEST OTHER','TEST','TEST')", [branchA, branchOther, cafeA]);
     await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,role) VALUES($1,$2,'owner')", [owner.userId, cafeA]);
     await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,branch_id,role) VALUES($1,$2,$3,'staff')", [staff.userId, cafeA, branchA]);
-    server = await createApp({ runtimePool: runtime });
-    await server.app.listen(0, '127.0.0.1');
-    const base = await server.app.getUrl();
     const request = (path: string, token?: string, method = 'GET', body?: unknown, extra: Record<string,string> = {}) => fetch(base + path, {
       method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? {'Content-Type':'application/json'} : {}), ...extra },
       ...(body ? { body: JSON.stringify(body) } : {}),

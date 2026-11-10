@@ -13,6 +13,11 @@ import { SessionController } from './session-controller.js';
 import { SessionService } from './sessions.js';
 import { randomUUID } from 'node:crypto';
 import { ApiErrorDto, SafeHttpErrors } from './http-errors.js';
+import { INITIAL_LOGIN, InitialLoginController, type InitialLogin } from './initial-login-controller.js';
+import { IdentityService } from './identity.js';
+import { OtpChallengeService } from './otp-challenges.js';
+import type { OtpCrypto, OtpProvider } from './otp.js';
+import type { PhoneVault } from './phone-vault.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -59,9 +64,22 @@ export class FoundationController {
 @Module({ controllers: [FoundationController, TenantController, SessionController], providers: [PendingIdentityGuard] })
 export class AppModule {}
 
-export async function createApp(options: { runtimePool?: pg.Pool } = {}) {
-  if (options.runtimePool) await validateRuntimePool(options.runtimePool);
-  const app = await NestFactory.create({ module: AppModule, providers: [
+export async function createApp(options: {
+  runtimePool?: pg.Pool;
+  initialLogin?: Readonly<{ crypto: OtpCrypto; vault: PhoneVault; provider: OtpProvider }>;
+} = {}) {
+  const { runtimePool, initialLogin: config } = options;
+  if (runtimePool) await validateRuntimePool(runtimePool);
+  let initialLogin: InitialLogin | undefined;
+  if (config) {
+    if (!runtimePool || !config.provider.enabled) throw new Error('Initial login requires a restricted runtime pool and enabled provider');
+    const otp = new OtpChallengeService(runtimePool, config.crypto, config.provider);
+    initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
+  }
+  const app = await NestFactory.create({ module: AppModule,
+    controllers: initialLogin ? [InitialLoginController] : [],
+    providers: [
+    ...(initialLogin ? [{ provide: INITIAL_LOGIN, useValue: initialLogin }] : []),
     { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },
     { provide: SessionService, useValue: options.runtimePool ? new SessionService(options.runtimePool) : null },
     { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },

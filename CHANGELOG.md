@@ -1,5 +1,9 @@
 # Changelog
 
+## Initial login transport preparation
+
+- Added request and verification routes that are only registered through explicit application composition. The normal startup still exposes neither route. Extended the disposable PostgreSQL fixture to test HTTP OTP issuance, verification, replay rejection and existing tenant authorization.
+
 ## SMS.ir provider preparation
 
 - Added an internal verification adapter and offline tests for request format, receipt validation, cancellation and sanitized failures. Application defaults remain disabled; no real message is sent.
