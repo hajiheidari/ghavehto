@@ -1,5 +1,9 @@
 # Changelog
 
+## M2 ownership request intake
+
+- Added verified-session claim submission, private status list and withdrawal; repeated submission is idempotent for the same café. No owner or tenant privileges are granted by intake.
+
 ## Public branch pages
 
 - Added linkable Persian branch pages and an API read constrained to the same reviewed projection as directory search.

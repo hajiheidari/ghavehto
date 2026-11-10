@@ -21,28 +21,28 @@ export async function validateRuntimePool(pool: Pool): Promise<void> {
 export class TenantAccessService {
   constructor(private readonly pool: Pool) {}
   readCafe(token: string, cafeId: string): Promise<{ cafeId: string; name: string }> {
-    return this.scoped(token, async client => {
+    return this.withVerifiedActor(token, async client => {
       const result = await client.query('SELECT id AS "cafeId",name FROM cafes WHERE id=$1', [cafeId]);
       if (!result.rowCount) throw new NotFoundException();
       return result.rows[0];
     });
   }
   readBranch(token: string, cafeId: string, branchId: string): Promise<{ branchId: string; cafeId: string; name: string }> {
-    return this.scoped(token, async client => {
+    return this.withVerifiedActor(token, async client => {
       const result = await client.query('SELECT id AS "branchId",cafe_id AS "cafeId",name FROM branches WHERE id=$1 AND cafe_id=$2', [branchId, cafeId]);
       if (!result.rowCount) throw new NotFoundException();
       return result.rows[0];
     });
   }
   updateCafe(token: string, cafeId: string, name: string): Promise<{ cafeId: string; name: string }> {
-    return this.scoped(token, async (client, userId) => {
+    return this.withVerifiedActor(token, async (client, userId) => {
       const result = await client.query('UPDATE cafes SET name=$2,normalized_name=$3 WHERE id=$1 RETURNING id AS "cafeId",name', [cafeId, name, normalizePersian(name)]);
       if (!result.rowCount) throw new NotFoundException();
       await client.query("INSERT INTO audit_events(actor_id,cafe_id,action,reason) VALUES($1,$2,'cafe.profile_updated','Owner updated café profile')", [userId, cafeId]);
       return result.rows[0];
     });
   }
-  private async scoped<T>(token: string, operation: (client: PoolClient, userId: string) => Promise<T>): Promise<T> {
+  async withVerifiedActor<T>(token: string, operation: (client: PoolClient, userId: string) => Promise<T>): Promise<T> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new UnauthorizedException();
     return identityTransaction(this.pool, async client => {
       const digest = createHash('sha256').update(token).digest();

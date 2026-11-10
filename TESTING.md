@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Ownership intake integration covers valid HTTP submission, duplicate reuse, rejection of unpublished branches, claimant-only read/withdrawal and unchanged tenant privileges. It uses the existing disposable verified-session flow; no SMS is sent.
+
 Branch detail coverage verifies that reviewed entries are readable, unpublished/withdrawn entries stay hidden, and SSR handles invalid identifiers and unavailable API responses separately.
 
 Directory review: the disposable PostgreSQL fixture checks role separation, rejection of denied provenance, audited correction and withdrawal, stale revision rejection, and disappearance from public search. The operator CLI is never run against a production database by CI.

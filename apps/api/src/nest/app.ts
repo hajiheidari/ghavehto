@@ -19,6 +19,7 @@ import { OtpChallengeService } from './otp-challenges.js';
 import type { OtpCrypto, OtpProvider } from './otp.js';
 import type { PhoneVault } from './phone-vault.js';
 import { DirectoryController } from './directory-controller.js';
+import { OwnershipClaimController } from './ownership-claim-controller.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -62,7 +63,7 @@ export class FoundationController {
   agents() { return {}; }
 }
 
-@Module({ controllers: [FoundationController, TenantController, SessionController, DirectoryController], providers: [PendingIdentityGuard] })
+@Module({ controllers: [FoundationController, TenantController, SessionController, DirectoryController, OwnershipClaimController], providers: [PendingIdentityGuard] })
 export class AppModule {}
 
 export async function createApp(options: {

@@ -75,6 +75,8 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     const [owner, staff, consumer] = verified;
     await admin.query("INSERT INTO cafes(id,name,normalized_name,slug) VALUES($1,'TEST A','test a',$3),($2,'TEST B','test b',$4)", [cafeA, cafeB, `test-${cafeA}`, `test-${cafeB}`]);
     await admin.query("INSERT INTO branches(id,cafe_id,name,province,city) VALUES($1,$3,'TEST FIRST','TEST','TEST'),($2,$3,'TEST OTHER','TEST','TEST')", [branchA, branchOther, cafeA]);
+    const {rows:[source]} = await admin.query("INSERT INTO source_records(cafe_id,source_url,retrieved_at,rights_status) VALUES($1,'https://example.invalid/claim',now(),'permitted') RETURNING id", [cafeA]);
+    await admin.query("INSERT INTO directory_listings(branch_id,cafe_id,source_id,cafe_name,branch_name,province,city,reviewed_at) VALUES($1,$2,$3,'TEST A','TEST FIRST','TEST','TEST',now())", [branchA,cafeA,source.id]);
     await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,role) VALUES($1,$2,'owner')", [owner.userId, cafeA]);
     await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,branch_id,role) VALUES($1,$2,$3,'staff')", [staff.userId, cafeA, branchA]);
     const request = (path: string, token?: string, method = 'GET', body?: unknown, extra: Record<string,string> = {}) => fetch(base + path, {
@@ -94,6 +96,24 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(path, 'a'.repeat(43))).status, 401);
     assert.equal((await request(path, owner.tokens.refreshToken)).status, 401);
     assert.equal((await request(path, consumer.tokens.accessToken)).status, 404);
+    const claimPath = '/v1/ownership-claims';
+    assert.equal((await request(claimPath,undefined,'POST',{branchId:branchA})).status,401);
+    assert.equal((await request(claimPath,consumer.tokens.accessToken,'POST',{branchId:branchOther})).status,404);
+    const publicBranch = await request(`/v1/directory/branches/${branchA}`);
+    assert.equal(publicBranch.status,200);
+    assert.equal((await publicBranch.json()).branchName,'TEST FIRST');
+    const claim = await request(claimPath,consumer.tokens.accessToken,'POST',{branchId:branchA});
+    assert.equal(claim.status,201);
+    const {claimId} = await claim.json() as {claimId:string};
+    const duplicate = await request(claimPath,consumer.tokens.accessToken,'POST',{branchId:branchA});
+    assert.equal(duplicate.status,201);
+    assert.deepEqual(await duplicate.json(),{claimId});
+    assert.deepEqual(await (await request(claimPath,staff.tokens.accessToken)).json(),[]);
+    assert.deepEqual(await (await request(claimPath,consumer.tokens.accessToken)).json(),[{claimId,branchId:branchA,status:'pending'}]);
+    assert.equal((await request(`${claimPath}/${claimId}`,staff.tokens.accessToken,'DELETE')).status,404);
+    assert.equal((await request(path,consumer.tokens.accessToken)).status,404);
+    assert.equal((await request(`${claimPath}/${claimId}`,consumer.tokens.accessToken,'DELETE')).status,200);
+    assert.deepEqual(await (await request(claimPath,consumer.tokens.accessToken)).json(),[{claimId,branchId:branchA,status:'withdrawn'}]);
     const ownSession = await request('/v1/session', owner.tokens.accessToken);
     assert.equal(ownSession.status, 200);
     assert.equal((await ownSession.json()).userId, owner.userId);
@@ -141,6 +161,9 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     await runtime?.end();
     await admin.query('DELETE FROM audit_events WHERE actor_id=ANY($1::uuid[]) OR cafe_id=ANY($2::uuid[])', [identities, [cafeA,cafeB]]);
     await admin.query('DELETE FROM cafe_memberships WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
+    await admin.query('DELETE FROM ownership_claims WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
+    await admin.query('DELETE FROM directory_listings WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
+    await admin.query('DELETE FROM source_records WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM branches WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM cafes WHERE id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM sessions WHERE user_id=ANY($1::uuid[])', [identities]);
