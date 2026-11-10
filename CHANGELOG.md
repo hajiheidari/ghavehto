@@ -1,5 +1,9 @@
 # Changelog
 
+## Owner access lifecycle
+
+- Added an operator-only owner grant and revocation separate from evidence review, with audit and replay protection.
+
 ## Private ownership review
 
 - Added an operator-only evidence decision, claimant status updates and transactional audit. Verification records the outcome without granting a café role.

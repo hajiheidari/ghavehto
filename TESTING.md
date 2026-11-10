@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Ownership access integration checks reviewer/runtime denial, existing-owner protection, idempotent grant, café scope, revocation with the same session, and replay rejection.
+
 Ownership review integration checks operator-only execution, withdrawn-claim rejection, queue removal, audited verification, claimant status and unchanged tenant access.
 
 Ownership intake integration covers valid HTTP submission, duplicate reuse, rejection of unpublished branches, claimant-only read/withdrawal and unchanged tenant privileges. It uses the existing disposable verified-session flow; no SMS is sent.

@@ -136,6 +136,32 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(`${claimPath}/${reviewedId}`,consumer.tokens.accessToken,'DELETE')).status,404);
     assert.equal((await request(path,consumer.tokens.accessToken)).status,404);
     assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action='ownership.claim_reviewed'",[cafeA])).rowCount,1);
+    const changeAccess = async (operation:string) => {
+      const operator = await admin.connect();
+      try {
+        await operator.query('BEGIN');
+        await operator.query('SET LOCAL ROLE ghahvehto_ownership_access');
+        const result = await operator.query('SELECT public.change_ownership_access($1,$2,$3) AS id',[reviewedId,operation,'TEST access decision']);
+        await operator.query('COMMIT');
+        return result.rows[0].id;
+      } catch(error) { await operator.query('ROLLBACK'); throw error; }
+      finally { operator.release(); }
+    };
+    for (const role of ['ghahvehto_app','ghahvehto_ownership_review']) {
+      assert.equal((await admin.query("SELECT has_function_privilege($1,'public.change_ownership_access(uuid,text,text)','EXECUTE') AS allowed",[role])).rows[0].allowed,false);
+    }
+    await assert.rejects(changeAccess('grant'),{code:'40001'}); // Existing owner must not be replaced.
+    await admin.query("DELETE FROM cafe_memberships WHERE cafe_id=$1 AND user_id=$2 AND role='owner'",[cafeA,owner.userId]);
+    const grantId = await changeAccess('grant');
+    assert.equal(await changeAccess('grant'),grantId);
+    assert.equal((await request(path,consumer.tokens.accessToken)).status,200);
+    assert.equal((await request(`/v1/cafes/${cafeB}/access`,consumer.tokens.accessToken)).status,404);
+    assert.equal(await changeAccess('revoke'),grantId);
+    assert.equal((await request(path,consumer.tokens.accessToken)).status,404);
+    assert.equal((await request('/v1/session',consumer.tokens.accessToken)).status,200);
+    await assert.rejects(changeAccess('grant'),{code:'40001'});
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('ownership.access_grant','ownership.access_revoke')",[cafeA])).rowCount,2);
+    await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,role) VALUES($1,$2,'owner')",[owner.userId,cafeA]);
     const ownSession = await request('/v1/session', owner.tokens.accessToken);
     assert.equal(ownSession.status, 200);
     assert.equal((await ownSession.json()).userId, owner.userId);
@@ -182,6 +208,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     await server?.app.close();
     await runtime?.end();
     await admin.query('DELETE FROM audit_events WHERE actor_id=ANY($1::uuid[]) OR cafe_id=ANY($2::uuid[])', [identities, [cafeA,cafeB]]);
+    await admin.query('DELETE FROM ownership_access_grants WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM cafe_memberships WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM ownership_claims WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
     await admin.query('DELETE FROM directory_listings WHERE cafe_id=ANY($1::uuid[])', [[cafeA,cafeB]]);
