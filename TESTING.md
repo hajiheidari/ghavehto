@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Ownership review integration checks operator-only execution, withdrawn-claim rejection, queue removal, audited verification, claimant status and unchanged tenant access.
+
 Ownership intake integration covers valid HTTP submission, duplicate reuse, rejection of unpublished branches, claimant-only read/withdrawal and unchanged tenant privileges. It uses the existing disposable verified-session flow; no SMS is sent.
 
 Branch detail coverage verifies that reviewed entries are readable, unpublished/withdrawn entries stay hidden, and SSR handles invalid identifiers and unavailable API responses separately.

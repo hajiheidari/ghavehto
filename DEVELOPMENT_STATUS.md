@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Ownership requests now have a private operator queue and verified/rejected decisions (migration 011). The database stores an opaque reference to a separately reviewed evidence case. Provisioning a reviewer, collecting evidence and granting or revoking operational ownership remain separate.
+
 Claim intake is available to verified sessions against a published branch (migration 010). It is private to the claimant, bounded and audited. Evidence upload, reviewer approval, actual ownership grant and a claimant UI are separate follow-ups.
 
 Public branch detail pages use the same visibility and provenance rules as search. They distinguish a missing listing from a temporarily unavailable directory.

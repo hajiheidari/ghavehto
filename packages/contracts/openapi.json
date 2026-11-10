@@ -1770,7 +1770,9 @@
             "type": "string",
             "enum": [
               "pending",
-              "withdrawn"
+              "withdrawn",
+              "verified",
+              "rejected"
             ]
           }
         },

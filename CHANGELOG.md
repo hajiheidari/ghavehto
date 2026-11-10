@@ -1,5 +1,9 @@
 # Changelog
 
+## Private ownership review
+
+- Added an operator-only evidence decision, claimant status updates and transactional audit. Verification records the outcome without granting a café role.
+
 ## M2 ownership request intake
 
 - Added verified-session claim submission, private status list and withdrawal; repeated submission is idempotent for the same café. No owner or tenant privileges are granted by intake.

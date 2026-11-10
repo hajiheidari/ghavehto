@@ -114,6 +114,28 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(path,consumer.tokens.accessToken)).status,404);
     assert.equal((await request(`${claimPath}/${claimId}`,consumer.tokens.accessToken,'DELETE')).status,200);
     assert.deepEqual(await (await request(claimPath,consumer.tokens.accessToken)).json(),[{claimId,branchId:branchA,status:'withdrawn'}]);
+    const newClaim = await request(claimPath,consumer.tokens.accessToken,'POST',{branchId:branchA});
+    assert.equal(newClaim.status,201);
+    const reviewedId = (await newClaim.json()).claimId;
+    const review = await admin.connect();
+    try {
+      await review.query('BEGIN');
+      assert.equal((await review.query("SELECT has_function_privilege('ghahvehto_app','public.review_ownership_claim(uuid,text,uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
+      await review.query('SET LOCAL ROLE ghahvehto_ownership_review');
+      assert.equal((await review.query('SELECT id FROM ownership_review_queue WHERE id=$1',[reviewedId])).rowCount,1);
+      await review.query('SAVEPOINT withdrawn_claim');
+      await assert.rejects(review.query("SELECT public.review_ownership_claim($1,'verified',$2)",[claimId,randomUUID()]),{code:'40001'});
+      await review.query('ROLLBACK TO SAVEPOINT withdrawn_claim');
+      assert.equal((await review.query("SELECT public.review_ownership_claim($1,'verified',$2) AS verdict",[reviewedId,randomUUID()])).rows[0].verdict,'verified');
+      assert.equal((await review.query('SELECT id FROM ownership_review_queue WHERE id=$1',[reviewedId])).rowCount,0);
+      await review.query('COMMIT');
+    } catch (error) { await review.query('ROLLBACK'); throw error; }
+    finally { review.release(); }
+    const statuses = await (await request(claimPath,consumer.tokens.accessToken)).json() as {claimId:string;status:string}[];
+    assert.equal(statuses.find(row=>row.claimId===reviewedId)?.status,'verified');
+    assert.equal((await request(`${claimPath}/${reviewedId}`,consumer.tokens.accessToken,'DELETE')).status,404);
+    assert.equal((await request(path,consumer.tokens.accessToken)).status,404);
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action='ownership.claim_reviewed'",[cafeA])).rowCount,1);
     const ownSession = await request('/v1/session', owner.tokens.accessToken);
     assert.equal(ownSession.status, 200);
     assert.equal((await ownSession.json()).userId, owner.userId);

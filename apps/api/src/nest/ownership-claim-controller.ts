@@ -11,7 +11,7 @@ class ClaimReceiptDto {
 }
 class ClaimSummaryDto extends ClaimReceiptDto {
   @ApiProperty({type:String,format:'uuid'}) branchId!: string;
-  @ApiProperty({type:String,enum:['pending','withdrawn']}) status!: 'pending'|'withdrawn';
+  @ApiProperty({type:String,enum:['pending','withdrawn','verified','rejected']}) status!: 'pending'|'withdrawn'|'verified'|'rejected';
 }
 class ClaimWithdrawalDto {
   @ApiProperty({type:Boolean,enum:[true]}) withdrawn!: true;
@@ -31,7 +31,7 @@ export class OwnershipClaimController {
   list(@Headers('authorization') header?: string): Promise<ClaimSummaryDto[]> {
     const {access,token} = this.bearer(header);
     return access.withVerifiedActor(token,async client => (await client.query<ClaimSummaryDto>(
-      `SELECT id AS "claimId",branch_id AS "branchId",CASE WHEN withdrawn_at IS NULL THEN 'pending' ELSE 'withdrawn' END AS status
+      `SELECT id AS "claimId",branch_id AS "branchId",coalesce(decision, CASE WHEN withdrawn_at IS NULL THEN 'pending' ELSE 'withdrawn' END) AS status
        FROM ownership_claims ORDER BY created_at DESC,id LIMIT 50`)).rows);
   }
 

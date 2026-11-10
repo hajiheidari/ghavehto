@@ -12,6 +12,7 @@
     "db:migrate": "tsx src/nest/migrate.ts",
     "auth:cleanup": "tsx src/nest/prune-otp.ts",
     "directory:review": "tsx src/nest/review-directory.ts",
+    "ownership:review": "tsx src/nest/review-ownership.ts",
     "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js .test-build/test/identity.test.js .test-build/test/tenant-api.test.js .test-build/test/auth-operations.test.js",
     "contracts:export": "tsc -p tsconfig.json && node dist/nest/export-openapi.js"
   },
