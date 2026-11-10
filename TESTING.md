@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Café navigation tests cover owner and branch staff projections, empty consumer scopes, cursor validation and cross-café denial over actual restricted-login HTTP.
+
 Branch roster integration checks owner scope, staff and cross-café denial, cursor validation, and visibility immediately after granting or revoking staff access.
 
 Branch staff integration covers strict payload validation, owner-only writes, cross-café denial, idempotence, immediate revocation and preservation of access to other branches.

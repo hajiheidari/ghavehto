@@ -96,6 +96,23 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(path, 'a'.repeat(43))).status, 401);
     assert.equal((await request(path, owner.tokens.refreshToken)).status, 401);
     assert.equal((await request(path, consumer.tokens.accessToken)).status, 404);
+    const ownCafes = await request('/v1/cafes',owner.tokens.accessToken);
+    assert.equal(ownCafes.status,200);
+    assert.equal(ownCafes.headers.get('cache-control'),'no-store');
+    assert.deepEqual(await ownCafes.json(),{items:[{cafeId:cafeA,name:'TEST A',canManageStaff:true}],nextCursor:null});
+    assert.deepEqual(await (await request('/v1/cafes',staff.tokens.accessToken)).json(),
+      {items:[{cafeId:cafeA,name:'TEST A',canManageStaff:false}],nextCursor:null});
+    assert.deepEqual(await (await request('/v1/cafes',consumer.tokens.accessToken)).json(),{items:[],nextCursor:null});
+    assert.deepEqual(await (await request(`/v1/cafes?after=${cafeA}`,owner.tokens.accessToken)).json(),{items:[],nextCursor:null});
+    assert.equal((await request('/v1/cafes?after=bad',owner.tokens.accessToken)).status,400);
+    const ownedBranches = await (await request(`/v1/cafes/${cafeA}/branches`,owner.tokens.accessToken)).json();
+    assert.deepEqual(ownedBranches,{items:[
+      {branchId:branchA,cafeId:cafeA,name:'TEST FIRST'},
+      {branchId:branchOther,cafeId:cafeA,name:'TEST OTHER'},
+    ].sort((a,b)=>a.branchId.localeCompare(b.branchId)),nextCursor:null});
+    assert.deepEqual(await (await request(`/v1/cafes/${cafeA}/branches`,staff.tokens.accessToken)).json(),
+      {items:[{branchId:branchA,cafeId:cafeA,name:'TEST FIRST'}],nextCursor:null});
+    assert.equal((await request(`/v1/cafes/${cafeB}/branches`,owner.tokens.accessToken)).status,404);
     const claimPath = '/v1/ownership-claims';
     assert.equal((await request(claimPath,undefined,'POST',{branchId:branchA})).status,401);
     assert.equal((await request(claimPath,consumer.tokens.accessToken,'POST',{branchId:branchOther})).status,404);

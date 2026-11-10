@@ -20,6 +20,25 @@ export async function validateRuntimePool(pool: Pool): Promise<void> {
 
 export class TenantAccessService {
   constructor(private readonly pool: Pool) {}
+  listCafes(token:string, after:string|null): Promise<{items:{cafeId:string;name:string;canManageStaff:boolean}[];nextCursor:string|null}> {
+    return this.withVerifiedActor(token,async client => {
+      const {rows} = await client.query<{cafeId:string;name:string;canManageStaff:boolean}>(
+        `SELECT c.id AS "cafeId",c.name,EXISTS(SELECT 1 FROM cafe_memberships m WHERE m.cafe_id=c.id AND m.role='owner' AND m.branch_id IS NULL) AS "canManageStaff"
+         FROM cafes c WHERE ($1::uuid IS NULL OR c.id>$1) ORDER BY c.id LIMIT 51`,[after]);
+      const items = rows.slice(0,50);
+      return {items,nextCursor:rows.length>50?items[49].cafeId:null};
+    });
+  }
+  listBranches(token:string,cafeId:string,after:string|null): Promise<{items:{branchId:string;cafeId:string;name:string}[];nextCursor:string|null}> {
+    return this.withVerifiedActor(token,async client => {
+      if (!(await client.query('SELECT id FROM cafes WHERE id=$1',[cafeId])).rowCount) throw new NotFoundException();
+      const {rows} = await client.query<{branchId:string;cafeId:string;name:string}>(
+        `SELECT id AS "branchId",cafe_id AS "cafeId",name FROM branches
+         WHERE cafe_id=$1 AND ($2::uuid IS NULL OR id>$2) ORDER BY id LIMIT 51`,[cafeId,after]);
+      const items = rows.slice(0,50);
+      return {items,nextCursor:rows.length>50?items[49].branchId:null};
+    });
+  }
   readCafe(token: string, cafeId: string): Promise<{ cafeId: string; name: string }> {
     return this.withVerifiedActor(token, async client => {
       const result = await client.query('SELECT id AS "cafeId",name FROM cafes WHERE id=$1', [cafeId]);

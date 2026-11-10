@@ -27,6 +27,8 @@ The historical dependency-free probe at 4100 is read-only diagnostics and is not
 
 ## Public directory discovery
 
+Authenticated navigation: `GET /v1/cafes` lists accessible café IDs/names and the server-derived `canManageStaff` flag. `GET /v1/cafes/:cafeId/branches` lists only accessible branch IDs/names. Both return `{items,nextCursor}`, accept an optional exclusive UUID `after` cursor, and cap pages at 50. They never use caller-supplied actor IDs.
+
 Owner-only staff roster: `GET /v1/cafes/:cafeId/branches/:branchId/staff` returns `{userIds,nextCursor}` with at most 50 staff account IDs and no contact data. Pass `?after=<nextCursor>` to continue. The cursor is exclusive; unauthorized and mismatched café/branch pairs return 404 for authenticated callers.
 
 Owner-only staff administration: `PUT /v1/cafes/:cafeId/branches/:branchId/staff/:userId` accepts `{enabled: boolean}` and returns the resulting state. The user ID is for an existing account; granting requires a verified phone. Revoking affects only the staff membership at the specified branch. The route cannot assign owner or manager roles, and does not send invitations.

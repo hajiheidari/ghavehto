@@ -1,5 +1,9 @@
 # Changelog
 
+## Authenticated café navigation
+
+- Added bounded café and branch lists derived from the verified session and existing RLS policies.
+
 ## Branch staff roster
 
 - Added a paginated, owner-only staff roster scoped to one branch. Responses expose account IDs only.

@@ -12,6 +12,17 @@ export class BranchAccessDto {
   @ApiProperty({ type: String, format: 'uuid' }) cafeId!: string;
   @ApiProperty({ type: String }) name!: string;
 }
+class CafeMembershipDto extends CafeAccessDto {
+  @ApiProperty({type:Boolean}) canManageStaff!: boolean;
+}
+class CafeListDto {
+  @ApiProperty({type:[CafeMembershipDto],maxItems:50}) items!: CafeMembershipDto[];
+  @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!: string|null;
+}
+class BranchListDto {
+  @ApiProperty({type:[BranchAccessDto],maxItems:50}) items!: BranchAccessDto[];
+  @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!: string|null;
+}
 export class UpdateCafeDto {
   @ApiProperty({ type: String, minLength: 1, maxLength: 120 })
   @IsString() @MinLength(1) @MaxLength(120) name!: string;
@@ -32,6 +43,21 @@ export class TenantController {
     const match = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(header ?? '');
     if (!this.access || !match) throw new UnauthorizedException();
     return match[1];
+  }
+  @Get() @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiQuery({name:'after',required:false,schema:{type:'string',format:'uuid'}})
+  @ApiResponse({status:200,type:CafeListDto})
+  list(@Headers('authorization') header:string|undefined,@Query('after',new ParseUUIDPipe({optional:true})) after?:string): Promise<CafeListDto> {
+    const token = this.token(header);
+    return this.access!.listCafes(token,after ?? null);
+  }
+  @Get(':cafeId/branches') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiQuery({name:'after',required:false,schema:{type:'string',format:'uuid'}})
+  @ApiResponse({status:200,type:BranchListDto})
+  branches(@Headers('authorization') header:string|undefined,@Param('cafeId',new ParseUUIDPipe()) cafeId:string,
+    @Query('after',new ParseUUIDPipe({optional:true})) after?:string): Promise<BranchListDto> {
+    const token = this.token(header);
+    return this.access!.listBranches(token,cafeId,after ?? null);
   }
   @Get(':cafeId/access') @Header('Cache-Control', 'no-store') @Header('Vary', 'Authorization')
   @ApiResponse({ status: 200, type: CafeAccessDto })
