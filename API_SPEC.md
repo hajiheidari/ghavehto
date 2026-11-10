@@ -27,6 +27,8 @@ The historical dependency-free probe at 4100 is read-only diagnostics and is not
 
 ## Public directory discovery
 
+Owner-only staff roster: `GET /v1/cafes/:cafeId/branches/:branchId/staff` returns `{userIds,nextCursor}` with at most 50 staff account IDs and no contact data. Pass `?after=<nextCursor>` to continue. The cursor is exclusive; unauthorized and mismatched café/branch pairs return 404 for authenticated callers.
+
 Owner-only staff administration: `PUT /v1/cafes/:cafeId/branches/:branchId/staff/:userId` accepts `{enabled: boolean}` and returns the resulting state. The user ID is for an existing account; granting requires a verified phone. Revoking affects only the staff membership at the specified branch. The route cannot assign owner or manager roles, and does not send invitations.
 
 Ownership intake uses `POST /v1/ownership-claims` with `{branchId}`, `GET /v1/ownership-claims` for the actor's latest 50 requests, and `DELETE /v1/ownership-claims/:id` to withdraw a pending request. All require a valid access bearer. Duplicate open requests for the same café return the same ID. The API accepts only a published branch and grants no ownership, staff access or public partner status. Missing, unpublished or other-user records are not disclosed. Intake is limited per verified actor.

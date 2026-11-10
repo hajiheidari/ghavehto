@@ -1,5 +1,9 @@
 # Changelog
 
+## Branch staff roster
+
+- Added a paginated, owner-only staff roster scoped to one branch. Responses expose account IDs only.
+
 ## Branch staff access
 
 - Owners can set branch-specific staff access for an existing verified account. Repeat requests are safe, and real changes are audited.

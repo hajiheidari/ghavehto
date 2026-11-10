@@ -42,6 +42,16 @@ export class TenantAccessService {
       return result.rows[0];
     });
   }
+  readBranchStaff(token:string, cafeId:string, branchId:string, after:string|null): Promise<{userIds:string[];nextCursor:string|null}> {
+    return this.withVerifiedActor(token, async client => {
+      const {rows:[row]} = await client.query<{user_ids:string[]|null}>('SELECT public.read_branch_staff($1,$2,$3) AS user_ids',
+        [cafeId,branchId,after]);
+      if (row.user_ids === null) throw new NotFoundException();
+      const userIds = row.user_ids.slice(0,50);
+      return {userIds,nextCursor:row.user_ids.length > 50 ? userIds[49] : null};
+    });
+  }
+
   changeBranchStaff(token:string, cafeId:string, branchId:string, userId:string, enabled:boolean): Promise<{enabled:boolean}> {
     return this.withVerifiedActor(token, async client => {
       const {rows:[row]} = await client.query('SELECT public.change_branch_staff($1,$2,$3,$4) AS allowed',

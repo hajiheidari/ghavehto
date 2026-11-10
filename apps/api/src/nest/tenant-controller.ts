@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Headers, Header, Inject, Param, ParseUUIDPipe, Patch, Put, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { ApiBearerAuth, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Headers, Header, Inject, Param, ParseUUIDPipe, Patch, Put, Query, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { ApiBearerAuth, ApiProperty, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsString, MaxLength, MinLength } from 'class-validator';
 import { TenantAccessService } from './tenant-access.js';
 
@@ -18,6 +18,10 @@ export class UpdateCafeDto {
 }
 class BranchStaffDto {
   @ApiProperty({type:Boolean}) @IsBoolean() enabled!: boolean;
+}
+class BranchStaffRosterDto {
+  @ApiProperty({type:'array',items:{type:'string',format:'uuid'},maxItems:50}) userIds!: string[];
+  @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!: string|null;
 }
 
 @ApiTags('authenticated-cafe') @ApiBearerAuth()
@@ -50,6 +54,15 @@ export class TenantController {
     const name = body.name.trim();
     if (!name) throw new BadRequestException('Name required');
     return this.access!.updateCafe(token, cafeId, name);
+  }
+  @Get(':cafeId/branches/:branchId/staff') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiQuery({name:'after',required:false,schema:{type:'string',format:'uuid'}})
+  @ApiResponse({status:200,type:BranchStaffRosterDto})
+  roster(@Headers('authorization') header:string|undefined, @Param('cafeId',new ParseUUIDPipe()) cafeId:string,
+    @Param('branchId',new ParseUUIDPipe()) branchId:string,
+    @Query('after',new ParseUUIDPipe({optional:true})) after?:string): Promise<BranchStaffRosterDto> {
+    const token = this.token(header);
+    return this.access!.readBranchStaff(token,cafeId,branchId,after ?? null);
   }
   @Put(':cafeId/branches/:branchId/staff/:userId') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
   @ApiResponse({status:200,type:BranchStaffDto})

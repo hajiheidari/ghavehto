@@ -182,6 +182,15 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchA}/access`, staff.tokens.accessToken)).status, 200);
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchOther}/access`, staff.tokens.accessToken, 'GET', undefined, {'x-user-id':owner.userId})).status, 404);
     const staffPath = `/v1/cafes/${cafeA}/branches/${branchOther}/staff/${staff.userId}`;
+    const rosterPath = `/v1/cafes/${cafeA}/branches/${branchA}/staff`;
+    const roster = await request(rosterPath,owner.tokens.accessToken);
+    assert.equal(roster.status,200);
+    assert.equal(roster.headers.get('cache-control'),'no-store');
+    assert.deepEqual(await roster.json(),{userIds:[staff.userId],nextCursor:null});
+    assert.deepEqual(await (await request(`${rosterPath}?after=${staff.userId}`,owner.tokens.accessToken)).json(),{userIds:[],nextCursor:null});
+    assert.equal((await request(`${rosterPath}?after=invalid`,owner.tokens.accessToken)).status,400);
+    assert.equal((await request(rosterPath,staff.tokens.accessToken)).status,404);
+    assert.equal((await request(rosterPath.replace(cafeA,cafeB),owner.tokens.accessToken)).status,404);
     const branchAccess = `/v1/cafes/${cafeA}/branches/${branchOther}/access`;
     assert.equal((await request(staffPath,staff.tokens.accessToken,'PUT',{enabled:true})).status,404);
     assert.equal((await request(staffPath,owner.tokens.accessToken,'PUT',{enabled:true,role:'owner'})).status,400);
@@ -192,6 +201,8 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       assert.equal(changed.status,200);
       assert.deepEqual(await changed.json(),{enabled});
       assert.equal((await request(branchAccess,staff.tokens.accessToken)).status,enabled?200:404);
+      assert.deepEqual(await (await request(staffPath.slice(0,staffPath.lastIndexOf('/')),owner.tokens.accessToken)).json(),
+        {userIds:enabled?[staff.userId]:[],nextCursor:null});
     }
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchA}/access`,staff.tokens.accessToken)).status,200);
     assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('branch.staff_granted','branch.staff_revoked')",[cafeA])).rowCount,2);
