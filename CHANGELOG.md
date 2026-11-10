@@ -1,5 +1,10 @@
 # Changelog
 
+## M2 directory discovery
+
+- Deferred live SMS and documented the independent product delivery sequence.
+- Added moderated branch snapshots, provenance and withdrawal visibility gates, bounded Persian search and the RTL directory page.
+
 ## Initial login transport preparation
 
 - Added request and verification routes that are only registered through explicit application composition. The normal startup still exposes neither route. Extended the disposable PostgreSQL fixture to test HTTP OTP issuance, verification, replay rejection and existing tenant authorization.

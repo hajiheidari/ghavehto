@@ -1,5 +1,7 @@
 # Initial sign-in activation gate
 
+Deferred by the founder until the site is operational and SMS.ir panel and eNamad prerequisites can be reviewed. Continue independent product milestones in the meantime; no provider application or real send is requested.
+
 Internal OTP → encrypted identity → opaque session → scoped API behavior has real disposable PostgreSQL/HTTP tests. That evidence does not prove actual SMS arrival, end-user sign-in, secure client persistence, physical-device behavior or publication readiness.
 
 The founder selected SMS.ir. The founder's explicit restriction remains: «SMS واقعی بدون ارائه‌دهنده و مجوز ارسال فعال نشود.» An internal SMS.ir adapter is implemented against the [provider's Verify Send contract](https://github.com/IPeCompany/SmsPanelV2.dotNet#verify-send), with a fixed HTTPS destination, cancellation, sanitized errors and no automatic retries. It is not wired to application startup or public routes. No real send, account registration or purchase has occurred.

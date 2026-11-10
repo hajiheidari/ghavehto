@@ -1,0 +1,50 @@
+import { BadRequestException, Controller, Get, Header, Inject, Query, ServiceUnavailableException } from '@nestjs/common';
+import type { Pool } from 'pg';
+import { ApiProperty, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { identityTransaction } from './identity-transaction.js';
+import { asciiDigits, normalizePersian } from './normalization.js';
+
+export const directoryPageSize = 24;
+class DirectoryItemDto {
+  @ApiProperty({ type:String, format:'uuid' }) id!: string;
+  @ApiProperty({ type:String }) cafeName!: string;
+  @ApiProperty({ type:String }) branchName!: string;
+  @ApiProperty({ type:String }) province!: string;
+  @ApiProperty({ type:String }) city!: string;
+  @ApiProperty({ type:String }) neighborhood!: string;
+}
+class DirectoryPageDto {
+  @ApiProperty({ type:[DirectoryItemDto], maxItems:directoryPageSize }) items!: DirectoryItemDto[];
+  @ApiProperty({ type:Boolean }) hasMore!: boolean;
+}
+export async function readDirectory(client: Pick<Pool,'query'>, term: string, page: number) {
+  const { rows } = await client.query(
+    `SELECT id,cafe_name AS "cafeName",branch_name AS "branchName",province,city,neighborhood
+     FROM public_directory WHERE $1='' OR strpos(search_text,$1)>0
+     ORDER BY cafe_name,branch_name,id LIMIT $2 OFFSET $3`,
+    [term, directoryPageSize + 1, (page - 1) * directoryPageSize]);
+  return { items: rows.slice(0,directoryPageSize), hasMore: page < 100 && rows.length > directoryPageSize };
+}
+
+@ApiTags('directory') @Controller('v1/directory')
+export class DirectoryController {
+  constructor(@Inject('RUNTIME_POOL') private readonly pool: Pool | null) {}
+  @Get() @Header('Cache-Control','no-store')
+  @ApiQuery({ name:'q', required:false, schema:{type:'string', maxLength:80} })
+  @ApiQuery({ name:'page', required:false, schema:{type:'integer', minimum:1, maximum:100} })
+  @ApiResponse({ status:200, type:DirectoryPageDto })
+  async list(@Query('q') raw: unknown, @Query('page') page: unknown): Promise<DirectoryPageDto> {
+    if ((raw !== undefined && (typeof raw !== 'string' || raw.length > 80 || /[\u0000-\u001f\u007f]/.test(raw))) ||
+        (page !== undefined && (typeof page !== 'string' || !/^(?:[1-9]\d?|100)$/.test(page)))) {
+      throw new BadRequestException();
+    }
+    const term = asciiDigits(normalizePersian(typeof raw === 'string' ? raw : '')).toLowerCase();
+    if (term.length > 80) throw new BadRequestException();
+    if (!this.pool) throw new ServiceUnavailableException();
+    try { return await identityTransaction(this.pool, async client => {
+      await client.query("SET LOCAL statement_timeout = '2s'");
+      return readDirectory(client, term, Number(page ?? 1));
+    }); }
+    catch { throw new ServiceUnavailableException(); }
+  }
+}

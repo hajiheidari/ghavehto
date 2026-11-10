@@ -24,3 +24,7 @@ Every request receives a server-generated X-Request-ID. Errors are flat {code,me
 IDENTITY_DATABASE_URL must point to a distinct non-owner NOINHERIT/NOBYPASSRLS/NOSUPERUSER/NOCREATEDB/NOCREATEROLE login with non-inheriting SET ROLE membership in ghahvehto_identity and ghahvehto_app. Privileged, inherited or table-owner credentials are rejected at startup. Without that pool, authenticated routes deny access and readiness is 503. DATABASE_URL is for migration/tests, never runtime health queries.
 
 The historical dependency-free probe at 4100 is read-only diagnostics and is not the Nest identity backend.
+
+## Public directory discovery
+
+`GET /v1/directory?q=<text>&page=<1–100>` returns `{items,hasMore}`. Each item has `id` (branch UUID), `cafeName`, `branchName`, `province`, `city`, and `neighborhood`. Search is optional, literal and capped at 80 characters; page size is 24. Results contain only reviewed branch snapshots with permitted provenance, never private contacts or unreviewed tenant data. Returns 400 for invalid query and 503 when the restricted database is unavailable; an empty published result is 200. Responses are not cached. This early directory contract is consumed by web SSR; mobile binding follows after the directory contract is stable.

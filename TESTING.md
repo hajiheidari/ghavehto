@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Directory increment: disposable PostgreSQL tests cover published projection, Persian normalization, parameterized search, pagination and denial of source rights. The default HTTP suite covers malformed search and missing runtime DB, and SSR smoke covers the unavailable state. Exact-head database results are tracked in PR checks.
+
 Initial login transport: the normal server must return 404 for both OTP routes. The explicitly composed disposable PostgreSQL fixture exercises challenge and verification over real HTTP, ignores forwarded IP, rejects extra body fields, checks no-store, rejects reuse and authenticates the issued session. This uses a test-only capture adapter and does not send SMS.
 
 SMS.ir adapter tests run under `pnpm test` with an injected offline transport. They exercise the exact template payload, receipt validation, rejected inputs, cancellation, sanitized failures and absence of automatic retries. They do not establish API credentials, delivery acceptance by SMS.ir or handset receipt.

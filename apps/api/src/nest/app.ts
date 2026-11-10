@@ -18,6 +18,7 @@ import { IdentityService } from './identity.js';
 import { OtpChallengeService } from './otp-challenges.js';
 import type { OtpCrypto, OtpProvider } from './otp.js';
 import type { PhoneVault } from './phone-vault.js';
+import { DirectoryController } from './directory-controller.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -61,7 +62,7 @@ export class FoundationController {
   agents() { return {}; }
 }
 
-@Module({ controllers: [FoundationController, TenantController, SessionController], providers: [PendingIdentityGuard] })
+@Module({ controllers: [FoundationController, TenantController, SessionController, DirectoryController], providers: [PendingIdentityGuard] })
 export class AppModule {}
 
 export async function createApp(options: {

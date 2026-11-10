@@ -30,7 +30,9 @@ try {
   assert.match(html, /lang="fa" dir="rtl"/);
   assert.ok(html.includes('ارتباط وب با API مشترک برقرار است'), 'SSR must actually call the running Nest API');
   assert.match(html, /noindex/);
-  assert.equal((await fetch(base+'/cafes')).status,200);
+  const cafes = await fetch(base+'/cafes?q=smoke');
+  assert.equal(cafes.status,200);
+  assert.match(await cafes.text(), /فهرست کافه‌ها فعلاً در دسترس نیست/);
   for (const kind of ['cafe','admin','agents']) {
     const page = await fetch(`${base}/dashboard/${kind}`);
     assert.equal(page.status,200);
@@ -38,7 +40,7 @@ try {
   }
   assert.equal((await fetch(base+'/missing')).status,404);
   assert.equal((await fetch(base+'/robots.txt')).status,200);
-  console.log('Web smoke passed: real SSR → Nest connection, RTL, empty directory, protected placeholders, 404 and robots');
+  console.log('Web smoke passed: real SSR → Nest connection, RTL, directory unavailable state, protected placeholders, 404 and robots');
 } finally {
   api.kill(); web.kill();
 }
