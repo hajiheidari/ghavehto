@@ -44,6 +44,27 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       await client.query('SET LOCAL ROLE ghahvehto_identity');
       assert.deepEqual(await readDirectory(client,'کافه',1), {items:[],hasMore:false});
       await client.query('RESET ROLE');
+      const review = 'SELECT public.review_directory_listing($1,$2,$3,$4,$5,$6) AS revision';
+      const correction = {cafeName:'کافه اصلاح‌شده',branchName:'شعبه ۲',province:'آزمایشی',city:'شهر تست',neighborhood:''};
+      assert.equal((await client.query("SELECT has_function_privilege('ghahvehto_app','public.review_directory_listing(uuid,integer,text,text,uuid,jsonb)','EXECUTE') AS allowed")).rows[0].allowed,false);
+      await client.query('SET LOCAL ROLE ghahvehto_directory_review');
+      await client.query('SAVEPOINT denied_source');
+      await assert.rejects(client.query(review,[ids.branchA,1,'publish','TEST review',source.id,correction]),{code:'22023'});
+      await client.query('ROLLBACK TO SAVEPOINT denied_source');
+      await client.query('RESET ROLE');
+      await client.query("UPDATE source_records SET rights_status='permitted' WHERE id=$1", [source.id]);
+      await client.query('SET LOCAL ROLE ghahvehto_directory_review');
+      assert.equal((await client.query(review,[ids.branchA,1,'publish','TEST correction',source.id,correction])).rows[0].revision,2);
+      await client.query('SAVEPOINT stale_revision');
+      await assert.rejects(client.query(review,[ids.branchA,1,'withdraw','TEST stale',null,null]),{code:'40001'});
+      await client.query('ROLLBACK TO SAVEPOINT stale_revision');
+      assert.equal((await client.query(review,[ids.branchA,2,'withdraw','TEST removal',null,null])).rows[0].revision,3);
+      await client.query('RESET ROLE');
+      assert.deepEqual((await client.query("SELECT action,metadata->>'revision' AS revision FROM audit_events WHERE cafe_id=$1 AND action LIKE 'directory.%' ORDER BY created_at, metadata->>'revision'", [ids.a])).rows,
+        [{action:'directory.publish',revision:'2'},{action:'directory.withdraw',revision:'3'}]);
+      await client.query('SET LOCAL ROLE ghahvehto_identity');
+      assert.deepEqual(await readDirectory(client,'اصلاح',1), {items:[],hasMore:false});
+      await client.query('RESET ROLE');
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);

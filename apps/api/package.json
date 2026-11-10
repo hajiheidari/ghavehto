@@ -11,6 +11,7 @@
     "test": "tsc -p tsconfig.test.json && node --test .test-build/test/nest.test.js .test-build/test/domain.test.js .test-build/test/otp.test.js .test-build/test/phone-vault.test.js .test-build/test/smsir-otp-provider.test.js",
     "db:migrate": "tsx src/nest/migrate.ts",
     "auth:cleanup": "tsx src/nest/prune-otp.ts",
+    "directory:review": "tsx src/nest/review-directory.ts",
     "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js .test-build/test/identity.test.js .test-build/test/tenant-api.test.js .test-build/test/auth-operations.test.js",
     "contracts:export": "tsc -p tsconfig.json && node dist/nest/export-openapi.js"
   },

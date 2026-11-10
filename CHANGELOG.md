@@ -1,5 +1,9 @@
 # Changelog
 
+## M2 directory review
+
+- Added an operator-only publish/correct/withdraw command backed by a restricted PostgreSQL capability, revision conflict detection and transactional audit.
+
 ## M2 directory discovery
 
 - Deferred live SMS and documented the independent product delivery sequence.
