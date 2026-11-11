@@ -46,6 +46,16 @@ export class TenantAccessService {
       return result.rows[0];
     });
   }
+  readCafeProfile(token:string,cafeId:string):Promise<{cafeId:string;name:string}> {
+    return this.withVerifiedActor(token,async client=>{
+      const {rows:[row]}=await client.query(
+        `SELECT id AS "cafeId",name FROM cafes WHERE id=$1 AND EXISTS(
+          SELECT 1 FROM cafe_memberships WHERE cafe_id=$1 AND role='owner' AND branch_id IS NULL
+        )`,[cafeId]);
+      if(!row) throw new NotFoundException();
+      return row;
+    });
+  }
   readBranch(token: string, cafeId: string, branchId: string): Promise<{ branchId: string; cafeId: string; name: string }> {
     return this.withVerifiedActor(token, async client => {
       const result = await client.query('SELECT id AS "branchId",cafe_id AS "cafeId",name FROM branches WHERE id=$1 AND cafe_id=$2', [branchId, cafeId]);

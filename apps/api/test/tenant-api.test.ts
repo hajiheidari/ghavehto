@@ -98,6 +98,19 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       const staffPage=await (await page(`/dashboard/cafe/${cafeA}`,staff.tokens.accessToken)).text();
       assert.ok(staffPage.includes('TEST FIRST'));
       assert.equal(staffPage.includes('TEST OTHER'),false);
+      assert.equal(staffPage.includes('ذخیره نام کافه'),false);
+      const profileUrl=`/dashboard/cafe/${cafeA}/profile`;
+      const rename=(token:string,origin:string,name:string)=>fetch(web.url+profileUrl,{
+        method:'POST',redirect:'manual',headers:{Cookie:`__Host-ghahvehto-access=${token}`,Origin:origin},
+        body:new URLSearchParams({name}),
+      });
+      const panelOrigin='https://panel.example.test';
+      assert.equal((await rename(owner.tokens.accessToken,'https://other.example.test','TEST BLOCKED')).status,403);
+      assert.equal((await rename(staff.tokens.accessToken,panelOrigin,'TEST BLOCKED')).headers.get('location'),`/dashboard/cafe/${cafeA}?profile=unavailable`);
+      assert.equal((await rename(owner.tokens.accessToken,panelOrigin,'TEST PANEL NAME')).headers.get('location'),`/dashboard/cafe/${cafeA}?profile=saved`);
+      assert.ok((await (await page('/dashboard/cafe',owner.tokens.accessToken)).text()).includes('TEST PANEL NAME'));
+      assert.equal((await (await fetch(`${base}/v1/directory/branches/${branchA}`)).json()).cafeName,'TEST A');
+      assert.equal((await rename(owner.tokens.accessToken,panelOrigin,'TEST A')).headers.get('location'),`/dashboard/cafe/${cafeA}?profile=saved`);
       const rosterUrl=`/dashboard/cafe/${cafeA}/branches/${branchA}/staff`;
       const ownerRoster=await (await page(rosterUrl,owner.tokens.accessToken)).text();
       assert.ok(ownerRoster.includes(staff.userId));
@@ -275,7 +288,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.deepEqual(await fetchCafeAccess(base, cafeA, owner.tokens.accessToken), {cafeId:cafeA, name:'TEST A'});
     assert.equal((await fetchBranchAccess(base, cafeA, branchA, staff.tokens.accessToken)).branchId, branchA);
     assert.equal((await updateCafeProfile(base, cafeA, 'TEST UPDATED', owner.tokens.accessToken)).name, 'TEST UPDATED');
-    assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND cafe_id=$2 AND action='cafe.profile_updated'", [owner.userId, cafeA])).rowCount, 1);
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND cafe_id=$2 AND action='cafe.profile_updated'", [owner.userId, cafeA])).rowCount, 3);
     assert.equal((await request('/v1/dashboards/admin', owner.tokens.accessToken)).status, 401);
     assert.equal((await request('/v1/dashboards/agents', owner.tokens.accessToken)).status, 401);
     assert.equal((await request('/v1/session/logout', owner.tokens.accessToken, 'POST')).status, 201);

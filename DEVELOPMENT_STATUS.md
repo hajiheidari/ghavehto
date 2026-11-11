@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Owners can edit the private café name from the panel when the HTTPS write origin is configured. This does not alter the reviewed public listing.
+
 Staff changes can be submitted from the owner web panel when `PANEL_WRITE_ORIGIN` is configured as an exact HTTPS origin. The default remains read-only. No browser session issuance or real SMS is enabled.
 
 The café panel includes a branch staff roster. Owner authorization remains enforced by the API; no contacts or tokens are rendered.

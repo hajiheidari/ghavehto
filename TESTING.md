@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Panel profile integration covers owner rename, staff and foreign-origin denial, and preservation of the public listing name.
+
 Staff forms integration covers owner grant/revoke, absence of controls for staff, direct staff POST denial, missing/foreign Origin rejection and roster refresh on the built Next/Nest stack.
 
 Staff SSR coverage renders the owner roster through actual Next/Nest and verifies that a branch staff session cannot retrieve the roster or see its identifiers in HTML.

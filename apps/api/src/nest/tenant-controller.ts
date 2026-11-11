@@ -72,6 +72,11 @@ export class TenantController {
     const token = this.token(header);
     return this.access!.readBranch(token, cafeId, branchId);
   }
+  @Get(':cafeId/profile') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiResponse({status:200,type:CafeAccessDto})
+  profile(@Headers('authorization') header:string|undefined,@Param('cafeId',new ParseUUIDPipe()) cafeId:string):Promise<CafeAccessDto> {
+    return this.access!.readCafeProfile(this.token(header),cafeId);
+  }
   @Patch(':cafeId/profile') @Header('Cache-Control', 'no-store') @Header('Vary', 'Authorization')
   @ApiResponse({ status: 200, type: CafeAccessDto })
   update(@Headers('authorization') header: string | undefined, @Param('cafeId', new ParseUUIDPipe()) cafeId: string,

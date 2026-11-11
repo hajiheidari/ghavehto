@@ -9,14 +9,14 @@ const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 export const panelId = (input:unknown):input is string => typeof input === 'string' && uuid.test(input);
 const object = (value:unknown):value is Record<string,unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-async function read<T>(path:string,parse:(input:unknown)=>T,change?:{enabled:boolean}):Promise<PanelResult<T>> {
+async function read<T>(path:string,parse:(input:unknown)=>T,change?:{method:'PUT'|'PATCH';body:object}):Promise<PanelResult<T>> {
   const token = (await cookies()).get(accessCookieName)?.value;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return {state:'signed-out'};
   try {
     const response = await fetch(new URL(path,process.env.API_BASE_URL ?? 'http://127.0.0.1:4101'),{
       cache:'no-store',redirect:'error',credentials:'omit',signal:AbortSignal.timeout(3000),
       headers:{Authorization:`Bearer ${token}`,...(change?{'Content-Type':'application/json'}:{})},
-      ...(change?{method:'PUT',body:JSON.stringify(change)}:{}),
+      ...(change?{method:change.method,body:JSON.stringify(change.body)}:{}),
     });
     if (response.status===401) return {state:'signed-out'};
     if (!response.ok) return {state:'unavailable'};
@@ -36,7 +36,14 @@ export function changePanelStaff(cafeId:string,branchId:string,userId:string,ena
   return read(`/v1/cafes/${cafeId}/branches/${branchId}/staff/${userId}`,input=>{
     if(!object(input)||input.enabled!==enabled) throw new Error('Invalid staff update response');
     return enabled;
-  },{enabled});
+  },{method:'PUT',body:{enabled}});
+}
+export function cafeProfile(cafeId:string,name?:string):Promise<PanelResult<{name:string}>> {
+  if(!panelId(cafeId)) return Promise.resolve({state:'unavailable'});
+  return read(`/v1/cafes/${cafeId}/profile`,input=>{
+    if(!object(input)||input.cafeId!==cafeId||typeof input.name!=='string') throw new Error('Invalid café profile');
+    return {name:input.name};
+  },name===undefined?undefined:{method:'PATCH',body:{name}});
 }
 function page<T>(input:unknown,valid:(item:unknown)=>item is T):Page<T> {
   if (!object(input) || !Array.isArray(input.items) || input.items.length>50 ||
