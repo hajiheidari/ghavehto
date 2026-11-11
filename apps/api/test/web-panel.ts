@@ -12,7 +12,7 @@ export async function startWebPanel(apiUrl:string) {
     root=parent;
   }
   const child=spawn(process.execPath,[join(root,'apps/web/node_modules/next/dist/bin/next'),'start',join(root,'apps/web'),'--hostname','127.0.0.1','--port','0'],{
-    env:{...process.env,API_BASE_URL:apiUrl,NEXT_TELEMETRY_DISABLED:'1'},stdio:['ignore','pipe','pipe'],
+    env:{...process.env,API_BASE_URL:apiUrl,NEXT_TELEMETRY_DISABLED:'1',PANEL_WRITE_ORIGIN:'https://panel.example.test'},stdio:['ignore','pipe','pipe'],
   });
   let output='';
   child.stdout.on('data',chunk=>{output=(output+String(chunk)).slice(-8000)});

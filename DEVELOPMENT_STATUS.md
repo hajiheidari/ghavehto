@@ -32,7 +32,9 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
-The café panel includes a read-only branch staff roster. Owner authorization remains enforced by the API; no contacts or tokens are rendered and mutation forms remain disabled.
+Staff changes can be submitted from the owner web panel when `PANEL_WRITE_ORIGIN` is configured as an exact HTTPS origin. The default remains read-only. No browser session issuance or real SMS is enabled.
+
+The café panel includes a branch staff roster. Owner authorization remains enforced by the API; no contacts or tokens are rendered.
 
 The read-only café web panel now consumes the authenticated scope APIs. It reads an opaque access credential only from a host-only secure cookie name and validates it with the API on every request. Genuine initial issuance, rotation, logout and CSRF-protected mutations remain activation work.
 

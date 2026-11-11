@@ -9,18 +9,34 @@ const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 export const panelId = (input:unknown):input is string => typeof input === 'string' && uuid.test(input);
 const object = (value:unknown):value is Record<string,unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-async function read<T>(path:string,parse:(input:unknown)=>T):Promise<PanelResult<T>> {
+async function read<T>(path:string,parse:(input:unknown)=>T,change?:{enabled:boolean}):Promise<PanelResult<T>> {
   const token = (await cookies()).get(accessCookieName)?.value;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return {state:'signed-out'};
   try {
     const response = await fetch(new URL(path,process.env.API_BASE_URL ?? 'http://127.0.0.1:4101'),{
       cache:'no-store',redirect:'error',credentials:'omit',signal:AbortSignal.timeout(3000),
-      headers:{Authorization:`Bearer ${token}`},
+      headers:{Authorization:`Bearer ${token}`,...(change?{'Content-Type':'application/json'}:{})},
+      ...(change?{method:'PUT',body:JSON.stringify(change)}:{}),
     });
     if (response.status===401) return {state:'signed-out'};
     if (!response.ok) return {state:'unavailable'};
     return {state:'ready',data:parse(await response.json())};
   } catch { return {state:'unavailable'}; }
+}
+export function staffPanelOrigin():string|null {
+  const value=process.env.PANEL_WRITE_ORIGIN;
+  if(!value) return null;
+  try {
+    const origin=new URL(value);
+    return origin.protocol==='https:'&&origin.origin===value?value:null;
+  } catch {return null;}
+}
+export function changePanelStaff(cafeId:string,branchId:string,userId:string,enabled:boolean) {
+  if(![cafeId,branchId,userId].every(panelId)) return Promise.resolve({state:'unavailable'} as const);
+  return read(`/v1/cafes/${cafeId}/branches/${branchId}/staff/${userId}`,input=>{
+    if(!object(input)||input.enabled!==enabled) throw new Error('Invalid staff update response');
+    return enabled;
+  },{enabled});
 }
 function page<T>(input:unknown,valid:(item:unknown)=>item is T):Page<T> {
   if (!object(input) || !Array.isArray(input.items) || input.items.length>50 ||

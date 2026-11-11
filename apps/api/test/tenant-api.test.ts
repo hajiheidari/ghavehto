@@ -105,6 +105,25 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       const deniedRoster=await (await page(rosterUrl,staff.tokens.accessToken)).text();
       assert.ok(deniedRoster.includes('مجوز مالک ندارید'));
       assert.equal(deniedRoster.includes(staff.userId),false);
+      assert.ok(ownerRoster.includes('اعطای دسترسی'));
+      assert.equal(deniedRoster.includes('اعطای دسترسی'),false);
+      const change=(token:string,origin:string|undefined,operation:string)=>fetch(web.url+rosterUrl+'/change',{
+        method:'POST',redirect:'manual',headers:{
+          Cookie:`__Host-ghahvehto-access=${token}`,...(origin?{Origin:origin}:{}),
+        },body:new URLSearchParams({userId:staff.userId,operation}),
+      });
+      const origin='https://panel.example.test';
+      assert.equal((await change(owner.tokens.accessToken,undefined,'revoke')).status,403);
+      assert.equal((await change(owner.tokens.accessToken,'https://other.example.test','revoke')).status,403);
+      const staffChange=await change(staff.tokens.accessToken,origin,'revoke');
+      assert.equal(staffChange.status,303);
+      assert.equal(staffChange.headers.get('location'),rosterUrl+'?outcome=unavailable');
+      assert.ok((await (await page(rosterUrl,owner.tokens.accessToken)).text()).includes(staff.userId));
+      const revoked=await change(owner.tokens.accessToken,origin,'revoke');
+      assert.equal(revoked.status,303);
+      assert.equal(revoked.headers.get('location'),rosterUrl+'?outcome=saved');
+      assert.equal((await (await page(rosterUrl,owner.tokens.accessToken)).text()).includes(staff.userId),false);
+      assert.equal((await change(owner.tokens.accessToken,origin,'grant')).headers.get('location'),rosterUrl+'?outcome=saved');
       assert.ok((await (await page('/dashboard/cafe',consumer.tokens.accessToken)).text()).includes('هنوز به کافه‌ای دسترسی ندارید'));
       assert.ok((await (await page('/dashboard/cafe','a'.repeat(43))).text()).includes('هیچ داده مدیریتی'));
     } finally {await web.close();}
@@ -247,7 +266,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
         {userIds:enabled?[staff.userId]:[],nextCursor:null});
     }
     assert.equal((await request(`/v1/cafes/${cafeA}/branches/${branchA}/access`,staff.tokens.accessToken)).status,200);
-    assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('branch.staff_granted','branch.staff_revoked')",[cafeA])).rowCount,2);
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('branch.staff_granted','branch.staff_revoked') AND metadata->>'branchId'=$2",[cafeA,branchOther])).rowCount,2);
     assert.equal((await request(`/v1/cafes/${cafeB}/branches/${branchA}/access`, staff.tokens.accessToken)).status, 404);
     assert.equal((await request(profile, staff.tokens.accessToken, 'PATCH', {name:'TEST FORBIDDEN'})).status, 404);
     assert.equal((await request(profile, owner.tokens.accessToken, 'PATCH', {name:'TEST', userId:owner.userId, role:'owner'})).status, 400);

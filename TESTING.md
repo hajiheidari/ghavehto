@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Staff forms integration covers owner grant/revoke, absence of controls for staff, direct staff POST denial, missing/foreign Origin rejection and roster refresh on the built Next/Nest stack.
+
 Staff SSR coverage renders the owner roster through actual Next/Nest and verifies that a branch staff session cannot retrieve the roster or see its identifiers in HTML.
 
 The restricted-login HTTP suite now starts the built Next application against the actual test Nest server and checks signed-out, owner, staff, consumer and invalid-token SSR states. Build the web workspace before running this integration suite. Cookie injection is test-only; it is not a product login route.

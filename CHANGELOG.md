@@ -1,5 +1,9 @@
 # Changelog
 
+## Staff access forms
+
+- Added owner staff grant/revoke forms with an explicit HTTPS origin, server-side API authorization and redirect-after-submit.
+
 ## Staff roster panel
 
 - Added a Persian owner-only staff roster view using the scoped API, with cursor navigation and explicit empty/denied states.
