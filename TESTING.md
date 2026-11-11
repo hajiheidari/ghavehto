@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The restricted-login HTTP suite now starts the built Next application against the actual test Nest server and checks signed-out, owner, staff, consumer and invalid-token SSR states. Build the web workspace before running this integration suite. Cookie injection is test-only; it is not a product login route.
+
 Café navigation tests cover owner and branch staff projections, empty consumer scopes, cursor validation and cross-café denial over actual restricted-login HTTP.
 
 Branch roster integration checks owner scope, staff and cross-café denial, cursor validation, and visibility immediately after granting or revoking staff access.

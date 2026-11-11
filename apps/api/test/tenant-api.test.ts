@@ -9,6 +9,7 @@ import { PhoneVault } from '../src/nest/phone-vault.js';
 import { SessionService } from '../src/nest/sessions.js';
 import { validateRuntimePool } from '../src/nest/tenant-access.js';
 import { fetchCafeAccess, fetchBranchAccess, updateCafeProfile } from '@ghahvehto/contracts/access-client';
+import {startWebPanel} from './web-panel.js';
 
 test('real HTTP tenant authorization uses verified sessions and restricted runtime login', async () => {
   assert.ok(process.env.DATABASE_URL);
@@ -83,6 +84,23 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? {'Content-Type':'application/json'} : {}), ...extra },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
+    const web=await startWebPanel(base);
+    try {
+      const page=async(path:string,token?:string)=>fetch(web.url+path,{
+        headers:token?{Cookie:`__Host-ghahvehto-access=${token}`}:{},
+      });
+      const signedOut=await (await page('/dashboard/cafe')).text();
+      assert.ok(signedOut.includes('هیچ داده مدیریتی'));
+      const ownerPage=await (await page('/dashboard/cafe',owner.tokens.accessToken)).text();
+      assert.ok(ownerPage.includes('TEST A'));
+      assert.equal(ownerPage.includes('TEST B'),false);
+      assert.equal(ownerPage.includes(owner.tokens.accessToken),false);
+      const staffPage=await (await page(`/dashboard/cafe/${cafeA}`,staff.tokens.accessToken)).text();
+      assert.ok(staffPage.includes('TEST FIRST'));
+      assert.equal(staffPage.includes('TEST OTHER'),false);
+      assert.ok((await (await page('/dashboard/cafe',consumer.tokens.accessToken)).text()).includes('هنوز به کافه‌ای دسترسی ندارید'));
+      assert.ok((await (await page('/dashboard/cafe','a'.repeat(43))).text()).includes('هیچ داده مدیریتی'));
+    } finally {await web.close();}
     const path = `/v1/cafes/${cafeA}/access`, profile = `/v1/cafes/${cafeA}/profile`;
     assert.equal((await request('/health/ready')).status, 200);
     const readinessFixture = await admin.connect();

@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+The read-only café web panel now consumes the authenticated scope APIs. It reads an opaque access credential only from a host-only secure cookie name and validates it with the API on every request. Genuine initial issuance, rotation, logout and CSRF-protected mutations remain activation work.
+
 Authenticated café/branch navigation APIs now return only the actor's accessible scopes. Owner capability is derived on the server. No café ID must be guessed to start navigating.
 
 Owners can read branch staff IDs using a paginated API (migration 014). The roster does not expose account contact details or change the underlying self-only membership policy.

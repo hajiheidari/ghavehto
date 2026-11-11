@@ -1,5 +1,9 @@
 # Changelog
 
+## Read-only café panel
+
+- Connected Persian SSR café and branch panels to verified API scopes. No login shortcut or cookie issuance route is enabled.
+
 ## Authenticated café navigation
 
 - Added bounded café and branch lists derived from the verified session and existing RLS policies.
