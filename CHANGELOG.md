@@ -1,5 +1,9 @@
 # Changelog
 
+## Staff roster panel
+
+- Added a Persian owner-only staff roster view using the scoped API, with cursor navigation and explicit empty/denied states.
+
 ## Read-only café panel
 
 - Connected Persian SSR café and branch panels to verified API scopes. No login shortcut or cookie issuance route is enabled.

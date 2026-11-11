@@ -36,3 +36,11 @@ export function getMyBranches(cafeId:string,after?:string):Promise<PanelResult<P
   return read(`/v1/cafes/${cafeId}/branches`+(after?`?after=${encodeURIComponent(after)}`:''),input=>page(input,
     (row):row is Branch => object(row)&&panelId(row.branchId)&&row.cafeId===cafeId&&typeof row.name==='string'));
 }
+export function getBranchStaff(cafeId:string,branchId:string,after?:string):Promise<PanelResult<{userIds:string[];nextCursor:string|null}>> {
+  if (!panelId(cafeId)||!panelId(branchId)) return Promise.resolve({state:'unavailable'});
+  return read(`/v1/cafes/${cafeId}/branches/${branchId}/staff`+(after?`?after=${encodeURIComponent(after)}`:''),input=>{
+    if (!object(input)||!Array.isArray(input.userIds)||input.userIds.length>50||
+      !input.userIds.every(panelId)||!(input.nextCursor===null||panelId(input.nextCursor))) throw new Error('Invalid staff roster');
+    return {userIds:input.userIds as string[],nextCursor:input.nextCursor as string|null};
+  });
+}

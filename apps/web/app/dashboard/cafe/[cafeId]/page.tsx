@@ -13,7 +13,9 @@ export default async function CafeBranches({params,searchParams}:{params:Promise
     {result.state==='signed-out'?<p>برای دیدن شعبه‌ها به ورود معتبر نیاز دارید.</p>:
       result.state==='unavailable'?<p role="status">اطلاعات این کافه در دسترس نیست یا به آن دسترسی ندارید.</p>:
       result.data.items.length===0?<p>شعبه‌ای در دسترس شما نیست.</p>:
-      <ul>{result.data.items.map(branch=><li key={branch.branchId}>{branch.name}</li>)}</ul>}
+      <ul>{result.data.items.map(branch=><li key={branch.branchId}>{branch.name}{' · '}
+        <Link href={`/dashboard/cafe/${cafeId}/branches/${branch.branchId}/staff`}>فهرست کارکنان (ویژه مالک)</Link>
+      </li>)}</ul>}
     {result.state==='ready'&&result.data.nextCursor&&<Link href={{pathname:`/dashboard/cafe/${cafeId}`,query:{after:result.data.nextCursor}}}>صفحه بعد</Link>}
   </section>;
 }

@@ -98,6 +98,13 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       const staffPage=await (await page(`/dashboard/cafe/${cafeA}`,staff.tokens.accessToken)).text();
       assert.ok(staffPage.includes('TEST FIRST'));
       assert.equal(staffPage.includes('TEST OTHER'),false);
+      const rosterUrl=`/dashboard/cafe/${cafeA}/branches/${branchA}/staff`;
+      const ownerRoster=await (await page(rosterUrl,owner.tokens.accessToken)).text();
+      assert.ok(ownerRoster.includes(staff.userId));
+      assert.equal(ownerRoster.includes(owner.tokens.accessToken),false);
+      const deniedRoster=await (await page(rosterUrl,staff.tokens.accessToken)).text();
+      assert.ok(deniedRoster.includes('مجوز مالک ندارید'));
+      assert.equal(deniedRoster.includes(staff.userId),false);
       assert.ok((await (await page('/dashboard/cafe',consumer.tokens.accessToken)).text()).includes('هنوز به کافه‌ای دسترسی ندارید'));
       assert.ok((await (await page('/dashboard/cafe','a'.repeat(43))).text()).includes('هیچ داده مدیریتی'));
     } finally {await web.close();}
