@@ -68,6 +68,34 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       assert.deepEqual(await readDirectory(client,'اصلاح',1), {items:[],hasMore:false});
       assert.equal(await readDirectoryBranch(client,ids.branchA),null);
       await client.query('RESET ROLE');
+      const {rows:[program]}=await client.query('INSERT INTO stamp_programs(cafe_id) VALUES($1) RETURNING id',[ids.a]);
+      await client.query('INSERT INTO stamp_program_versions(program_id,cafe_id,version,stamps_required) VALUES($1,$2,1,10)',[program.id,ids.a]);
+      const stamp=`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+        VALUES($1,$2,$3,1,gen_random_uuid(),1,'award','TEST',now())`;
+      await client.query(stamp,[ids.owner,ids.a,program.id]);
+      const {rows:[star]}=await client.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
+        VALUES($1,gen_random_uuid(),5,'award','TEST',now()) RETURNING id,operation_id`,[ids.owner]);
+      await client.query(`INSERT INTO tier_entries(user_id,qualification_year,operation_id,units,kind,reason,effective_at)
+        VALUES($1,2026,$2,5,'award','TEST',now())`,[ids.owner,star.operation_id]);
+      const reversal=`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at,reversal_of)
+        VALUES($1,gen_random_uuid(),$2,'reversal','TEST',now(),$3)`;
+      for(const [query,params,code] of [
+        [stamp,[ids.owner,ids.b,program.id],'23503'],
+        [reversal,[ids.staff,-5,star.id],'23503'],
+        [reversal,[ids.owner,-4,star.id],'23503'],
+        ["INSERT INTO tier_entries(user_id,qualification_year,operation_id,units,kind,reason,effective_at) VALUES($1,2026,gen_random_uuid(),-1,'spend','TEST',now())",[ids.owner],'23514'],
+        ["UPDATE stamp_entries SET reason='TEST EDIT'",[],'55000'],
+        ['DELETE FROM star_entries',[],'55000'],
+        ['TRUNCATE tier_entries',[],'55000'],
+      ] as const) {
+        await client.query('SAVEPOINT journal_guard');
+        await assert.rejects(client.query(query,[...params]),{code});
+        await client.query('ROLLBACK TO SAVEPOINT journal_guard');
+        await client.query('RELEASE SAVEPOINT journal_guard');
+      }
+      await client.query(reversal,[ids.owner,-5,star.id]);
+      assert.equal((await client.query('SELECT sum(units) AS balance FROM star_entries WHERE user_id=$1',[ids.owner])).rows[0].balance,'0');
+      assert.equal((await client.query("SELECT has_table_privilege('ghahvehto_app','star_entries','INSERT') AS allowed")).rows[0].allowed,false);
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);

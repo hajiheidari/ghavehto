@@ -1,5 +1,7 @@
 # Changelog
 
+- Added immutable storage for café stamps, spendable platform stars and non-spendable tier points, plus versioned stamp rules. No award or redemption endpoint is enabled.
+
 - Added owner-only café name editing to the web panel. Reviewed public listings retain their approved names.
 
 ## Staff access forms

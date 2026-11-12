@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+M3 storage starts in migration 015: three independent append-only journals and immutable stamp program versions. Runtime roles cannot access them yet. Transactional earning, balance checks, expiry processing, QR and redemption are pending.
+
 Owners can edit the private café name from the panel when the HTTPS write origin is configured. This does not alter the reviewed public listing.
 
 Staff changes can be submitted from the owner web panel when `PANEL_WRITE_ORIGIN` is configured as an exact HTTPS origin. The default remains read-only. No browser session issuance or real SMS is enabled.
