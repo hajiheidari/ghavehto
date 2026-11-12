@@ -1,5 +1,7 @@
 # Changelog
 
+- Added an internal single-stamp transaction that checks branch authority and returns the original receipt on an identical retry.
+
 - Added immutable storage for café stamps, spendable platform stars and non-spendable tier points, plus versioned stamp rules. No award or redemption endpoint is enabled.
 
 - Added owner-only café name editing to the web panel. Reviewed public listings retain their approved names.

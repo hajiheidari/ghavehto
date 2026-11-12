@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
 import pg from 'pg';
 import { migrate } from '../src/nest/migrations.js';
 import { readDirectory, readDirectoryBranch } from '../src/nest/directory-controller.js';
@@ -96,6 +97,29 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       await client.query(reversal,[ids.owner,-5,star.id]);
       assert.equal((await client.query('SELECT sum(units) AS balance FROM star_entries WHERE user_id=$1',[ids.owner])).rows[0].balance,'0');
       assert.equal((await client.query("SELECT has_table_privilege('ghahvehto_app','star_entries','INSERT') AS allowed")).rows[0].allowed,false);
+      await client.query('UPDATE users SET phone_verified_at=now() WHERE id IN ($1,$2)',[ids.owner,ids.staff]);
+      const issue='SELECT public.award_branch_stamp($1,$2,$3,$4,$5,$6,$7) AS id';
+      const operation=randomUUID();
+      const award=[ids.staff,ids.owner,ids.a,ids.branchA,program.id,1,operation];
+      assert.equal((await client.query("SELECT has_function_privilege('ghahvehto_app','public.award_branch_stamp(uuid,uuid,uuid,uuid,uuid,integer,uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
+      await client.query('SET LOCAL ROLE ghahvehto_stamp_issuer');
+      const first=(await client.query(issue,award)).rows[0].id;
+      assert.equal((await client.query(issue,award)).rows[0].id,first);
+      for(const [params,code] of [
+        [[ids.staff,ids.owner,ids.a,ids.branchB,program.id,1,randomUUID()],'42501'],
+        [[ids.staff,ids.owner,ids.a,ids.branchA,program.id,2,operation],'23505'],
+        [[ids.staff,ids.owner,ids.a,ids.branchA,program.id,2,randomUUID()],'22023'],
+        [[ids.staff,ids.staff,ids.a,ids.branchA,program.id,1,randomUUID()],'22023'],
+      ] as const) {
+        await client.query('SAVEPOINT stamp_guard');
+        await assert.rejects(client.query(issue,[...params]),{code});
+        await client.query('ROLLBACK TO SAVEPOINT stamp_guard');
+        await client.query('RELEASE SAVEPOINT stamp_guard');
+      }
+      await client.query('RESET ROLE');
+      assert.deepEqual((await client.query('SELECT units,award_branch_id,award_actor_id FROM stamp_entries WHERE operation_id=$1',[operation])).rows,
+        [{units:1,award_branch_id:ids.branchA,award_actor_id:ids.staff}]);
+      assert.equal((await client.query("SELECT id FROM audit_events WHERE action='loyalty.stamp_awarded' AND metadata->>'operationId'=$1",[operation])).rowCount,1);
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);
