@@ -120,6 +120,32 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       assert.deepEqual((await client.query('SELECT units,award_branch_id,award_actor_id FROM stamp_entries WHERE operation_id=$1',[operation])).rows,
         [{units:1,award_branch_id:ids.branchA,award_actor_id:ids.staff}]);
       assert.equal((await client.query("SELECT id FROM audit_events WHERE action='loyalty.stamp_awarded' AND metadata->>'operationId'=$1",[operation])).rowCount,1);
+      const issueQr='SELECT public.issue_stamp_qr($1,$2,$3,$4,1) AS token';
+      const consumeQr='SELECT public.consume_stamp_qr($1,$2,$3) AS id';
+      const qrParams=[ids.owner,ids.a,ids.branchA,program.id];
+      assert.equal((await client.query("SELECT has_function_privilege('ghahvehto_app','public.consume_stamp_qr(uuid,uuid,text)','EXECUTE') AS allowed")).rows[0].allowed,false);
+      await client.query('SET LOCAL ROLE ghahvehto_stamp_qr');
+      const {rows:[qr]}=await client.query(issueQr,qrParams);
+      const {rows:[expired]}=await client.query(issueQr,qrParams);
+      assert.match(qr.token,/^[0-9a-f]{64}$/);
+      assert.notEqual(qr.token,expired.token);
+      await client.query('RESET ROLE');
+      await client.query("UPDATE stamp_qr_tokens SET expires_at=clock_timestamp()-interval '1 second' WHERE token_hash=sha256(convert_to($1,'UTF8'))",[expired.token]);
+      await client.query('SET LOCAL ROLE ghahvehto_stamp_qr');
+      for(const params of [[ids.staff,ids.branchB,qr.token],[ids.staff,ids.branchA,expired.token]]) {
+        await client.query('SAVEPOINT qr_guard');
+        await assert.rejects(client.query(consumeQr,params),{code:'22023'});
+        await client.query('ROLLBACK TO SAVEPOINT qr_guard');
+        await client.query('RELEASE SAVEPOINT qr_guard');
+      }
+      const {rows:[receipt]}=await client.query(consumeQr,[ids.staff,ids.branchA,qr.token]);
+      await client.query('SAVEPOINT qr_replay');
+      await assert.rejects(client.query(consumeQr,[ids.staff,ids.branchA,qr.token]),{code:'22023'});
+      await client.query('ROLLBACK TO SAVEPOINT qr_replay');
+      await client.query('RESET ROLE');
+      assert.deepEqual((await client.query('SELECT entry_id,consumed_at IS NOT NULL AS consumed FROM stamp_qr_tokens WHERE token_hash=sha256(convert_to($1,\'UTF8\'))',[qr.token])).rows,
+        [{entry_id:receipt.id,consumed:true}]);
+      assert.equal((await client.query('SELECT id FROM stamp_entries WHERE id=$1 AND units=1',[receipt.id])).rowCount,1);
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);

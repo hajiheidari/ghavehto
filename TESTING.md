@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Stamp QR integration covers expiry, incorrect branch, one successful consumption, replay rejection and receipt linkage. The ordinary application role cannot consume tokens.
+
 The PostgreSQL stamp fixture checks exact retry, conflicting payload, branch and version rejection, no self-award, audit uniqueness and no general runtime execution.
 
 Loyalty storage checks run in the disposable PostgreSQL fixture: distinct operation namespaces, cross-café and cross-user denial, exact compensating entries, no tier spend, immutable history and disabled runtime insertion.
