@@ -1,5 +1,7 @@
 # Changelog
 
+- Added opt-in QR HTTP routes with strict payload validation; normal startup leaves them unregistered.
+
 - Connected internal QR issuance and consumption to the verified session actor without opening public routes.
 
 - Limited internal stamp QR issuance to five tokens per recipient in a rolling minute, across all branches.

@@ -20,6 +20,7 @@ import type { OtpCrypto, OtpProvider } from './otp.js';
 import type { PhoneVault } from './phone-vault.js';
 import { DirectoryController } from './directory-controller.js';
 import { OwnershipClaimController } from './ownership-claim-controller.js';
+import { StampQrController } from './stamp-qr-controller.js';
 
 export class BootstrapDto {
   @ApiProperty({ example: 'قهوه‌تو', type: String }) brand!: string;
@@ -68,9 +69,11 @@ export class AppModule {}
 
 export async function createApp(options: {
   runtimePool?: pg.Pool;
+  enableStampQr?: boolean;
   initialLogin?: Readonly<{ crypto: OtpCrypto; vault: PhoneVault; provider: OtpProvider }>;
 } = {}) {
   const { runtimePool, initialLogin: config } = options;
+  if (options.enableStampQr && !runtimePool) throw new Error('Stamp QR requires a restricted runtime pool');
   if (runtimePool) await validateRuntimePool(runtimePool);
   let initialLogin: InitialLogin | undefined;
   if (config) {
@@ -79,7 +82,7 @@ export async function createApp(options: {
     initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
   }
   const app = await NestFactory.create({ module: AppModule,
-    controllers: initialLogin ? [InitialLoginController] : [],
+    controllers: [...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
     providers: [
     ...(initialLogin ? [{ provide: INITIAL_LOGIN, useValue: initialLogin }] : []),
     { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },

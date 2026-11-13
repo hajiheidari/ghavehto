@@ -25,6 +25,8 @@ test('Nest API serves shared contract; privileged routes fail closed', async () 
     assert.equal((await fetch(`${base}/v1/directory?page=101`)).status, 400);
     assert.equal((await fetch(`${base}/v1/auth/otp/request`, {method:'POST'})).status, 404);
     assert.equal((await fetch(`${base}/v1/auth/otp/verify`, {method:'POST'})).status, 404);
+    assert.equal((await fetch(`${base}/v1/stamp-qr/issue`, {method:'POST'})).status,404);
+    assert.equal((await fetch(`${base}/v1/stamp-qr/consume`, {method:'POST'})).status,404);
     const denied = await fetch(`${base}/v1/session`, {headers:{authorization:'Bearer private-invalid-credential','x-request-id':'client-supplied-value'}});
     const denial = await denied.json() as {code:string;message:string;requestId:string};
     assert.equal(denial.code, 'unauthorized');

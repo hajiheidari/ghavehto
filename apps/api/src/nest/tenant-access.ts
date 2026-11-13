@@ -90,7 +90,7 @@ export class TenantAccessService {
     });
   }
 
-  // Deliberately not exposed by a controller until the QR flow is enabled.
+  // Used only when the application explicitly composes the QR controller.
   issueStampQr(token:string,cafeId:string,branchId:string,programId:string,version:number):Promise<string> {
     return this.withVerifiedActor(token,async client=>
       (await client.query<{qr:string}>('SELECT public.issue_own_stamp_qr($1,$2,$3,$4) AS qr',

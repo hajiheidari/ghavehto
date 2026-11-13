@@ -39,7 +39,7 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     try { await assert.rejects(validateRuntimePool(runtime), /Restricted identity runtime/); }
     finally { await admin.query(`GRANT ghahvehto_identity TO ${login} WITH INHERIT FALSE`); }
     let code = '';
-    server = await createApp({ runtimePool: runtime, initialLogin: {
+    server = await createApp({ runtimePool: runtime, enableStampQr:true, initialLogin: {
       crypto, vault, provider: { enabled: true, async send(input) { code = input.code; } },
     } });
     await server.app.listen(0, '127.0.0.1');
@@ -141,6 +141,13 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       assert.ok((await (await page('/dashboard/cafe','a'.repeat(43))).text()).includes('هیچ داده مدیریتی'));
     } finally {await web.close();}
     const path = `/v1/cafes/${cafeA}/access`, profile = `/v1/cafes/${cafeA}/profile`;
+    const qrInput={cafeId:cafeA,branchId:branchA,programId:randomUUID(),version:1};
+    assert.equal((await request('/v1/stamp-qr/issue',undefined,'POST',qrInput)).status,401);
+    assert.equal((await request('/v1/stamp-qr/issue',consumer.tokens.accessToken,'POST',{...qrInput,recipientId:owner.userId})).status,400);
+    assert.equal((await request('/v1/stamp-qr/issue',consumer.tokens.accessToken,'POST',qrInput)).status,404);
+    const invalidQr=await request('/v1/stamp-qr/consume',staff.tokens.accessToken,'POST',{branchId:branchA,qr:'0'.repeat(64)});
+    assert.equal(invalidQr.status,400);
+    assert.equal(invalidQr.headers.get('cache-control'),'no-store');
     assert.equal((await request('/health/ready')).status, 200);
     const readinessFixture = await admin.connect();
     try {
