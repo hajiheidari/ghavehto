@@ -15,6 +15,7 @@
     "test/phone-vault.test.ts",
     "test/identity.test.ts",
     "test/tenant-api.test.ts",
+    "test/stamp-qr-http.test.ts",
     "test/auth-operations.test.ts",
     "test/smsir-otp-provider.test.ts"
   ]

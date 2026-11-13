@@ -1,5 +1,7 @@
 # Changelog
 
+- Added an isolated HTTP integration test for successful QR awards and concurrent replay.
+
 - Added opt-in QR HTTP routes with strict payload validation; normal startup leaves them unregistered.
 
 - Connected internal QR issuance and consumption to the verified session actor without opening public routes.

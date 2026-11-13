@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Successful QR HTTP flow uses a separate disposable PostgreSQL database to preserve immutable journals. It exercises actual session issuance, branch mismatch and concurrent duplicate scans, checking one successful receipt, one stamp and one audit entry. The test database login needs CREATE DATABASE and the existing migration privileges.
+
 QR HTTP tests assert default route absence, missing bearer denial, rejection of a caller-provided recipient, missing program and invalid token handling. Successful issue and consume remain covered by the rollback-only PostgreSQL fixture.
 
 The QR actor fixture checks fail-closed missing identity and verifies that the journal recipient and staff actor come from the transaction, not arguments accepted by the session-facing functions.

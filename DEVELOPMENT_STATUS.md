@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+The QR success integration fixture exercises the opt-in HTTP flow from verified sessions through the journal and concurrent duplicate scans. Standard startup still leaves the routes disabled.
+
 An explicitly composed test application can exercise QR issue/consume routes with verified bearer sessions. Normal startup does not register them; no client scanner or rollout is enabled.
 
 Migration 019 wires QR into the verified backend session transaction. The customer and awarding employee are derived server-side. There is still no public QR endpoint or UI.
