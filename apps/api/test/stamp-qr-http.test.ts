@@ -103,7 +103,7 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       await server?.app.close();
       await runtime?.end();
       await db?.end();
-      if(databaseCreated) await host.query(`DROP DATABASE ${database} WITH (FORCE)`);
+      if(databaseCreated) await host.query(`DROP DATABASE ${database}`);
       if(loginCreated) await host.query(`DROP ROLE ${login}`);
     } finally {await host.end();}
   }
