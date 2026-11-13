@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {test} from 'node:test';
+import {setTimeout as delay} from 'node:timers/promises';
 import pg from 'pg';
 import {createApp} from '../src/nest/app.js';
 import {migrate} from '../src/nest/migrations.js';
@@ -98,12 +99,25 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.equal(allocations.some(row=>row.award_id===expired.id),false);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_redeemed'")).rowCount,1);
     await assert.rejects(runtime.query(sql,[customer.id,attempts[winner].id,randomUUID()]),{code:'42501'});
+    await assert.rejects(runtime.query('SELECT * FROM stamp_spend_allocations'),{code:'42501'});
+    await assert.rejects(db.query('UPDATE stamp_spend_allocations SET units=1'),{code:'55000'});
+    await assert.rejects(db.query('DELETE FROM stamp_spend_allocations'),{code:'55000'});
+    await assert.rejects(db.query('TRUNCATE stamp_spend_allocations'),{code:'55000'});
   } finally {
     try {
       await server?.app.close();
       await runtime?.end();
       await db?.end();
-      if(databaseCreated) await host.query(`DROP DATABASE ${database}`);
+      if(databaseCreated) {
+        // PostgreSQL can still be processing the pools' disconnects.
+        for(let attempt=0;;attempt++){
+          try {await host.query(`DROP DATABASE ${database}`);break;}
+          catch(error){
+            if((error as pg.DatabaseError).code!=='55006'||attempt>=19) throw error;
+            await delay(50);
+          }
+        }
+      }
       if(loginCreated) await host.query(`DROP ROLE ${login}`);
     } finally {await host.end();}
   }
