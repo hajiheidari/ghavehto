@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The redemption fixture includes expired, soon-expiring and later-expiring stamps. Concurrent redemption checks both the single spend and the exact earliest-expiry allocation.
+
 The disposable QR fixture also races two different rewards against one stamp balance, then checks one debit, one stock decrement, one audit, matching retry and conflicting retry.
 
 Successful QR HTTP flow uses a separate disposable PostgreSQL database to preserve immutable journals. It exercises actual session issuance, branch mismatch and concurrent duplicate scans, checking one successful receipt, one stamp and one audit entry. The test database login needs CREATE DATABASE and the existing migration privileges.

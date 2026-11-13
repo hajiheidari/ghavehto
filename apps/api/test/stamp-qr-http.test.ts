@@ -60,8 +60,11 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       [{id:entryId,user_id:customer.id,award_actor_id:staff.id,units:1}]);
     assert.deepEqual((await db.query('SELECT entry_id FROM stamp_qr_tokens')).rows,[{entry_id:entryId}]);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_awarded'")).rowCount,1);
-    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
-      VALUES($1,$2,$3,1,gen_random_uuid(),9,'award','TEST balance',now())`,[customer.id,cafe.id,program.id]);
+    const {rows:[soon,later,expired]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,expires_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),6,'award','TEST soon',now(),now()+interval '1 hour'),
+            ($1,$2,$3,1,gen_random_uuid(),5,'award','TEST later',now(),now()+interval '2 hours'),
+            ($1,$2,$3,1,gen_random_uuid(),100,'award','TEST expired',now()-interval '2 hours',now()-interval '1 hour')
+      RETURNING id`,[customer.id,cafe.id,program.id]);
     const {rows:rewards}=await db.query<{id:string}>(`INSERT INTO stamp_rewards(cafe_id,program_id,program_version,stock,active)
       VALUES($1,$2,1,1,true),($1,$2,1,1,true) RETURNING id`,[cafe.id,program.id]);
     const sql='SELECT public.redeem_stamp_reward($1,$2,$3) AS id';
@@ -88,6 +91,11 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await assert.rejects(redeem(attempts[1-winner].id,attempts[winner].operation),{code:'23505'});
     assert.deepEqual((await db.query('SELECT stock FROM stamp_rewards ORDER BY stock')).rows,[{stock:0},{stock:1}]);
     assert.deepEqual((await db.query("SELECT units FROM stamp_entries WHERE kind='spend'")).rows,[{units:-10}]);
+    const allocations=(await db.query('SELECT award_id,units FROM stamp_spend_allocations')).rows;
+    assert.equal(allocations.length,2);
+    assert.equal(allocations.find(row=>row.award_id===soon.id)?.units,6);
+    assert.equal(allocations.find(row=>row.award_id===later.id)?.units,4);
+    assert.equal(allocations.some(row=>row.award_id===expired.id),false);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_redeemed'")).rowCount,1);
     await assert.rejects(runtime.query(sql,[customer.id,attempts[winner].id,randomUUID()]),{code:'42501'});
   } finally {

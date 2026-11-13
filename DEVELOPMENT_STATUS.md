@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 021 allocates stamp debits to valid awards by earliest expiry. Mixed expiring and legacy unallocated/reversal history remains blocked pending reconciliation. Public redemption is still disabled.
+
 Migration 020 implements internal stamp redemption with stock and balance serialization, a permanent receipt and audit. It rejects ledgers with expiring awards until lot accounting is implemented. No redemption route or runtime grant is enabled.
 
 The QR success integration fixture exercises the opt-in HTTP flow from verified sessions through the journal and concurrent duplicate scans. Standard startup still leaves the routes disabled.

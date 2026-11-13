@@ -1,5 +1,7 @@
 # Changelog
 
+- Stamp redemption excludes expired awards and records immutable allocations, spending earliest expiry first.
+
 - Added internal atomic stamp redemption with versioned cost, stock, balance and idempotent receipts.
 
 - Added an isolated HTTP integration test for successful QR awards and concurrent replay.
