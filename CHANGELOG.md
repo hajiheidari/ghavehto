@@ -1,5 +1,7 @@
 # Changelog
 
+- Connected internal QR issuance and consumption to the verified session actor without opening public routes.
+
 - Limited internal stamp QR issuance to five tokens per recipient in a rolling minute, across all branches.
 
 - Added internal expiring single-use QR tokens and atomic stamp consumption.

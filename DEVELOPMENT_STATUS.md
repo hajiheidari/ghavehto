@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 019 wires QR into the verified backend session transaction. The customer and awarding employee are derived server-side. There is still no public QR endpoint or UI.
+
 Migration 018 adds a database-enforced rolling issuance limit across all branches. Public QR routes and verified-session wiring remain pending.
 
 Migration 017 implements internal stamp QR issue/consume with hash-only storage, 90-second expiry and branch binding. No HTTP routes, QR screen or general runtime permissions are enabled; session wiring and issuance throttling remain pending.

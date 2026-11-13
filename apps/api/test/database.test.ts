@@ -160,6 +160,20 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       await client.query('RESET ROLE');
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
+      const issueOwn='SELECT public.issue_own_stamp_qr($1,$2,$3,1) AS qr';
+      const consumeScoped='SELECT public.consume_scoped_stamp_qr($1,$2) AS id';
+      await client.query('SAVEPOINT no_qr_actor');
+      await assert.rejects(client.query(issueOwn,[ids.a,ids.branchA,program.id]),{code:'42501'});
+      await client.query('ROLLBACK TO SAVEPOINT no_qr_actor');
+      await client.query('RELEASE SAVEPOINT no_qr_actor');
+      await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);
+      const {rows:[own]}=await client.query(issueOwn,[ids.a,ids.branchA,program.id]);
+      await client.query("SELECT set_config('app.user_id',$1,true)", [ids.staff]);
+      const {rows:[scoped]}=await client.query(consumeScoped,[ids.branchA,own.qr]);
+      await client.query('RESET ROLE');
+      assert.deepEqual((await client.query('SELECT user_id,award_actor_id FROM stamp_entries WHERE id=$1',[scoped.id])).rows,
+        [{user_id:ids.owner,award_actor_id:ids.staff}]);
+      await client.query('SET LOCAL ROLE ghahvehto_app');
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);
       assert.deepEqual((await client.query('SELECT id FROM cafes')).rows.map(r=>r.id), [ids.a]);
       assert.equal((await client.query("UPDATE cafes SET name = 'TEST UPDATED' WHERE id = $1", [ids.b])).rowCount, 0);

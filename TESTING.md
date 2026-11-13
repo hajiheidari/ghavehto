@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The QR actor fixture checks fail-closed missing identity and verifies that the journal recipient and staff actor come from the transaction, not arguments accepted by the session-facing functions.
+
 Stamp QR issuance checks cover a shared quota across branches, inclusion of consumed and expired codes within the issuance window, and reopening after that window.
 
 Stamp QR integration covers expiry, incorrect branch, one successful consumption, replay rejection and receipt linkage. The ordinary application role cannot consume tokens.

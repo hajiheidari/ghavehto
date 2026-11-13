@@ -90,6 +90,19 @@ export class TenantAccessService {
     });
   }
 
+  // Deliberately not exposed by a controller until the QR flow is enabled.
+  issueStampQr(token:string,cafeId:string,branchId:string,programId:string,version:number):Promise<string> {
+    return this.withVerifiedActor(token,async client=>
+      (await client.query<{qr:string}>('SELECT public.issue_own_stamp_qr($1,$2,$3,$4) AS qr',
+        [cafeId,branchId,programId,version])).rows[0].qr);
+  }
+
+  consumeStampQr(token:string,branchId:string,qr:string):Promise<string> {
+    return this.withVerifiedActor(token,async client=>
+      (await client.query<{entry_id:string}>('SELECT public.consume_scoped_stamp_qr($1,$2) AS entry_id',
+        [branchId,qr])).rows[0].entry_id);
+  }
+
   async withVerifiedActor<T>(token: string, operation: (client: PoolClient, userId: string) => Promise<T>): Promise<T> {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new UnauthorizedException();
     return identityTransaction(this.pool, async client => {
