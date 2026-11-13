@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 020 implements internal stamp redemption with stock and balance serialization, a permanent receipt and audit. It rejects ledgers with expiring awards until lot accounting is implemented. No redemption route or runtime grant is enabled.
+
 The QR success integration fixture exercises the opt-in HTTP flow from verified sessions through the journal and concurrent duplicate scans. Standard startup still leaves the routes disabled.
 
 An explicitly composed test application can exercise QR issue/consume routes with verified bearer sessions. Normal startup does not register them; no client scanner or rollout is enabled.

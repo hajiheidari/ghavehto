@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,randomUUID} from 'node:crypto';
 import {test} from 'node:test';
 import pg from 'pg';
 import {createApp} from '../src/nest/app.js';
@@ -60,6 +60,36 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       [{id:entryId,user_id:customer.id,award_actor_id:staff.id,units:1}]);
     assert.deepEqual((await db.query('SELECT entry_id FROM stamp_qr_tokens')).rows,[{entry_id:entryId}]);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_awarded'")).rowCount,1);
+    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),9,'award','TEST balance',now())`,[customer.id,cafe.id,program.id]);
+    const {rows:rewards}=await db.query<{id:string}>(`INSERT INTO stamp_rewards(cafe_id,program_id,program_version,stock,active)
+      VALUES($1,$2,1,1,true),($1,$2,1,1,true) RETURNING id`,[cafe.id,program.id]);
+    const sql='SELECT public.redeem_stamp_reward($1,$2,$3) AS id';
+    const redeem=async (rewardId:string,operation:string)=>{
+      const client=await db!.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL ROLE ghahvehto_stamp_redeemer');
+        const {rows:[row]}=await client.query<{id:string}>(sql,[customer.id,rewardId,operation]);
+        await client.query('COMMIT');
+        return row.id;
+      } catch(error) {await client.query('ROLLBACK');throw error;}
+      finally {client.release();}
+    };
+    const attempts=rewards.map(({id})=>({id,operation:randomUUID()}));
+    const results=await Promise.allSettled(attempts.map(a=>redeem(a.id,a.operation)));
+    assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+    const winner=results.findIndex(r=>r.status==='fulfilled');
+    const won=results[winner],lost=results[1-winner];
+    assert.equal(won.status,'fulfilled');
+    assert.equal(lost.status,'rejected');
+    assert.equal(lost.reason.code,'22023');
+    assert.equal(await redeem(attempts[winner].id,attempts[winner].operation),won.value);
+    await assert.rejects(redeem(attempts[1-winner].id,attempts[winner].operation),{code:'23505'});
+    assert.deepEqual((await db.query('SELECT stock FROM stamp_rewards ORDER BY stock')).rows,[{stock:0},{stock:1}]);
+    assert.deepEqual((await db.query("SELECT units FROM stamp_entries WHERE kind='spend'")).rows,[{units:-10}]);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_redeemed'")).rowCount,1);
+    await assert.rejects(runtime.query(sql,[customer.id,attempts[winner].id,randomUUID()]),{code:'42501'});
   } finally {
     try {
       await server?.app.close();

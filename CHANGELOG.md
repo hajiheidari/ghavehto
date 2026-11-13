@@ -1,5 +1,7 @@
 # Changelog
 
+- Added internal atomic stamp redemption with versioned cost, stock, balance and idempotent receipts.
+
 - Added an isolated HTTP integration test for successful QR awards and concurrent replay.
 
 - Added opt-in QR HTTP routes with strict payload validation; normal startup leaves them unregistered.
