@@ -1,5 +1,7 @@
 # Test plan and execution
 
+Stamp QR issuance checks cover a shared quota across branches, inclusion of consumed and expired codes within the issuance window, and reopening after that window.
+
 Stamp QR integration covers expiry, incorrect branch, one successful consumption, replay rejection and receipt linkage. The ordinary application role cannot consume tokens.
 
 The PostgreSQL stamp fixture checks exact retry, conflicting payload, branch and version rejection, no self-award, audit uniqueness and no general runtime execution.

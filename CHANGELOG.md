@@ -1,5 +1,7 @@
 # Changelog
 
+- Limited internal stamp QR issuance to five tokens per recipient in a rolling minute, across all branches.
+
 - Added internal expiring single-use QR tokens and atomic stamp consumption.
 
 - Added an internal single-stamp transaction that checks branch authority and returns the original receipt on an identical retry.

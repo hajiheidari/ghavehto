@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 018 adds a database-enforced rolling issuance limit across all branches. Public QR routes and verified-session wiring remain pending.
+
 Migration 017 implements internal stamp QR issue/consume with hash-only storage, 90-second expiry and branch binding. No HTTP routes, QR screen or general runtime permissions are enabled; session wiring and issuance throttling remain pending.
 
 Migration 016 adds a restricted internal one-stamp capability, operation replay protection and atomic audit. It is not granted to the web/API runtime. The QR/visit proof, rate limits, expiry and redemption are still pending before activation.

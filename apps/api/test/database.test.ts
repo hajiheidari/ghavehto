@@ -146,6 +146,18 @@ test('PostgreSQL migrations are repeatable; RLS isolates café and branch access
       assert.deepEqual((await client.query('SELECT entry_id,consumed_at IS NOT NULL AS consumed FROM stamp_qr_tokens WHERE token_hash=sha256(convert_to($1,\'UTF8\'))',[qr.token])).rows,
         [{entry_id:receipt.id,consumed:true}]);
       assert.equal((await client.query('SELECT id FROM stamp_entries WHERE id=$1 AND units=1',[receipt.id])).rowCount,1);
+      await client.query('SET LOCAL ROLE ghahvehto_stamp_qr');
+      for(let i=0;i<3;i++) await client.query(issueQr,[ids.owner,ids.a,ids.branchB,program.id]);
+      await client.query('SAVEPOINT qr_rate');
+      await assert.rejects(client.query(issueQr,qrParams),{code:'54000'});
+      await client.query('ROLLBACK TO SAVEPOINT qr_rate');
+      await client.query('RELEASE SAVEPOINT qr_rate');
+      await client.query('RESET ROLE');
+      assert.equal((await client.query('SELECT count(*)::int AS total FROM stamp_qr_tokens WHERE recipient_id=$1',[ids.owner])).rows[0].total,5);
+      await client.query("UPDATE stamp_qr_tokens SET issued_at=clock_timestamp()-interval '61 seconds' WHERE recipient_id=$1",[ids.owner]);
+      await client.query('SET LOCAL ROLE ghahvehto_stamp_qr');
+      assert.match((await client.query(issueQr,qrParams)).rows[0].token,/^[0-9a-f]{64}$/);
+      await client.query('RESET ROLE');
       await client.query('SET LOCAL ROLE ghahvehto_app');
       assert.equal((await client.query('SELECT id FROM cafes')).rowCount, 0);
       await client.query("SELECT set_config('app.user_id',$1,true)", [ids.owner]);
