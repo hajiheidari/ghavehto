@@ -1,5 +1,7 @@
 # Changelog
 
+- Added an operator-only, read-only stamp reconciliation report for legacy spends, reversals and expiry entries.
+
 - Stamp redemption excludes expired awards and records immutable allocations, spending earliest expiry first.
 
 - Added internal atomic stamp redemption with versioned cost, stock, balance and idempotent receipts.

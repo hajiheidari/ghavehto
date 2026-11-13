@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL redemption fixture checks reconciliation counts for legacy spends, reversals and expiry entries, historical lot totals, recipient isolation and denied runtime access.
+
 The redemption fixture includes expired, soon-expiring and later-expiring stamps. Concurrent redemption checks both the single spend and the exact earliest-expiry allocation. The same fixture verifies that the runtime login cannot read allocations and that PostgreSQL rejects updates, deletes, and truncation.
 
 The disposable QR fixture also races two different rewards against one stamp balance, then checks one debit, one stock decrement, one audit, matching retry and conflicting retry.

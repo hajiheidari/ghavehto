@@ -103,6 +103,27 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await assert.rejects(db.query('UPDATE stamp_spend_allocations SET units=1'),{code:'55000'});
     await assert.rejects(db.query('DELETE FROM stamp_spend_allocations'),{code:'55000'});
     await assert.rejects(db.query('TRUNCATE stamp_spend_allocations'),{code:'55000'});
+
+    const inspect='SELECT * FROM public.inspect_stamp_reconciliation($1,$2,$3,1,now())';
+    const scope=[customer.id,cafe.id,program.id];
+    assert.deepEqual((await db.query(inspect,scope)).rows,[{
+      legacy_spend_count:'0',reversal_count:'0',expiry_entry_count:'0',
+      expired_unspent_units:'100',active_unspent_units:'2',
+    }]);
+    await assert.rejects(runtime.query(inspect,scope),{code:'42501'});
+    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'spend','TEST legacy',now()),
+            ($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now())`,scope);
+    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
+      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'reversal','TEST reversal',now(),$4)`,[...scope,entryId]);
+    assert.deepEqual((await db.query(inspect,scope)).rows,[{
+      legacy_spend_count:'1',reversal_count:'1',expiry_entry_count:'1',
+      expired_unspent_units:'100',active_unspent_units:'2',
+    }]);
+    assert.deepEqual((await db.query(inspect,[staff.id,cafe.id,program.id])).rows,[{
+      legacy_spend_count:'0',reversal_count:'0',expiry_entry_count:'0',
+      expired_unspent_units:'0',active_unspent_units:'0',
+    }]);
   } finally {
     try {
       await server?.app.close();
