@@ -114,6 +114,50 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       } finally {await client.query('ROLLBACK');client.release();}
     });
 
+    await t.test('full spend reversal restores the same valid lots once and permits safe re-spending',async()=>{
+      const who=await user();
+      await award(who,6);
+      const {rows:[spent]}=await pool.query(spend,[who,randomUUID(),5,'TEST refundable debit']);
+      const before=(await pool.query('SELECT clock_timestamp()::text AS at')).rows[0].at;
+      assert.equal(await balance(who),'1');
+      const reverse='SELECT public.reverse_funded_star_spend($1,$2,$3,$4) AS id';
+      const args=[who,spent.id,randomUUID(),'TEST recovery reason'];
+      await assert.rejects(pool.query(reverse,[await user(),spent.id,randomUUID(),args[3]]),{code:'22023'});
+      const results=await Promise.all([pool.query(reverse,args),pool.query(reverse,args)]);
+      assert.deepEqual(results[0].rows,results[1].rows);
+      assert.equal(await balance(who),'6');
+      assert.equal(await balance(who,before),'1');
+      await assert.rejects(pool.query(reverse,[who,spent.id,args[2],'TEST changed reason']),{code:'23505'});
+      await assert.rejects(pool.query(reverse,[who,spent.id,randomUUID(),args[3]]),{code:'22023'});
+      const race=await Promise.allSettled([1,2].map(()=>pool.query(spend,[who,randomUUID(),5,'TEST reuse restored lot'])));
+      assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+      assert.equal(await balance(who),'1');
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='loyalty.star_spend_reversed'")).rowCount,1);
+      assert.equal((await pool.query('SELECT 1 FROM tier_entries')).rowCount,0);
+      assert.equal((await pool.query('SELECT 1 FROM stamp_entries')).rowCount,0);
+      for(const sql of ['UPDATE star_spend_reversals SET spend_id=entry_id','DELETE FROM star_spend_reversals','TRUNCATE star_spend_reversals'])
+        await assert.rejects(pool.query(sql),{code:'55000'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_app');
+        await assert.rejects(client.query(reverse,args),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+    });
+
+    await t.test('reversal cannot revive expired original lots',async()=>{
+      const who=await user();
+      const {rows:[lot]}=await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at,expires_at,funding_budget_id)
+        VALUES($1,gen_random_uuid(),3,'award','TEST expired source',clock_timestamp()-interval '2 hours',
+          clock_timestamp()-interval '1 hour',$2) RETURNING id`,[who,budget.id]);
+      const {rows:[spent]}=await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
+        VALUES($1,gen_random_uuid(),-3,'spend','TEST previous debit',clock_timestamp()-interval '90 minutes') RETURNING id`,[who]);
+      await pool.query('INSERT INTO star_spend_allocations(debit_id,award_id,units) VALUES($1,$2,3)',[spent.id,lot.id]);
+      await assert.rejects(pool.query('SELECT public.reverse_funded_star_spend($1,$2,$3,$4)',
+        [who,spent.id,randomUUID(),'TEST expired recovery']),{code:'22023'});
+      assert.equal(await balance(who),'0');
+      assert.equal((await pool.query('SELECT 1 FROM star_entries WHERE reversal_of=$1',[spent.id])).rowCount,0);
+    });
+
     await t.test('legacy history, invalid parameters, deleted accounts and runtime access fail closed',async()=>{
       const who=await user();await award(who,3);
       await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)

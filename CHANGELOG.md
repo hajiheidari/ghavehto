@@ -1,5 +1,7 @@
 # Changelog
 
+- Restore full internal star spends to their still-valid original lots through audited immutable reversals.
+
 - Record funded-star lot expiry once without double-deducting balance or refunding budgets; wait for test backend disconnects during cleanup.
 
 - Add internal serialized star spending with immutable earliest-expiry allocations, idempotent audit and expiry-aware historical balances.

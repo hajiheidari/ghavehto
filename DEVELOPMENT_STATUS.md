@@ -38,6 +38,8 @@ Migration 038 adds maintenance-only star debits and immutable earliest-expiry lo
 
 Migration 039 adds maintenance-only expiry accounting for the exact unspent remainder of a funded award. It shares the spending account lock, records one immutable linkage and audit event, rejects early or duplicate expiry and does not refund the funding budget. Expiry records do not deduct active balance a second time. No scheduler or runtime grant is enabled.
 
+Migration 040 adds full maintenance-only spend reversals with a reason and immutable linkage. Account serialization and original-lot accounting allow safe re-spending without duplicating credits. A reversal is refused when any original lot has expired; partial or mixed-expiry recovery and award reversals remain separate work. Funding budgets are never refunded by spend reversal. No reward fulfillment, runtime permission or public endpoint is introduced.
+
 ## Other open gates
 
 Migration 037 lets database maintenance compare issued stars with funded and remaining units. A mismatch is reported without changing the journal or budget.

@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Star spend reversal · 2026-11-14
+
+Full PostgreSQL/PostGIS suite passed 25 tests with zero failures/skips after migration 040. The targeted fixture reports 7 tests including parent accounting. New checks cover concurrent exact replay, changed reason and duplicate reversal denial, recipient isolation, historical cutoff before reversal, restoration to original lots, competing re-spends, immutable reversal linkage, runtime denial, unchanged stamp/tier journals and rejection of expired original lots. Existing spending and partial-expiry tests still pass with net allocation accounting.
+
 ## Star expiry · 2026-11-14
 
 Full PostgreSQL/PostGIS suite passed 23 tests, zero failures/skips after migration 039. The added case verifies partial historical spending, exact remainder expiry, concurrent replay, changed/duplicate/early/wrong-account rejection, immutable expiry linkage, runtime denial, unchanged budget and continued spending from a separate valid lot. An initial targeted run passed business assertions but failed because FORCE-dropping the test database could interrupt a disconnecting backend; cleanup now retries ordinary DROP after pool shutdown, matching the existing fixture pattern. The successful full rerun includes this correction.
