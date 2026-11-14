@@ -1,5 +1,7 @@
 # Changelog
 
+- Reject standalone star refunds for open reward reservations until atomic cancellation is implemented.
+
 - Atomically reserve internal star rewards with bounded stock, lot-backed debits and immutable replay receipts; keep delivery disabled.
 
 - Add maintenance-only star account reconciliation of journal totals, spendable units and pending expiries.

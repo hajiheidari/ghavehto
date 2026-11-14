@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Reserved-spend reversal guard · 2026-11-14
+
+After migration 043 the full PostgreSQL/PostGIS suite passed 27 tests, zero failures/skips. The dedicated star fixture also passed all 9 reported tests on the exact pinned Node 24.19.0 Docker image against the disposable database. The reservation test now verifies standalone reversal is rejected, no reversal journal entry survives, the balance stays debited, stock stays reserved and replay still returns the original receipt. Free-standing internal spends remain reversible. This closes credit recovery outside an atomic reservation cancellation path; that cancellation path is still pending.
+
 ## Star reward reservation · 2026-11-14
 
 Full PostgreSQL/PostGIS suite passed 27 tests with zero failures/skips after migration 042. The star fixture has eight subtests plus parent accounting. New checks race different rewards against one balance and different accounts against one stock unit, then verify permanent concurrent replay receipts, changed reward conflict, disabled/default-inactive reward rejection, used operation conflict, unchanged stock after an accounting reversal, immutable receipts and runtime denial. Failed attempts leave balance and stock unchanged. OpenAPI export/client drift and tracked-schema no-diff passed. Host setup was rerun from its saved installation script successfully. Manually started API health/bootstrap and Persian RTL SSR responded successfully after the production build completed.

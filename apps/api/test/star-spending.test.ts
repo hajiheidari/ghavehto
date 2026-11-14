@@ -192,8 +192,11 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       await pool.query(spend,[second,reused,1,'TEST direct debit']);
       await assert.rejects(pool.query(redeem,[second,[other,reward][winning].id,reused]),{code:'23505'});
       const {rows:[receipt]}=await pool.query('SELECT entry_id FROM star_redemptions WHERE id=$1',[won.value.rows[0].id]);
-      // Accounting reversal does not assert cancellation or refill reward inventory.
-      await pool.query('SELECT public.reverse_funded_star_spend($1,$2,$3,$4)',[who,receipt.entry_id,randomUUID(),'TEST accounting recovery']);
+      // An open reservation must not release credits through standalone reversal.
+      await assert.rejects(pool.query('SELECT public.reverse_funded_star_spend($1,$2,$3,$4)',
+        [who,receipt.entry_id,randomUUID(),'TEST accounting recovery']),{code:'22023'});
+      assert.equal(await balance(who),'1');
+      assert.equal((await pool.query('SELECT 1 FROM star_entries WHERE reversal_of=$1',[receipt.entry_id])).rowCount,0);
       assert.equal((await pool.query('SELECT stock FROM star_rewards WHERE id=$1',[target.id])).rows[0].stock,0);
       assert.deepEqual((await pool.query(redeem,args)).rows,won.value.rows);
       for(const sql of ['UPDATE star_redemptions SET user_id=user_id','DELETE FROM star_redemptions','TRUNCATE star_redemptions'])
