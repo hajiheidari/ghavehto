@@ -12,7 +12,7 @@ The subsequent Persian HTTP error/request-ID checkpoint `34221b1` passed all fiv
 
 ## Implemented M1 foundations
 
-- Pinned Node 24.19.0 / pnpm 11.25.0 / Nest 11.1.17 / Next 16.4.2 / Flutter 3.47.5, frozen lockfile, package-age verification and explicit build-script allowlist.
+- Pinned Node 24.19.0 / pnpm 11.25.0 / Nest 11.1.18 / Next 16.4.2 / Flutter 3.47.5, frozen lockfile, package-age verification and explicit build-script allowlist.
 - Persian RTL Next SSR connected to the real Nest bootstrap; honest empty/error states and protected dashboard shells. No imported commercial directory data.
 - PostgreSQL/PostGIS migrations 001–007, tenant/branch RLS, checksum-verified migrations and readiness through restricted credentials.
 - Persistent OTP HMACs, expiry, attempt/send budgets, cooldown, single-use consumption, resend supersession, provider cancellation/deadline and bounded expiry maintenance.
@@ -29,6 +29,14 @@ Initial public OTP/login routes and SMS delivery are NOT enabled. The only enabl
 The founder selected SMS.ir. Its Verify Send adapter is implemented and tested with an injected offline transport; it is not wired to startup. Genuine sign-in still needs an existing account and approved template, secure credentials (never chat/Git), and separate authorization for a narrowly scoped real test send.
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
+
+## Dependency security checkpoint · 2026-11-15
+
+The owner-preview code `1ed5c1016b96e280594b161ed43998c363172f6c` passed Foundation CI [43647945317](https://github.com/hajiheidari/ghavehto/actions/runs/43647945317). It also passed all 65 compiled API/database tests on the exact Node 24.19.0 image, with zero failures/skips.
+
+A production dependency audit then reported 11 advisories (6 high, 4 moderate, 1 low) in previously pinned dependencies. Nest common/core/platform-express are now pinned to the compatible 11.1.18 patch; targeted same-major overrides select path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 for affected ranges. A repeat production audit reports no known vulnerabilities. Frozen lock/supply-chain checks, build/typecheck, generated contract export/no-diff/drift, SSR smoke, 3 contract tests, 12 API unit tests and 1 probe passed. All 65 compiled tests, including 53 database tests, passed again on Node 24.19.0 after the security patches. Foundation CI now enforces production audit at high severity; this patch needs its own exact-head remote result, never inferred from the earlier CI.
+
+Continue from the pushed PR #1 head with the next-work list below. Core services stay free, all commercial data/budgets remain unseeded and SMS/public launch/real payouts remain disabled. Local Flutter/container completion still needs the already-saved environment network change; independent product work must continue while it is pending.
 
 ## M4 private owner experience preview · 2026-11-15
 

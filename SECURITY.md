@@ -14,6 +14,10 @@ Current scope is loopback development, with real transactional identity/session/
 - OTP retention: a fixed argument-free SECURITY DEFINER routine has safe search_path, qualified tables, PUBLIC execution revoked, one advisory lease, SKIP LOCKED and batches of at most 1000 expired challenges older than 24h plus 1000 verification windows older than 24h. It cannot prune current hourly budgets; the identity role gets EXECUTE, not arbitrary DELETE. Counts-only audit is appended. Users/sessions/audit retention is untouched.
 - HTTP: strict DTO validation, parameterized SQL, generic Persian errors with server-generated request IDs, no raw exception/SQL/credential response, no-store, Helmet baseline headers and no wildcard CORS. Bearer APIs do not accept ambient cookie authority. TS authenticated helpers omit cookies/reject redirects; Dart session helpers disable redirects and bound the complete send/read.
 
+## Production dependency checkpoint · 2026-11-15
+
+The production audit reported 11 advisories in the previous lock (6 high, 4 moderate, 1 low). The compatible Nest 11.1.18 patch addresses GHSA-36xv-jgw5-4q75; targeted same-major overrides select path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 for affected ranges. A repeat production audit reported no known vulnerabilities and all 65 compiled API/database tests passed on pinned Node 24.19.0 after the changes. The Foundation workflow enforces the high-severity production audit. Advisory scan scope is production dependencies; operational, device, privacy and independent security review remain M6 gates.
+
 ## Activation and release gates
 
 An approved provider, secure key/credential provisioning and explicit real-send authorization are required for initial sign-in. Input IP must come from a trusted transport boundary and reviewed reverse-proxy policy. Secret rotation/recovery, real delivery reconciliation, transport/global abuse limits, HTTPS/TLS, request logging redaction/monitoring, web secure cookies/CSRF and mobile secure storage must be completed/reviewed before public authentication.

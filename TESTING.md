@@ -1,5 +1,12 @@
 # Test plan and execution
 
+## Production dependency remediation · 2026-11-15
+
+Production audit initially reported 11 advisories: 6 high, 4 moderate, 1 low. Nest 11.1.18 plus targeted compatible path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 overrides reduced the repeat `pnpm audit --prod` report to no known vulnerabilities. Frozen installation/supply-chain checks, workspace build/typecheck, OpenAPI export with no additional schema drift, client drift, SSR smoke, 3 contract tests, 12 API unit tests and 1 probe passed. The complete compiled suite then passed 65 tests, zero failures/skips, on verified Node 24.19.0 after the patches; 53 are database-suite outcomes including parent accounting. The existing HTTP fixtures exercise routing, malformed JSON/error handling, OTP/session/tenant flows and real Next SSR with the patched packages. No CVE exploit reproduction or complete M6 security review is claimed. Foundation CI now runs `pnpm audit --prod --audit-level high`.
+
+The preceding code checkpoint `1ed5c1016b96e280594b161ed43998c363172f6c` passed Foundation CI 43647945317; the dependency patch is a separate executable checkpoint and requires its own CI result.
+
+
 ## Private owner experience preview · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 53 tests, zero failures/skips after migration 051. A new disposable database test uses real opaque sessions and a non-owner NOINHERIT runtime login to verify missing/spoofed/consumer/staff/cross-café denial, owner-only data, no-store, cursor validation, 52-item pagination, immediate owner revocation and no raw claims privilege. Actual built Next→Nest SSR checks Persian RTL, escaped titles, exact budget display above Number.MAX_SAFE_INTEGER, absence of credentials in HTML and denied/signed-out states. Workspace build/typecheck, 12 API unit tests, 1 probe, 3 contract tests, OpenAPI export, generated-client drift and independent SSR smoke passed. The default profile/experience routes now explicitly guard absent runtime before service dereference and are checked to return 401. No browser visual, local Flutter/native or public rollout claim is made.
