@@ -33,7 +33,7 @@ test('real identity verification is atomic, private and grants no commercial pri
         assert.equal((await client.query('SELECT id FROM users WHERE id=$1 AND phone_verified_at IS NOT NULL',[id])).rowCount,1);
         registered.push(id);
       };
-      const [ra, rb] = await Promise.all([a.identity.verify(ca.challengeId, phone, a.code(), ip,onRegistration), b.identity.verify(cb.challengeId, phone, b.code(), ip,onRegistration)]);
+      const [ra, rb] = await Promise.all([a.identity.verify(ca.challengeId, phone, a.code(), ip,{onRegistration}), b.identity.verify(cb.challengeId, phone, b.code(), ip,{onRegistration})]);
       assert.ok(ra); assert.ok(rb); assert.equal(ra.userId, rb.userId);
       assert.deepEqual(registered,[ra.userId]);
       assert.notEqual(ra.tokens.accessToken, rb.tokens.accessToken);

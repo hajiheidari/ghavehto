@@ -1,5 +1,7 @@
 # Changelog
 
+- Bind optional referral attribution to newly created, verified identities.
+
 - Add a server-only transaction hook that runs once for a newly verified identity.
 
 - Add internal expiry-aware inspection of funded star balances.

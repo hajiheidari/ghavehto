@@ -1,3 +1,4 @@
+import {identityTransaction} from '../src/nest/identity-transaction.js';
 import {hashReferralCode,issueReferralLink} from '../src/nest/referral-links.js';
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
@@ -299,6 +300,22 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await db.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
       VALUES($1,gen_random_uuid(),-1,'spend','TEST legacy star spend',now())`,[customer.id]);
     assert.deepEqual((await db.query(inspectStars,[customer.id,future])).rows,[{units:null}]);
+    const registrationLink=await issueReferralLink(db,staff.id,60);
+    const invitee=await identityTransaction(runtime,async client=>{
+      await client.query("SELECT set_config('ghahvehto.registration_referral',$1,true)",[hashReferralCode(registrationLink.code).toString('hex')]);
+      const {rows:[row]}=await client.query(`INSERT INTO users(phone_hash,phone_ciphertext,phone_verified_at)
+        VALUES($1,$2,now()) RETURNING id`,[randomBytes(32),randomBytes(32)]);
+      return row.id;
+    });
+    assert.deepEqual((await db.query('SELECT inviter_id,link_id FROM referral_attributions WHERE invitee_id=$1',[invitee])).rows,
+      [{inviter_id:staff.id,link_id:registrationLink.id}]);
+    const skipped=await identityTransaction(runtime,async client=>{
+      await client.query("SELECT set_config('ghahvehto.registration_referral',$1,true)",[hashReferralCode(issuedLink.code).toString('hex')]);
+      const {rows:[row]}=await client.query(`INSERT INTO users(phone_hash,phone_ciphertext,phone_verified_at)
+        VALUES($1,$2,now()) RETURNING id`,[randomBytes(32),randomBytes(32)]);
+      return row.id;
+    });
+    assert.equal((await db.query('SELECT 1 FROM referral_attributions WHERE invitee_id=$1',[skipped])).rowCount,0);
   } finally {
     try {
       await server?.app.close();
