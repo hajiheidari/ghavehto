@@ -1,5 +1,7 @@
 # Changelog
 
+- Append non-spendable tier awards with UTC year assignment and scoped qualification totals.
+
 - Add internal issuance of platform stars against a funded budget.
 
 - Reconcile an allocated spend reversal when its original stamp awards remain valid.

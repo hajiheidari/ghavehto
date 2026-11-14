@@ -238,6 +238,23 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.equal((await db.query('SELECT units FROM star_entries')).rows[0].units,5);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stars_awarded'")).rowCount,1);
     assert.equal((await db.query('SELECT 1 FROM tier_entries')).rowCount,0);
+    const awardTier='SELECT public.award_tier_points($1,$2,$3,$4) AS id';
+    const inspectTier='SELECT public.inspect_tier_qualification($1,$2,$3) AS units';
+    const tierArgs=[customer.id,randomUUID(),8,'2025-01-01T00:00:00Z'];
+    await assert.rejects(runtime.query(awardTier,tierArgs),{code:'42501'});
+    await assert.rejects(runtime.query(inspectTier,[customer.id,2025,'2025-12-31T00:00:00Z']),{code:'42501'});
+    const tierRuns=await Promise.all([1,2].map(()=>db!.query(awardTier,tierArgs)));
+    assert.deepEqual(tierRuns[0].rows,tierRuns[1].rows);
+    await assert.rejects(db.query(awardTier,[customer.id,tierArgs[1],9,tierArgs[3]]),{code:'23505'});
+    await db.query(awardTier,[customer.id,randomUUID(),3,'2024-12-31T23:59:59Z']);
+    for(const [recipient,year,at,units] of [
+      [customer.id,2024,'2025-12-31T00:00:00Z','3'],
+      [customer.id,2025,'2025-12-31T00:00:00Z','8'],
+      [customer.id,2025,'2024-12-31T23:59:59Z','0'],
+      [staff.id,2025,'2025-12-31T00:00:00Z','0'],
+    ]) assert.deepEqual((await db.query(inspectTier,[recipient,year,at])).rows,[{units}]);
+    assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,1);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.tier_awarded'")).rowCount,2);
   } finally {
     try {
       await server?.app.close();
