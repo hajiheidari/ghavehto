@@ -1,5 +1,7 @@
 # Changelog
 
+- Add a server-only transaction hook that runs once for a newly verified identity.
+
 - Add internal expiry-aware inspection of funded star balances.
 
 - Generate internal referral codes with hash-only storage and scoped revocation.

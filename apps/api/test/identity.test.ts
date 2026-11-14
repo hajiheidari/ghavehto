@@ -28,8 +28,14 @@ test('real identity verification is atomic, private and grants no commercial pri
       // Separate OTP key epochs model overlapping challenges across a key rotation.
       const a = service(), b = service();
       const [ca, cb] = await Promise.all([a.otp.request(phone, ip), b.otp.request(phone, ip)]);
-      const [ra, rb] = await Promise.all([a.identity.verify(ca.challengeId, phone, a.code(), ip), b.identity.verify(cb.challengeId, phone, b.code(), ip)]);
+      const registered: string[] = [];
+      const onRegistration = async (client: import('pg').PoolClient, id: string) => {
+        assert.equal((await client.query('SELECT id FROM users WHERE id=$1 AND phone_verified_at IS NOT NULL',[id])).rowCount,1);
+        registered.push(id);
+      };
+      const [ra, rb] = await Promise.all([a.identity.verify(ca.challengeId, phone, a.code(), ip,onRegistration), b.identity.verify(cb.challengeId, phone, b.code(), ip,onRegistration)]);
       assert.ok(ra); assert.ok(rb); assert.equal(ra.userId, rb.userId);
+      assert.deepEqual(registered,[ra.userId]);
       assert.notEqual(ra.tokens.accessToken, rb.tokens.accessToken);
       assert.equal(await a.identity.verify(ca.challengeId, phone, a.code(), ip), null);
       assert.equal((await new SessionService(pool).authenticate(ra.tokens.accessToken))?.userId, ra.userId);

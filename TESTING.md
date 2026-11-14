@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The identity fixture checks that two successful concurrent verifications call the registration hook only once and that it can see the newly verified account.
+
 The PostgreSQL fixture checks star balance at the expiry boundary, account isolation, denied runtime access and unknown balance for unsupported history.
 
 The PostgreSQL fixture checks generated referral code hashing, role denial, scoped revocation and rejection of revoked links.

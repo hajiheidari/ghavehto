@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Identity verification now supports a transaction-local callback only for new verified registrations. Referral registration wiring and restricted database access remain pending; no HTTP handler provides the callback.
+
 Migration 033 provides a private expiry-aware funded star balance for award-only accounts. Unsupported historical adjustments return an unknown balance. Star spending is not enabled.
 
 Migration 032 adds internal issuance and revocation. It stores only hashes of random codes; public routing and tying attribution to a newly registered account remain pending.
