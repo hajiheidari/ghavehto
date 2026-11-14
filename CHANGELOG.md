@@ -1,5 +1,7 @@
 # Changelog
 
+- Record expired stamp remainders once, preserving both the original award and its allocations.
+
 - Added owner-only allocation of documented legacy stamp spends without rewriting the journal.
 
 - Added an operator-only, read-only stamp reconciliation report for legacy spends, reversals and expiry entries.

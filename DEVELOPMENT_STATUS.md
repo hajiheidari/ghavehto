@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 024 records the remaining units of an expired stamp award through a maintenance-only function. Redemption understands linked expiry entries. Unlinked legacy expiry and reversals still need separate reconciliation; no worker or endpoint is enabled.
+
 Migration 023 allows maintenance to attach evidence-backed lot allocations to legacy spends without altering past entries. Histories with reversals or explicit expiry entries still require separate rules.
 
 Migration 022 adds an owner-only diagnostic scoped to one user, café and program version. Its lot totals are raw accounting evidence, not a spendable balance. Mixed historical records remain blocked until reconciled.

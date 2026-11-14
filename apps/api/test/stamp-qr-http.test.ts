@@ -121,13 +121,32 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await Promise.all([1,2].map(()=>db!.query(allocate,[legacy.id,[later.id],[1]])));
     await assert.rejects(db.query(allocate,[legacy.id,[entryId],[1]]),{code:'23505'});
     assert.equal((await db.query(inspect,scope)).rows[0].legacy_spend_count,'0');
+    const {rows:[historical]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      SELECT $1,$2,$3,1,gen_random_uuid(),-30,'spend','TEST dated spend',effective_at FROM stamp_entries WHERE id=$4
+      RETURNING id`,[...scope,expired.id]);
+    const expire='SELECT public.record_stamp_award_expiry($1) AS id';
+    await assert.rejects(runtime.query(expire,[expired.id]),{code:'42501'});
+    await assert.rejects(db.query(expire,[soon.id]),{code:'22023'});
+    await assert.rejects(db.query(expire,[expired.id]),{code:'22023'});
+    await db.query(allocate,[historical.id,[expired.id],[30]]);
+    const expiryRuns=await Promise.all([1,2].map(()=>db!.query(expire,[expired.id])));
+    const expiryId=expiryRuns[0].rows[0].id;
+    assert.ok(expiryId);
+    assert.equal(expiryRuns[1].rows[0].id,expiryId);
+    assert.deepEqual((await db.query("SELECT id,units FROM stamp_entries WHERE kind='expire'")).rows,[{id:expiryId,units:-70}]);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_expired'")).rowCount,1);
+    assert.equal((await db.query(inspect,scope)).rows[0].expired_unspent_units,'0');
+    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),9,'award','TEST after expiry',now())`,scope);
+    assert.ok(await redeem(attempts[1-winner].id,randomUUID()));
+    assert.equal((await db.query(inspect,scope)).rows[0].active_unspent_units,'0');
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
       VALUES($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now())`,scope);
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
       VALUES($1,$2,$3,1,gen_random_uuid(),-1,'reversal','TEST reversal',now(),$4)`,[...scope,entryId]);
     assert.deepEqual((await db.query(inspect,scope)).rows,[{
-      legacy_spend_count:'0',reversal_count:'1',expiry_entry_count:'1',
-      expired_unspent_units:'100',active_unspent_units:'1',
+      legacy_spend_count:'0',reversal_count:'1',expiry_entry_count:'2',
+      expired_unspent_units:'0',active_unspent_units:'0',
     }]);
     assert.deepEqual((await db.query(inspect,[staff.id,cafe.id,program.id])).rows,[{
       legacy_spend_count:'0',reversal_count:'0',expiry_entry_count:'0',
