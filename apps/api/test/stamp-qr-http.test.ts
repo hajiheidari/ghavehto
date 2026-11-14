@@ -195,11 +195,24 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await assert.rejects(redeem(newReward.id,randomUUID()),{code:'22023'});
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
       VALUES($1,$2,$3,1,gen_random_uuid(),10,'award','TEST after reversal',now())`,scope);
-    assert.ok(await redeem(newReward.id,randomUUID()));
+    const restoredReceipt=await redeem(newReward.id,randomUUID());
+    const {rows:[restoredSpend]}=await db.query('SELECT entry_id FROM stamp_redemptions WHERE id=$1',[restoredReceipt]);
+    const linkSpend='SELECT public.link_stamp_spend_reversal($1)';
+    const restore=await reverseAward(restoredSpend.entry_id,10);
+    await assert.rejects(runtime.query(linkSpend,[restore]),{code:'42501'});
+    await Promise.all([1,2].map(()=>db!.query(linkSpend,[restore])));
+    assert.equal((await db.query(inspect,scope)).rows[0].active_unspent_units,'10');
+    assert.equal((await db.query('SELECT stock FROM stamp_rewards WHERE id=$1',[newReward.id])).rows[0].stock,0);
+    const {rows:[nextReward]}=await db.query(`INSERT INTO stamp_rewards(cafe_id,program_id,program_version,stock,active)
+      VALUES($1,$2,1,1,true) RETURNING id`,[cafe.id,program.id]);
+    assert.ok(await redeem(nextReward.id,randomUUID()));
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_spend_reversal_linked'")).rowCount,1);
+    const expiredRestore=await reverseAward(historical.id,30);
+    await assert.rejects(db.query(linkSpend,[expiredRestore]),{code:'22023'});
     const spentReversal=await reverseAward(entryId,-1);
     await assert.rejects(db.query(linkReversal,[spentReversal]),{code:'22023'});
     assert.deepEqual((await db.query(inspect,scope)).rows,[{
-      legacy_spend_count:'0',reversal_count:'2',expiry_entry_count:'3',
+      legacy_spend_count:'0',reversal_count:'4',expiry_entry_count:'3',
       expired_unspent_units:'0',active_unspent_units:'0',
     }]);
     assert.deepEqual((await db.query(inspect,[staff.id,cafe.id,program.id])).rows,[{

@@ -1,5 +1,7 @@
 # Changelog
 
+- Reconcile an allocated spend reversal when its original stamp awards remain valid.
+
 - Reconcile full reversals of unused stamp awards without changing journal entries.
 
 - Reconcile documented stamp expiries that exhausted multiple awards in one entry.
