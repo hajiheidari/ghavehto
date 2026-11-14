@@ -111,14 +111,23 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       expired_unspent_units:'100',active_unspent_units:'2',
     }]);
     await assert.rejects(runtime.query(inspect,scope),{code:'42501'});
+    const {rows:[legacy]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'spend','TEST legacy',now()) RETURNING id`,scope);
+    const allocate='SELECT public.allocate_legacy_stamp_spend($1,$2,$3)';
+    await assert.rejects(runtime.query(allocate,[legacy.id,[later.id],[1]]),{code:'42501'});
+    await assert.rejects(db.query(allocate,[legacy.id,[expired.id],[1]]),{code:'22023'});
+    await assert.rejects(db.query(allocate,[legacy.id,[soon.id],[1]]),{code:'22023'});
+    assert.equal((await db.query(inspect,scope)).rows[0].legacy_spend_count,'1');
+    await Promise.all([1,2].map(()=>db!.query(allocate,[legacy.id,[later.id],[1]])));
+    await assert.rejects(db.query(allocate,[legacy.id,[entryId],[1]]),{code:'23505'});
+    assert.equal((await db.query(inspect,scope)).rows[0].legacy_spend_count,'0');
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
-      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'spend','TEST legacy',now()),
-            ($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now())`,scope);
+      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now())`,scope);
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
       VALUES($1,$2,$3,1,gen_random_uuid(),-1,'reversal','TEST reversal',now(),$4)`,[...scope,entryId]);
     assert.deepEqual((await db.query(inspect,scope)).rows,[{
-      legacy_spend_count:'1',reversal_count:'1',expiry_entry_count:'1',
-      expired_unspent_units:'100',active_unspent_units:'2',
+      legacy_spend_count:'0',reversal_count:'1',expiry_entry_count:'1',
+      expired_unspent_units:'100',active_unspent_units:'1',
     }]);
     assert.deepEqual((await db.query(inspect,[staff.id,cafe.id,program.id])).rows,[{
       legacy_spend_count:'0',reversal_count:'0',expiry_entry_count:'0',

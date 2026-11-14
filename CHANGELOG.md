@@ -1,5 +1,7 @@
 # Changelog
 
+- Added owner-only allocation of documented legacy stamp spends without rewriting the journal.
+
 - Added an operator-only, read-only stamp reconciliation report for legacy spends, reversals and expiry entries.
 
 - Stamp redemption excludes expired awards and records immutable allocations, spending earliest expiry first.

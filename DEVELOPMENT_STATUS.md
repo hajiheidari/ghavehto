@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 023 allows maintenance to attach evidence-backed lot allocations to legacy spends without altering past entries. Histories with reversals or explicit expiry entries still require separate rules.
+
 Migration 022 adds an owner-only diagnostic scoped to one user, café and program version. Its lot totals are raw accounting evidence, not a spendable balance. Mixed historical records remain blocked until reconciled.
 
 Migration 021 allocates stamp debits to valid awards by earliest expiry. Mixed expiring and legacy unallocated/reversal history remains blocked pending reconciliation. Public redemption is still disabled.

@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The isolated PostgreSQL fixture checks legacy allocation replay under concurrency, conflicting replay, denied runtime access, expired lots and exhausted lots.
+
 The PostgreSQL redemption fixture checks reconciliation counts for legacy spends, reversals and expiry entries, historical lot totals, recipient isolation and denied runtime access.
 
 The redemption fixture includes expired, soon-expiring and later-expiring stamps. Concurrent redemption checks both the single spend and the exact earliest-expiry allocation. The same fixture verifies that the runtime login cannot read allocations and that PostgreSQL rejects updates, deletes, and truncation.
