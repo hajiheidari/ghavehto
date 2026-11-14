@@ -343,6 +343,15 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     await assert.rejects(runtime.query(review,[latestReferral.id,2]),{code:'42501'});
     assert.deepEqual((await db.query(review,[latestReferral.id,2])).rows,[{decision:'review_volume'}]);
     assert.deepEqual((await db.query(review,[latestReferral.id,3])).rows,[{decision:'review_pending'}]);
+    const decision='SELECT public.record_referral_review($1,$2,$3,$4)';
+    const reviewArgs=[latestReferral.id,'eligible',3,'TEST confirmed review'];
+    await assert.rejects(runtime.query(decision,reviewArgs),{code:'42501'});
+    await assert.rejects(db.query(decision,[latestReferral.id,'eligible',2,'TEST over cap']),{code:'22023'});
+    await Promise.all([1,2].map(()=>db!.query(decision,reviewArgs)));
+    await assert.rejects(db.query(decision,[latestReferral.id,'rejected',3,'TEST conflicting decision']),{code:'23505'});
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.referral_reviewed'")).rowCount,1);
+    await assert.rejects(db.query('DELETE FROM referral_review_decisions'),{code:'55000'});
+    assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,3);
     await db.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1',[registered.userId]);
     assert.deepEqual((await db.query(review,[latestReferral.id,3])).rows,[{decision:'account_unavailable'}]);
   } finally {

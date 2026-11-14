@@ -1,5 +1,7 @@
 # Changelog
 
+- Store audited referral review decisions without issuing rewards.
+
 - Add private referral volume screening before any reward decisions.
 
 - Accept optional referral codes on the explicitly composed OTP verification route.
