@@ -219,6 +219,25 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       legacy_spend_count:'0',reversal_count:'0',expiry_entry_count:'0',
       expired_unspent_units:'0',active_unspent_units:'0',
     }]);
+    const {rows:[budget]}=await db.query(`INSERT INTO star_award_budgets(funded_units,remaining_units,active)
+      VALUES(7,7,true) RETURNING id`);
+    const awardStars='SELECT public.award_funded_stars($1,$2,$3,$4,$5) AS id';
+    const starOps=[randomUUID(),randomUUID()];
+    const starArgs=(op:string,amount:number)=>[customer.id,budget.id,op,amount,null];
+    await assert.rejects(runtime.query(awardStars,starArgs(starOps[0],5)),{code:'42501'});
+    await assert.rejects(db.query(awardStars,[...starArgs(randomUUID(),2).slice(0,4),new Date(0)]),{code:'22023'});
+    const starRace=await Promise.allSettled(starOps.map(op=>db!.query(awardStars,starArgs(op,5))));
+    const starWinner=starRace.findIndex(result=>result.status==='fulfilled');
+    assert.notEqual(starWinner,-1);
+    assert.equal(starRace.filter(result=>result.status==='fulfilled').length,1);
+    const starWon=starRace[starWinner];
+    assert.equal(starWon.status,'fulfilled');
+    assert.deepEqual((await db.query(awardStars,starArgs(starOps[starWinner],5))).rows,starWon.value.rows);
+    await assert.rejects(db.query(awardStars,starArgs(starOps[starWinner],1)),{code:'23505'});
+    assert.equal((await db.query('SELECT remaining_units FROM star_award_budgets WHERE id=$1',[budget.id])).rows[0].remaining_units,2);
+    assert.equal((await db.query('SELECT units FROM star_entries')).rows[0].units,5);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stars_awarded'")).rowCount,1);
+    assert.equal((await db.query('SELECT 1 FROM tier_entries')).rowCount,0);
   } finally {
     try {
       await server?.app.close();

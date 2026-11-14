@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 029 issues platform stars from a maintenance-provisioned budget with atomic debit, audit and replay handling. No budget is seeded; no runtime grant, public issuance or redemption is enabled.
+
 Migration 028 reconciles full historical spend reversals with fully allocated, still-valid original awards. It restores their lot balance without changing reward stock or the journal. Expired or mixed-validity restores remain blocked. The function remains maintenance-only.
 
 Migration 027 reconciles full negative reversals of unused stamp awards. Linked reversals reduce lot balances and do not block other valid redemptions. Restoring spent or expired units still requires separate rules.

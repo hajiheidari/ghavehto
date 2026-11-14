@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The isolated PostgreSQL fixture races funded star awards, verifies replay and expiry rollback, and checks that issuance leaves tier points untouched.
+
 The PostgreSQL fixture checks spend reversal replay, spendable restoration, unchanged reward stock, expired lot refusal and denied runtime access.
 
 The PostgreSQL fixture checks award reversal linkage, denied runtime access, concurrent replay, one audit record, zero remaining units and rejection of allocated awards.

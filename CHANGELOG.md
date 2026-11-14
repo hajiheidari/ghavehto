@@ -1,5 +1,7 @@
 # Changelog
 
+- Add internal issuance of platform stars against a funded budget.
+
 - Reconcile an allocated spend reversal when its original stamp awards remain valid.
 
 - Reconcile full reversals of unused stamp awards without changing journal entries.
