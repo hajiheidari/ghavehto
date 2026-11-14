@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M4 separate founder cohorts · 2026-11-15
+
+Migration 048 adds independent member/café founder programs with explicit qualification, enrollment and benefit end instants. No default 30-day policy or cohort is seeded; programs default inactive. Member qualification uses verified registration time; café qualification requires an active verified ownership grant and usable owner. Immutable badge events are once per program/subject, replayable and permanent. Time-limited benefit eligibility is calculated separately and stops at its end, program pause, deleted member or lost verified café ownership; these do not erase the badge event. No tier/star/stamp points are touched, no real benefit/provider/public rollout is enabled.
+
+Full PostgreSQL/PostGIS suite passed 46 tests, zero failures/skips. Continue M4 tracked café QR and honest scan/click/verified-registration/interaction distinctions; do not infer installs or real visits from clicks.
+
 ## M4 atomic experience participation · 2026-11-15
 
 Migration 047 adds maintenance-only participation claims with immutable replay receipts. Member, verified ownership, branch, policy window, stock and budget are rechecked after locks; the cutoff comes from the database clock. A shared member/café lock enforces first-recorded-participation across campaigns and member limits across policy versions. Claims atomically consume one stock unit, the explicit version budget cost, optional first-visit linkage and one audit event. Exact retries return the original receipt even after deactivation; changed payloads conflict. Confirmed QR history prevents first-recorded-visit participation. No loyalty journal is awarded/spent, and no public/runtime/provider activation is enabled.

@@ -1,5 +1,7 @@
 # Changelog
 
+- Add independently configured member/café founder cohorts with immutable permanent badges and separately expiring benefit eligibility.
+
 - Reserve experience participation atomically with server-time eligibility, stock/budget limits and cross-campaign first-visit serialization.
 
 - Add private versioned experience eligibility with verified ownership, branch/window limits and independent stock/budget envelopes.

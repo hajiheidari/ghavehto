@@ -19,6 +19,7 @@
     "test/star-spending.test.ts",
     "test/referral-rewards.test.ts",
     "test/experiences.test.ts",
+    "test/founders.test.ts",
     "test/auth-operations.test.ts",
     "test/smsir-otp-provider.test.ts"
   ]

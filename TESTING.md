@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Separate founder cohorts · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 46 tests with zero failures/skips after migration 048. Five reported founder tests cover disabled programs, concurrent replay/competing enrollment, changed subject conflicts, qualification/enrollment windows, permanent badges before/after temporary benefit expiry, program pause, deleted members, verified café ownership and its revocation, immutable policy/badge records, denied runtime/identity access and unchanged stamp/star/tier journals. No cohort, monetary value or real benefits are provisioned.
+
+
 ## Atomic experience participation · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 41 tests with zero failures/skips after migration 047. New functional cases race stock and funding across members, retry receipts concurrently after deactivation, reject changed branch, enforce limits across versions, race first participation across separate campaigns, deny participation after an actual consumed stamp QR, check expiry after a capacity-lock wait with zero stock/budget/receipt effects, enforce immutable claims/first-visit links and deny runtime writes. Star/tier journals remain unchanged; the only stamp entry in the fixture is from its explicit QR confirmation.
