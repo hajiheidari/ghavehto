@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Reviewed referral star funding · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 34 tests, zero failures/skips after migration 045. Three reported tests in the new referral fixture exercise actual register/attribute/review/issue-QR/consume-QR flows, competing and exact-replay awards, derived recipient, changed amount, budget exhaustion and retry after rollback, rejected review, pre-attribution and inviter-awarded interactions, reversed interaction, deleted account, pre-used direct-award operation, immutable mapping and denied app/identity roles. Negative eligibility cases use an available independent budget so funding exhaustion cannot mask a missing authorization gate. No real SMS, commercial seed or external reward delivery is involved.
+
+
 ## Atomic star reservation cancellation · 2026-11-15
 
 After migration 044 the complete disposable PostgreSQL/PostGIS suite passed 31 tests with zero failures/skips. Four new subtests cover competing and exact-replay cancellations, changed reason and account isolation, deferred linkage integrity, inactive rewards, historical balances, unchanged funding and other journals, immutable receipts, re-reservation after recovery, cancellation racing a new reservation, expired-source denial, runtime/identity denial, and atomic rollback on stock overflow. Existing TRUNCATE immutability checks now use CASCADE so the append-only trigger, rather than the newly added FK refusal, is exercised. The dedicated suite still requires READ COMMITTED and has no runtime/public grants.

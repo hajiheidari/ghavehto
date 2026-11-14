@@ -1,5 +1,7 @@
 # Changelog
 
+- Issue internal funded referral stars once after reviewed eligibility and independent confirmed QR interaction.
+
 - Cancel internal star reservations atomically with immutable replay receipts, original-lot recovery and one stock return.
 
 - Reject standalone star refunds for open reward reservations until atomic cancellation is implemented.

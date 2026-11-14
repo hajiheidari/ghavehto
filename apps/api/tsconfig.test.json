@@ -17,6 +17,7 @@
     "test/tenant-api.test.ts",
     "test/stamp-qr-http.test.ts",
     "test/star-spending.test.ts",
+    "test/referral-rewards.test.ts",
     "test/auth-operations.test.ts",
     "test/smsir-otp-provider.test.ts"
   ]
