@@ -1,5 +1,7 @@
 # Changelog
 
+- Keep café tracking scans/clicks, verified registration facts and genuine QR interactions separate with immutable attribution windows.
+
 - Add independently configured member/café founder cohorts with immutable permanent badges and separately expiring benefit eligibility.
 
 - Reserve experience participation atomically with server-time eligibility, stock/budget limits and cross-campaign first-visit serialization.

@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M4 private café attribution evidence · 2026-11-15
+
+Migration 049 stores hash-only scoped café/branch/optional-experience links (inactive by default), immutable QR-scan/store-click touches, distinct registration and phone-verification facts, and confirmed QR interaction attribution. Link scope/window cannot be rewritten. New touches require live verified ownership and an active unexpired link; callers cannot provide touch timestamps or assert installs/verification through that path. Registration attribution derives its times from a newly verified account within the configured touch window and cannot overwrite another touch. Genuine interaction requires the attributed member's consumed QR in the same branch within that window. The private report exposes separate counts, never an inferred installation metric. No raw phone/IP/device fingerprint is stored by tracking. No public routing, runtime grant, campaign activation or outreach is enabled.
+
+Full PostgreSQL/PostGIS suite passed 51 tests, zero failures/skips. Integration into trusted new-registration transactions and client landing/consent/rate-limit flows remains pending; these internal routines are not public analytics readiness. Printable inactive tracking QR artifacts are next.
+
 ## M4 separate founder cohorts · 2026-11-15
 
 Migration 048 adds independent member/café founder programs with explicit qualification, enrollment and benefit end instants. No default 30-day policy or cohort is seeded; programs default inactive. Member qualification uses verified registration time; café qualification requires an active verified ownership grant and usable owner. Immutable badge events are once per program/subject, replayable and permanent. Time-limited benefit eligibility is calculated separately and stops at its end, program pause, deleted member or lost verified café ownership; these do not erase the badge event. No tier/star/stamp points are touched, no real benefit/provider/public rollout is enabled.

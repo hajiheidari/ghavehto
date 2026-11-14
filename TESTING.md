@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Café tracking evidence · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 51 tests with zero failures/skips after migration 049. Five tracking tests verify concurrent exact touch replay, changed event rejection, refusal of install/registration/verification assertions through touch input, distinct scan/click/registration/phone/interaction counts, new-account timestamps, attribution conflict, real QR branch binding, confirmed interaction replay, configured registration/interaction window expiry, immutable event/config scope, disabled/expired links, ownership revocation and denied runtime/identity calls. No install count is invented and no external analytics service is called.
+
+
 ## Separate founder cohorts · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 46 tests with zero failures/skips after migration 048. Five reported founder tests cover disabled programs, concurrent replay/competing enrollment, changed subject conflicts, qualification/enrollment windows, permanent badges before/after temporary benefit expiry, program pause, deleted members, verified café ownership and its revocation, immutable policy/badge records, denied runtime/identity access and unchanged stamp/star/tier journals. No cohort, monetary value or real benefits are provisioned.
