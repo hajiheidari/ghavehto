@@ -19,6 +19,10 @@ test('Nest API serves shared contract; privileged routes fail closed', async () 
       assert.equal((await fetch(`${base}/v1/dashboards/${role}`, { headers: { authorization: 'Bearer forged' } })).status, 401);
     }
     assert.equal((await fetch(`${base}/v1/cafes/20000000-0000-4000-8000-000000000001/access`)).status, 401);
+    for(const route of ['profile','experiences']) {
+      const denied=await fetch(`${base}/v1/cafes/20000000-0000-4000-8000-000000000001/${route}`);
+      assert.equal(denied.status,401);assert.equal(denied.headers.get('cache-control'),'no-store');
+    }
     assert.equal((await fetch(`${base}/v1/session`)).status, 401);
     assert.equal((await fetch(`${base}/v1/directory`)).status, 503);
     assert.equal((await fetch(`${base}/v1/directory?q=a&q=b`)).status, 400);

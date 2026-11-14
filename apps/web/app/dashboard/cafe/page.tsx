@@ -12,7 +12,7 @@ export default async function CafePanel({searchParams}:{searchParams:Promise<{af
       result.state==='unavailable' ? <p role="status">اطلاعات کافه‌های شما فعلاً در دسترس نیست.</p> :
       result.data.items.length===0 ? <p>هنوز به کافه‌ای دسترسی ندارید.</p> :
       <ul>{result.data.items.map(cafe=><li key={cafe.cafeId}><Link href={`/dashboard/cafe/${cafe.cafeId}`}>{cafe.name}</Link>
-        <p>{cafe.canManageStaff?'دسترسی مالک کافه':'دسترسی همکار کافه'}</p></li>)}</ul>}
+        <p>{cafe.canManageStaff?'دسترسی مالک کافه':'دسترسی همکار کافه'}</p>{cafe.canManageStaff&&<Link href={`/dashboard/cafe/${cafe.cafeId}/experiences`}>تجربه‌های کافه</Link>}</li>)}</ul>}
     {result.state==='ready'&&result.data.nextCursor&&<Link href={{pathname:'/dashboard/cafe',query:{after:result.data.nextCursor}}}>صفحه بعد</Link>}
   </section>;
 }

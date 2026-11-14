@@ -67,3 +67,17 @@ export function getBranchStaff(cafeId:string,branchId:string,after?:string):Prom
     return {userIds:input.userIds as string[],nextCursor:input.nextCursor as string|null};
   });
 }
+
+export type ExperiencePreview={experienceId:string;cafeId:string;title:string|null;active:boolean;version:number;branchId:string|null;branchName:string|null;startsAt:string;endsAt:string;firstRecordedVisitOnly:boolean;perMemberLimit:number;remainingStock:number;remainingBudgetUnits:string};
+export function getOwnerExperiences(cafeId:string,after?:string):Promise<PanelResult<Page<ExperiencePreview>>> {
+  if(!panelId(cafeId)||(after!==undefined&&!panelId(after))) return Promise.resolve({state:'unavailable'});
+  const date=(value:unknown):value is string=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value));
+  return read(`/v1/cafes/${cafeId}/experiences`+(after?`?after=${encodeURIComponent(after)}`:''),input=>page(input,
+    (row):row is ExperiencePreview=>object(row)&&panelId(row.experienceId)&&row.cafeId===cafeId
+      &&(row.title===null||typeof row.title==='string'&&row.title.length<=120)&&typeof row.active==='boolean'
+      &&Number.isInteger(row.version)&&Number(row.version)>0&&(row.branchId===null||panelId(row.branchId))
+      &&(row.branchName===null||typeof row.branchName==='string')&&date(row.startsAt)&&date(row.endsAt)
+      &&typeof row.firstRecordedVisitOnly==='boolean'&&Number.isInteger(row.perMemberLimit)&&Number(row.perMemberLimit)>0
+      &&Number.isInteger(row.remainingStock)&&Number(row.remainingStock)>=0
+      &&typeof row.remainingBudgetUnits==='string'&&/^(0|[1-9][0-9]{0,18})$/.test(row.remainingBudgetUnits)));
+}

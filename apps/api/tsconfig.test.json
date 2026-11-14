@@ -22,6 +22,7 @@
     "test/founders.test.ts",
     "test/cafe-tracking.test.ts",
     "test/cafe-tracking-qr.test.ts",
+    "test/experience-preview-http.test.ts",
     "test/auth-operations.test.ts",
     "test/smsir-otp-provider.test.ts"
   ]

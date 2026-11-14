@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import type { Pool, PoolClient } from 'pg';
 import { identityTransaction } from './identity-transaction.js';
+import type {OwnerExperiencePage} from './experience-preview-model.js';
 import { normalizePersian } from './normalization.js';
 
 /** Runtime pool must use a separately provisioned non-owner login, never migration credentials. */
@@ -37,6 +38,14 @@ export class TenantAccessService {
          WHERE cafe_id=$1 AND ($2::uuid IS NULL OR id>$2) ORDER BY id LIMIT 51`,[cafeId,after]);
       const items = rows.slice(0,50);
       return {items,nextCursor:rows.length>50?items[49].branchId:null};
+    });
+  }
+  readExperiences(token:string,cafeId:string,after:string|null):Promise<OwnerExperiencePage> {
+    return this.withVerifiedActor(token,async client=>{
+      const {rows:[row]}=await client.query<{page:OwnerExperiencePage|null}>(
+        'SELECT public.read_owner_experiences($1,$2) AS page',[cafeId,after]);
+      if(row.page===null) throw new NotFoundException();
+      return row.page;
     });
   }
   readCafe(token: string, cafeId: string): Promise<{ cafeId: string; name: string }> {

@@ -35,6 +35,26 @@ class BranchStaffRosterDto {
   @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!: string|null;
 }
 
+class OwnerExperienceDto {
+  @ApiProperty({type:String,format:'uuid'}) experienceId!:string;
+  @ApiProperty({type:String,format:'uuid'}) cafeId!:string;
+  @ApiProperty({type:String,nullable:true,maxLength:120}) title!:string|null;
+  @ApiProperty({type:Boolean}) active!:boolean;
+  @ApiProperty({type:Number,minimum:1}) version!:number;
+  @ApiProperty({type:String,format:'uuid',nullable:true}) branchId!:string|null;
+  @ApiProperty({type:String,nullable:true}) branchName!:string|null;
+  @ApiProperty({type:String,format:'date-time'}) startsAt!:string;
+  @ApiProperty({type:String,format:'date-time'}) endsAt!:string;
+  @ApiProperty({type:Boolean}) firstRecordedVisitOnly!:boolean;
+  @ApiProperty({type:Number,minimum:1}) perMemberLimit!:number;
+  @ApiProperty({type:Number,minimum:0}) remainingStock!:number;
+  @ApiProperty({type:String,pattern:'^(0|[1-9][0-9]{0,18})$'}) remainingBudgetUnits!:string;
+}
+class OwnerExperienceListDto {
+  @ApiProperty({type:[OwnerExperienceDto],maxItems:50}) items!:OwnerExperienceDto[];
+  @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!:string|null;
+}
+
 @ApiTags('authenticated-cafe') @ApiBearerAuth()
 @Controller('v1/cafes')
 export class TenantController {
@@ -50,6 +70,14 @@ export class TenantController {
   list(@Headers('authorization') header:string|undefined,@Query('after',new ParseUUIDPipe({optional:true})) after?:string): Promise<CafeListDto> {
     const token = this.token(header);
     return this.access!.listCafes(token,after ?? null);
+  }
+  @Get(':cafeId/experiences') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
+  @ApiQuery({name:'after',required:false,schema:{type:'string',format:'uuid'}})
+  @ApiResponse({status:200,type:OwnerExperienceListDto})
+  experiences(@Headers('authorization') header:string|undefined,@Param('cafeId',new ParseUUIDPipe()) cafeId:string,
+    @Query('after',new ParseUUIDPipe({optional:true})) after?:string):Promise<OwnerExperienceListDto> {
+    const token=this.token(header);
+    return this.access!.readExperiences(token,cafeId,after??null);
   }
   @Get(':cafeId/branches') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
   @ApiQuery({name:'after',required:false,schema:{type:'string',format:'uuid'}})
@@ -75,7 +103,8 @@ export class TenantController {
   @Get(':cafeId/profile') @Header('Cache-Control','no-store') @Header('Vary','Authorization')
   @ApiResponse({status:200,type:CafeAccessDto})
   profile(@Headers('authorization') header:string|undefined,@Param('cafeId',new ParseUUIDPipe()) cafeId:string):Promise<CafeAccessDto> {
-    return this.access!.readCafeProfile(this.token(header),cafeId);
+    const token=this.token(header);
+    return this.access!.readCafeProfile(token,cafeId);
   }
   @Patch(':cafeId/profile') @Header('Cache-Control', 'no-store') @Header('Vary', 'Authorization')
   @ApiResponse({ status: 200, type: CafeAccessDto })

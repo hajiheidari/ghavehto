@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Private owner experience preview · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 53 tests, zero failures/skips after migration 051. A new disposable database test uses real opaque sessions and a non-owner NOINHERIT runtime login to verify missing/spoofed/consumer/staff/cross-café denial, owner-only data, no-store, cursor validation, 52-item pagination, immediate owner revocation and no raw claims privilege. Actual built Next→Nest SSR checks Persian RTL, escaped titles, exact budget display above Number.MAX_SAFE_INTEGER, absence of credentials in HTML and denied/signed-out states. Workspace build/typecheck, 12 API unit tests, 1 probe, 3 contract tests, OpenAPI export, generated-client drift and independent SSR smoke passed. The default profile/experience routes now explicitly guard absent runtime before service dereference and are checked to return 401. No browser visual, local Flutter/native or public rollout claim is made.
+
+
 ## Printable tracking QR drafts · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 52 tests, zero failures/skips after migration 050. The real database fixture checks hash-only storage, inactive state and refused touches before activation. API unit suite passed 12 tests, including decoding the generated PNG with independent pngjs/jsQR libraries to verify the exact HTTPS random-code URL, embedded print artifact and RTL markup. Invalid/insecure origins and invalid lifetimes cannot persist a link. The CommonJS decoder is loaded through Node createRequire to match its actual export and declaration under NodeNext. Frozen install verified the updated lock/supply-chain policy; workspace build/typecheck and 1 HTTP probe passed. No public link, real commercial QR or provider operation was created.

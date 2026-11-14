@@ -1,5 +1,7 @@
 # Changelog
 
+- Add read-only Persian RTL owner experience preview over restricted-session API, exact budget strings and bounded pagination; keep activation private.
+
 - Produce inactive hash-only café tracking drafts as self-contained Persian RTL printable QR artifacts, verified by an independent decoder.
 
 - Keep café tracking scans/clicks, verified registration facts and genuine QR interactions separate with immutable attribution windows.
