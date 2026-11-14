@@ -1,5 +1,7 @@
 # Changelog
 
+- Added maintenance reconciliation for documented single-award legacy stamp expiries.
+
 - Record expired stamp remainders once, preserving both the original award and its allocations.
 
 - Added owner-only allocation of documented legacy stamp spends without rewriting the journal.

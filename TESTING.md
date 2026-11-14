@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL loyalty fixture checks historical expiry linkage, replay under concurrency, duplicate award rejection, runtime denial and a single audit event.
+
 The PostgreSQL loyalty fixture checks partial expiry, concurrent replay, rejected early expiry and unresolved history, denied runtime access, audit and reconciliation after expiry.
 
 The isolated PostgreSQL fixture checks legacy allocation replay under concurrency, conflicting replay, denied runtime access, expired lots and exhausted lots.

@@ -140,8 +140,25 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       VALUES($1,$2,$3,1,gen_random_uuid(),9,'award','TEST after expiry',now())`,scope);
     assert.ok(await redeem(attempts[1-winner].id,randomUUID()));
     assert.equal((await db.query(inspect,scope)).rows[0].active_unspent_units,'0');
-    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
-      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now())`,scope);
+    const {rows:[oldAward]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,expires_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),2,'award','TEST legacy award',now()-interval '2 hours',now()-interval '1 hour') RETURNING id`,scope);
+    const {rows:[oldExpiry]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'expire','TEST legacy expiry',now()) RETURNING id`,scope);
+    const link='SELECT public.link_legacy_stamp_expiry($1,$2)';
+    await assert.rejects(runtime.query(link,[oldExpiry.id,oldAward.id]),{code:'42501'});
+    await assert.rejects(db.query(link,[oldExpiry.id,expired.id]),{code:'22023'});
+    await assert.rejects(db.query(link,[oldExpiry.id,oldAward.id]),{code:'22023'});
+    const {rows:[oldSpend]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      SELECT $1,$2,$3,1,gen_random_uuid(),-1,'spend','TEST before legacy expiry',effective_at FROM stamp_entries WHERE id=$4
+      RETURNING id`,[...scope,oldAward.id]);
+    await assert.rejects(db.query(link,[oldExpiry.id,oldAward.id]),{code:'22023'});
+    await db.query(allocate,[oldSpend.id,[oldAward.id],[1]]);
+    await Promise.all([1,2].map(()=>db!.query(link,[oldExpiry.id,oldAward.id])));
+    await assert.rejects(db.query(link,[oldExpiry.id,expired.id]),{code:'23505'});
+    assert.deepEqual((await db.query('SELECT award_id,units FROM stamp_spend_allocations WHERE debit_id=$1',[oldExpiry.id])).rows,
+      [{award_id:oldAward.id,units:1}]);
+    assert.equal((await db.query(expire,[oldAward.id])).rows[0].id,oldExpiry.id);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_expiry_linked'")).rowCount,1);
     await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
       VALUES($1,$2,$3,1,gen_random_uuid(),-1,'reversal','TEST reversal',now(),$4)`,[...scope,entryId]);
     assert.deepEqual((await db.query(inspect,scope)).rows,[{
