@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL fixture checks star balance at the expiry boundary, account isolation, denied runtime access and unknown balance for unsupported history.
+
 The PostgreSQL fixture checks generated referral code hashing, role denial, scoped revocation and rejection of revoked links.
 
 The PostgreSQL fixture races two referral links for the same recipient, checks stable replay, rejects expired links and self-attribution, denies runtime access and verifies no rewards.

@@ -286,6 +286,19 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.referral_attributed'")).rowCount,1);
     assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,1);
     assert.equal((await db.query('SELECT 1 FROM tier_entries')).rowCount,2);
+    const inspectStars='SELECT public.inspect_funded_star_balance($1,$2) AS units';
+    const future=(await db.query("SELECT (clock_timestamp()+interval '2 hours')::text AS at")).rows[0].at;
+    const starExpiry=(await db.query("SELECT (clock_timestamp()+interval '1 hour')::text AS at")).rows[0].at;
+    await db.query(awardStars,[customer.id,budget.id,randomUUID(),2,starExpiry]);
+    const now=(await db.query('SELECT clock_timestamp()::text AS at')).rows[0].at;
+    await assert.rejects(runtime.query(inspectStars,[customer.id,now]),{code:'42501'});
+    for(const [who,at,units] of [[customer.id,now,'7'],[customer.id,starExpiry,'5'],
+      [customer.id,future,'5'],[staff.id,now,'0'],[customer.id,'2001-01-01T00:00:00Z','0']]){
+      assert.deepEqual((await db.query(inspectStars,[who,at])).rows,[{units}]);
+    }
+    await db.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
+      VALUES($1,gen_random_uuid(),-1,'spend','TEST legacy star spend',now())`,[customer.id]);
+    assert.deepEqual((await db.query(inspectStars,[customer.id,future])).rows,[{units:null}]);
   } finally {
     try {
       await server?.app.close();

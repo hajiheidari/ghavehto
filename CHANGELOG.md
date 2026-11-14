@@ -1,5 +1,7 @@
 # Changelog
 
+- Add internal expiry-aware inspection of funded star balances.
+
 - Generate internal referral codes with hash-only storage and scoped revocation.
 
 - Record internal verified referral attribution without granting rewards.
