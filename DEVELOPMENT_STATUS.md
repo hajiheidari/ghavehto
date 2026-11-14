@@ -36,6 +36,8 @@ Re-read PR #1 as Draft and its branch/ref as `a1dc4b42ce7f7442529d6094e7fefd3a2c
 
 Migration 038 adds maintenance-only star debits and immutable earliest-expiry lot allocations. Per-account serialization prevents different operations from overspending; exact retries return the same entry, and changed payloads conflict. Expiry is checked after acquiring the balance lock. Balance inspection supports allocated spends and historical cutoffs, while unallocated or unsupported history remains unknown. No public route, runtime permission, reward payout or production budget is enabled. Stamp and tier journals remain independent.
 
+Migration 039 adds maintenance-only expiry accounting for the exact unspent remainder of a funded award. It shares the spending account lock, records one immutable linkage and audit event, rejects early or duplicate expiry and does not refund the funding budget. Expiry records do not deduct active balance a second time. No scheduler or runtime grant is enabled.
+
 ## Other open gates
 
 Migration 037 lets database maintenance compare issued stars with funded and remaining units. A mismatch is reported without changing the journal or budget.

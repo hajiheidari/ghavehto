@@ -78,6 +78,42 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       } finally {await lock.query('ROLLBACK');lock.release();}
     });
 
+    await t.test('expired remainder is recorded once, without changing balances or funding',async()=>{
+      const who=await user();
+      // Evidence-backed synthetic history lives only in this disposable database.
+      const {rows:[lot]}=await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at,expires_at,funding_budget_id)
+        VALUES($1,gen_random_uuid(),5,'award','TEST historical lot',clock_timestamp()-interval '2 hours',
+          clock_timestamp()-interval '1 hour',$2) RETURNING id`,[who,budget.id]);
+      const {rows:[debit]}=await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
+        VALUES($1,gen_random_uuid(),-2,'spend','TEST historical debit',clock_timestamp()-interval '90 minutes') RETURNING id`,[who]);
+      await pool.query('INSERT INTO star_spend_allocations(debit_id,award_id,units) VALUES($1,$2,2)',[debit.id,lot.id]);
+      const valid=await award(who,4);
+      const fundingBefore=(await pool.query('SELECT remaining_units FROM star_award_budgets WHERE id=$1',[budget.id])).rows;
+      assert.equal(await balance(who),'4');
+      const expiry='SELECT public.expire_funded_star_award($1,$2,$3) AS id';
+      await assert.rejects(pool.query(expiry,[who,valid,randomUUID()]),{code:'22023'});
+      await assert.rejects(pool.query(expiry,[await user(),lot.id,randomUUID()]),{code:'22023'});
+      const args=[who,lot.id,randomUUID()];
+      const results=await Promise.all([pool.query(expiry,args),pool.query(expiry,args)]);
+      assert.deepEqual(results[0].rows,results[1].rows);
+      await assert.rejects(pool.query(expiry,[who,valid,args[2]]),{code:'23505'});
+      await assert.rejects(pool.query(expiry,[who,lot.id,randomUUID()]),{code:'22023'});
+      const entry=results[0].rows[0].id;
+      assert.deepEqual((await pool.query('SELECT units,kind FROM star_entries WHERE id=$1',[entry])).rows,[{units:-3,kind:'expire'}]);
+      assert.equal(await balance(who),'4');
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='loyalty.stars_expired'")).rowCount,1);
+      assert.deepEqual((await pool.query('SELECT remaining_units FROM star_award_budgets WHERE id=$1',[budget.id])).rows,fundingBefore);
+      await pool.query(spend,[who,randomUUID(),4,'TEST spend after expiry recording']);
+      assert.equal(await balance(who),'0');
+      for(const sql of ['UPDATE star_expiry_records SET units=1','DELETE FROM star_expiry_records','TRUNCATE star_expiry_records'])
+        await assert.rejects(pool.query(sql),{code:'55000'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_app');
+        await assert.rejects(client.query(expiry,args),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+    });
+
     await t.test('legacy history, invalid parameters, deleted accounts and runtime access fail closed',async()=>{
       const who=await user();await award(who,3);
       await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
@@ -102,7 +138,16 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
     });
   } finally {
     await db?.end();
-    if(created) await host.query(`DROP DATABASE ${database} WITH (FORCE)`);
+    if(created) {
+      // Pool shutdown can resolve before the backend has processed disconnects.
+      for(let attempt=0;;attempt++){
+        try {await host.query(`DROP DATABASE ${database}`);break;}
+        catch(error){
+          if((error as pg.DatabaseError).code!=='55006'||attempt>=19) throw error;
+          await delay(50);
+        }
+      }
+    }
     await host.end();
   }
 });

@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Star expiry · 2026-11-14
+
+Full PostgreSQL/PostGIS suite passed 23 tests, zero failures/skips after migration 039. The added case verifies partial historical spending, exact remainder expiry, concurrent replay, changed/duplicate/early/wrong-account rejection, immutable expiry linkage, runtime denial, unchanged budget and continued spending from a separate valid lot. An initial targeted run passed business assertions but failed because FORCE-dropping the test database could interrupt a disconnecting backend; cleanup now retries ordinary DROP after pool shutdown, matching the existing fixture pattern. The successful full rerun includes this correction.
+
 ## Star spending · 2026-11-14
 
 The new disposable PostgreSQL/PostGIS test ran successfully: 4 reported tests (one parent and three subtests), no failures/skips. It verifies competing debits, exact concurrent retries, changed payload/account rejection, earliest-expiry allocations, historical balance before spending and at expiry, no funding refund, independent stamp/tier journals, immutable allocations, expiry while waiting on the account lock, rollback on insufficient balance, unsupported legacy history, deleted accounts and denied app/identity roles. Migrations were applied twice to verify repeatability. This is internal accounting only, not reward fulfillment. Full `test:db` passed 22 tests with zero failures/skips on PostgreSQL/PostGIS 17. Workspace build/typecheck, 10 API unit tests, 1 probe test, 3 contract tests, client drift and real Next→Nest SSR smoke passed on host Node 24.22.1/pnpm 11.25.0; exact pinned-container validation remains separate.
