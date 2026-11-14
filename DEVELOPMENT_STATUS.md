@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 027 reconciles full negative reversals of unused stamp awards. Linked reversals reduce lot balances and do not block other valid redemptions. Restoring spent or expired units still requires separate rules.
+
 Migration 026 reconciles combined historical expiry entries against an explicit list of expired awards in one scope, requiring the full remainder of each award and an exact total. Reversal reconciliation remains open.
 
 Migration 025 links a documented legacy expiry to a single award in the same account and program if its full unspent remainder matches. Combined expiries, unresolved spending and reversals remain blocked.

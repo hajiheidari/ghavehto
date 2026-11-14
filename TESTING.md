@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL fixture checks award reversal linkage, denied runtime access, concurrent replay, one audit record, zero remaining units and rejection of allocated awards.
+
 The PostgreSQL loyalty fixture checks combined expiry exact totals, duplicate and unexpired awards, atomic rejection, order-independent concurrent replay, and one audit event.
 
 The PostgreSQL loyalty fixture checks historical expiry linkage, replay under concurrency, duplicate award rejection, runtime denial and a single audit event.

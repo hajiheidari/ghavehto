@@ -1,5 +1,7 @@
 # Changelog
 
+- Reconcile full reversals of unused stamp awards without changing journal entries.
+
 - Reconcile documented stamp expiries that exhausted multiple awards in one entry.
 
 - Added maintenance reconciliation for documented single-award legacy stamp expiries.

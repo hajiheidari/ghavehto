@@ -177,10 +177,29 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       [combinedExpiry.id])).rows,combinedAwards.sort((a,b)=>a.units-b.units));
     for(const award of pair) assert.equal((await db.query(expire,[award])).rows[0].id,combinedExpiry.id);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_expiry_linked'")).rowCount,2);
-    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
-      VALUES($1,$2,$3,1,gen_random_uuid(),-1,'reversal','TEST reversal',now(),$4)`,[...scope,entryId]);
+    const {rows:[unused]}=await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,expires_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),10,'award','TEST unused',now(),now()+interval '1 hour') RETURNING id`,scope);
+    const reverseAward=async (awardId:string,units:number)=>{
+      const {rows:[row]}=await db!.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,reversal_of)
+        VALUES($1,$2,$3,1,gen_random_uuid(),$4,'reversal','TEST reversal',now(),$5) RETURNING id`,[...scope,units,awardId]);
+      return row.id;
+    };
+    const linkReversal='SELECT public.link_stamp_award_reversal($1)';
+    const unusedReversal=await reverseAward(unused.id,-10);
+    await assert.rejects(runtime.query(linkReversal,[unusedReversal]),{code:'42501'});
+    await Promise.all([1,2].map(()=>db!.query(linkReversal,[unusedReversal])));
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.stamp_award_reversal_linked'")).rowCount,1);
+    assert.equal((await db.query(inspect,scope)).rows[0].active_unspent_units,'0');
+    const {rows:[newReward]}=await db.query(`INSERT INTO stamp_rewards(cafe_id,program_id,program_version,stock,active)
+      VALUES($1,$2,1,1,true) RETURNING id`,[cafe.id,program.id]);
+    await assert.rejects(redeem(newReward.id,randomUUID()),{code:'22023'});
+    await db.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,gen_random_uuid(),10,'award','TEST after reversal',now())`,scope);
+    assert.ok(await redeem(newReward.id,randomUUID()));
+    const spentReversal=await reverseAward(entryId,-1);
+    await assert.rejects(db.query(linkReversal,[spentReversal]),{code:'22023'});
     assert.deepEqual((await db.query(inspect,scope)).rows,[{
-      legacy_spend_count:'0',reversal_count:'1',expiry_entry_count:'3',
+      legacy_spend_count:'0',reversal_count:'2',expiry_entry_count:'3',
       expired_unspent_units:'0',active_unspent_units:'0',
     }]);
     assert.deepEqual((await db.query(inspect,[staff.id,cafe.id,program.id])).rows,[{
