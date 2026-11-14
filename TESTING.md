@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL fixture tests referral review at the volume cap, denied runtime access and deleted account screening.
+
 The disposable PostgreSQL HTTP fixture checks referral validation and attribution through real OTP verification with an in-memory provider.
 
 The PostgreSQL fixture checks referral attribution on verified insert through the identity role, and successful registration with a revoked code.

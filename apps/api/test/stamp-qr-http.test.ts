@@ -338,6 +338,13 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.ok(registered);
     assert.deepEqual((await db.query('SELECT link_id FROM referral_attributions WHERE invitee_id=$1',[registered.userId])).rows,
       [{link_id:registrationLink.id}]);
+    const review='SELECT public.inspect_referral_review($1,$2) AS decision';
+    const {rows:[latestReferral]}=await db.query('SELECT id FROM referral_attributions WHERE invitee_id=$1',[registered.userId]);
+    await assert.rejects(runtime.query(review,[latestReferral.id,2]),{code:'42501'});
+    assert.deepEqual((await db.query(review,[latestReferral.id,2])).rows,[{decision:'review_volume'}]);
+    assert.deepEqual((await db.query(review,[latestReferral.id,3])).rows,[{decision:'review_pending'}]);
+    await db.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1',[registered.userId]);
+    assert.deepEqual((await db.query(review,[latestReferral.id,3])).rows,[{decision:'account_unavailable'}]);
   } finally {
     try {
       await server?.app.close();

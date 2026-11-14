@@ -1,5 +1,7 @@
 # Changelog
 
+- Add private referral volume screening before any reward decisions.
+
 - Accept optional referral codes on the explicitly composed OTP verification route.
 
 - Bind optional referral attribution to newly created, verified identities.

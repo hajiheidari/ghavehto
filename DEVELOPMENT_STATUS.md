@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 035 adds a maintenance-only referral review preview with a configurable rolling 24-hour cap. Meeting the cap is not reward approval; no reward is issued.
+
 The opt-in OTP verification handler accepts a referral code. Normal startup still leaves this handler and all SMS delivery disabled.
 
 Migration 034 attaches an optional referral during the verified identity insert. Existing accounts and unusable codes do not receive attribution. The HTTP handler does not accept referral codes yet.
