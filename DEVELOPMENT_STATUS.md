@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M4 printable inactive tracking QR · 2026-11-15
+
+Migration 050 and the internal `prepareCafeTrackingQr` helper create printable Persian RTL HTML with an embedded 960px PNG QR and its exact HTTPS URL. Rendering completes before persistence; only the random 256-bit code hash is stored. An explicit HTTPS origin, scope and bounded lifetime/window are required. The database requires verified ownership and always creates an inactive link. No landing route, activation, printing service, public QR publication, external request or inferred install is enabled. A printed draft is not an operational public link until the separate landing and activation work is done.
+
+Full PostgreSQL/PostGIS suite passed 52 tests, zero failures/skips; 12 API unit tests (including independent PNG/QR decoding), 1 probe test, frozen install/supply-chain verification, workspace build and typecheck passed. qrcode 1.5.4 and test-only decoder/parser types are pinned in the lockfile. Continue the private owner experience preview before public campaign/attribution activation.
+
 ## M4 private café attribution evidence · 2026-11-15
 
 Migration 049 stores hash-only scoped café/branch/optional-experience links (inactive by default), immutable QR-scan/store-click touches, distinct registration and phone-verification facts, and confirmed QR interaction attribution. Link scope/window cannot be rewritten. New touches require live verified ownership and an active unexpired link; callers cannot provide touch timestamps or assert installs/verification through that path. Registration attribution derives its times from a newly verified account within the configured touch window and cannot overwrite another touch. Genuine interaction requires the attributed member's consumed QR in the same branch within that window. The private report exposes separate counts, never an inferred installation metric. No raw phone/IP/device fingerprint is stored by tracking. No public routing, runtime grant, campaign activation or outreach is enabled.

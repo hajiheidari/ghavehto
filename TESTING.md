@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Printable tracking QR drafts · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 52 tests, zero failures/skips after migration 050. The real database fixture checks hash-only storage, inactive state and refused touches before activation. API unit suite passed 12 tests, including decoding the generated PNG with independent pngjs/jsQR libraries to verify the exact HTTPS random-code URL, embedded print artifact and RTL markup. Invalid/insecure origins and invalid lifetimes cannot persist a link. The CommonJS decoder is loaded through Node createRequire to match its actual export and declaration under NodeNext. Frozen install verified the updated lock/supply-chain policy; workspace build/typecheck and 1 HTTP probe passed. No public link, real commercial QR or provider operation was created.
+
+
 ## Café tracking evidence · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 51 tests with zero failures/skips after migration 049. Five tracking tests verify concurrent exact touch replay, changed event rejection, refusal of install/registration/verification assertions through touch input, distinct scan/click/registration/phone/interaction counts, new-account timestamps, attribution conflict, real QR branch binding, confirmed interaction replay, configured registration/interaction window expiry, immutable event/config scope, disabled/expired links, ownership revocation and denied runtime/identity calls. No install count is invented and no external analytics service is called.

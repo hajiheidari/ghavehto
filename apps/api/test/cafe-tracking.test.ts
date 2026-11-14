@@ -4,6 +4,8 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {test} from 'node:test';
 import pg from 'pg';
 import {migrate} from '../src/nest/migrations.js';
+import {prepareCafeTrackingQr} from '../src/nest/cafe-tracking-qr.js';
+import {createHash} from 'node:crypto';
 
 test('cafe attribution counts touches, verified identity and confirmed interactions separately',async t=>{
   assert.ok(process.env.DATABASE_URL);
@@ -78,6 +80,14 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       await assert.rejects(pool.query(interact,[historical.id,lateProof]),{code:'22023'});
       assert.deepEqual((await pool.query(metrics,[l.id])).rows,[{qr_scans:'1',store_clicks:'0',registrations:'1',phone_verifications:'1',confirmed_interactions:'0'}]);
     });
+    await t.test('printable drafts store only hashes and stay inactive until separately authorized',async()=>{
+      const draft=await prepareCafeTrackingQr(pool,{cafeId:cafe.id,branchId:branch.id,publicOrigin:'https://example.invalid',lifetimeSeconds:3600,attributionWindowSeconds:600});
+      const code=new URL(draft.url).pathname.split('/').at(-1)!;
+      const hash=createHash('sha256').update(code,'ascii').digest();
+      assert.deepEqual((await pool.query('SELECT active,code_hash,attribution_window_seconds FROM cafe_tracking_links WHERE id=$1',[draft.id])).rows,
+        [{active:false,code_hash:hash,attribution_window_seconds:600}]);
+      await assert.rejects(pool.query(touch,[hash,'qr_scan',randomUUID()]),{code:'22023'});
+    });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
       const l=await link();
@@ -86,7 +96,7 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       const client=await pool.connect();
       try {
         for(const role of ['ghahvehto_app','ghahvehto_identity']){
-          for(const [sql,args] of [[touch,[l.hash,'qr_scan',randomUUID()]],[attribute,[owner,randomUUID()]],[interact,[owner,randomUUID()]],[metrics,[main.id]]] as const){
+          for(const [sql,args] of [[touch,[l.hash,'qr_scan',randomUUID()]],[attribute,[owner,randomUUID()]],[interact,[owner,randomUUID()]],[metrics,[main.id]],['SELECT public.register_cafe_tracking_draft($1,$2,$3,$4,$5,$6)',[cafe.id,branch.id,null,l.hash,3600,600]]] as const){
             await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
             await assert.rejects(client.query(sql,[...args]),{code:'42501'});await client.query('ROLLBACK');
           }

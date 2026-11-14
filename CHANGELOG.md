@@ -1,5 +1,7 @@
 # Changelog
 
+- Produce inactive hash-only café tracking drafts as self-contained Persian RTL printable QR artifacts, verified by an independent decoder.
+
 - Keep café tracking scans/clicks, verified registration facts and genuine QR interactions separate with immutable attribution windows.
 
 - Add independently configured member/café founder cohorts with immutable permanent badges and separately expiring benefit eligibility.
