@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Star account reconciliation · 2026-11-14
+
+Full PostgreSQL/PostGIS suite passed 25 tests with zero failures/skips after migration 041. Additional assertions verify pending-expiry units before accounting, zero pending after accounting, restored balances after reversal, zero supported variance, unknown balance/variance for unsupported legacy spends, and denied app/identity execution. The report does not modify historical records or provision budgets.
+
 ## Star spend reversal · 2026-11-14
 
 Full PostgreSQL/PostGIS suite passed 25 tests with zero failures/skips after migration 040. The targeted fixture reports 7 tests including parent accounting. New checks cover concurrent exact replay, changed reason and duplicate reversal denial, recipient isolation, historical cutoff before reversal, restoration to original lots, competing re-spends, immutable reversal linkage, runtime denial, unchanged stamp/tier journals and rejection of expired original lots. Existing spending and partial-expiry tests still pass with net allocation accounting.

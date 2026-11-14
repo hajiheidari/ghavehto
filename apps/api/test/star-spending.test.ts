@@ -24,6 +24,7 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
     const {rows:[budget]}=await db.query('INSERT INTO star_award_budgets(funded_units,remaining_units,active) VALUES(100,100,true) RETURNING id');
     const award=async(who:string,amount:number,expiry:string|null=null)=>(await pool.query(
       'SELECT public.award_funded_stars($1,$2,$3,$4,$5) AS id',[who,budget.id,randomUUID(),amount,expiry])).rows[0].id;
+    const reconcile='SELECT * FROM public.inspect_star_account($1,clock_timestamp())';
     const spend='SELECT public.spend_funded_stars($1,$2,$3,$4) AS id';
     const balance=async(who:string,at:string|null=null)=>(await pool.query(
       'SELECT public.inspect_funded_star_balance($1,coalesce($2::timestamptz,clock_timestamp())) AS units',[who,at])).rows[0].units;
@@ -90,6 +91,8 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       const valid=await award(who,4);
       const fundingBefore=(await pool.query('SELECT remaining_units FROM star_award_budgets WHERE id=$1',[budget.id])).rows;
       assert.equal(await balance(who),'4');
+      assert.deepEqual((await pool.query(reconcile,[who])).rows,
+        [{journal_units:'7',spendable_units:'4',pending_expiry_units:'3',variance:'0'}]);
       const expiry='SELECT public.expire_funded_star_award($1,$2,$3) AS id';
       await assert.rejects(pool.query(expiry,[who,valid,randomUUID()]),{code:'22023'});
       await assert.rejects(pool.query(expiry,[await user(),lot.id,randomUUID()]),{code:'22023'});
@@ -98,6 +101,8 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       assert.deepEqual(results[0].rows,results[1].rows);
       await assert.rejects(pool.query(expiry,[who,valid,args[2]]),{code:'23505'});
       await assert.rejects(pool.query(expiry,[who,lot.id,randomUUID()]),{code:'22023'});
+      assert.deepEqual((await pool.query(reconcile,[who])).rows,
+        [{journal_units:'4',spendable_units:'4',pending_expiry_units:'0',variance:'0'}]);
       const entry=results[0].rows[0].id;
       assert.deepEqual((await pool.query('SELECT units,kind FROM star_entries WHERE id=$1',[entry])).rows,[{units:-3,kind:'expire'}]);
       assert.equal(await balance(who),'4');
@@ -127,6 +132,8 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       assert.deepEqual(results[0].rows,results[1].rows);
       assert.equal(await balance(who),'6');
       assert.equal(await balance(who,before),'1');
+      assert.deepEqual((await pool.query(reconcile,[who])).rows,
+        [{journal_units:'6',spendable_units:'6',pending_expiry_units:'0',variance:'0'}]);
       await assert.rejects(pool.query(reverse,[who,spent.id,args[2],'TEST changed reason']),{code:'23505'});
       await assert.rejects(pool.query(reverse,[who,spent.id,randomUUID(),args[3]]),{code:'22023'});
       const race=await Promise.allSettled([1,2].map(()=>pool.query(spend,[who,randomUUID(),5,'TEST reuse restored lot'])));
@@ -163,6 +170,8 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)
         VALUES($1,gen_random_uuid(),-1,'spend','TEST unsupported legacy',clock_timestamp())`,[who]);
       assert.equal(await balance(who),null);
+      assert.deepEqual((await pool.query(reconcile,[who])).rows,
+        [{journal_units:'2',spendable_units:null,pending_expiry_units:null,variance:null}]);
       await assert.rejects(pool.query(spend,[who,randomUUID(),1,'TEST legacy']),{code:'22023'});
       for(const amount of [0,-1,null]) await assert.rejects(pool.query(spend,[who,randomUUID(),amount,'TEST invalid']),{code:'22023'});
       await assert.rejects(pool.query(spend,[who,randomUUID(),1,'  ']),{code:'22023'});
@@ -173,6 +182,9 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
         for(const role of ['ghahvehto_app','ghahvehto_identity']){
           await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
           await assert.rejects(client.query(spend,[who,randomUUID(),1,'TEST denied']),{code:'42501'});
+          await client.query('ROLLBACK');
+          await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
+          await assert.rejects(client.query(reconcile,[who]),{code:'42501'});
           await client.query('ROLLBACK');
           await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
           await assert.rejects(client.query('SELECT * FROM star_spend_allocations'),{code:'42501'});

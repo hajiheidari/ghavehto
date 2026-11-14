@@ -1,5 +1,7 @@
 # Changelog
 
+- Add maintenance-only star account reconciliation of journal totals, spendable units and pending expiries.
+
 - Restore full internal star spends to their still-valid original lots through audited immutable reversals.
 
 - Record funded-star lot expiry once without double-deducting balance or refunding budgets; wait for test backend disconnects during cleanup.
