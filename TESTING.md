@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL fixture races two referral links for the same recipient, checks stable replay, rejects expired links and self-attribution, denies runtime access and verifies no rewards.
+
 The PostgreSQL fixture checks tier awards across a UTC year boundary, as-of balance, recipient isolation, concurrent replay and independence from stars.
 
 The isolated PostgreSQL fixture races funded star awards, verifies replay and expiry rollback, and checks that issuance leaves tier points untouched.

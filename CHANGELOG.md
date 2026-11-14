@@ -1,5 +1,7 @@
 # Changelog
 
+- Record internal verified referral attribution without granting rewards.
+
 - Append non-spendable tier awards with UTC year assignment and scoped qualification totals.
 
 - Add internal issuance of platform stars against a funded budget.

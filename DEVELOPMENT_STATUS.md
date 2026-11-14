@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 031 adds hashed referral link storage and atomic verified attribution with one inviter per invitee. There is no public route, registration attachment, risk scoring or reward payout yet.
+
 Migration 030 records internal tier awards and calculates points by qualification year and cutoff. It does not spend points, touch stars, or activate tiers and benefits; runtime access remains disabled.
 
 Migration 029 issues platform stars from a maintenance-provisioned budget with atomic debit, audit and replay handling. No budget is seeded; no runtime grant, public issuance or redemption is enabled.

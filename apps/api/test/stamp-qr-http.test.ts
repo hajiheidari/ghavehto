@@ -255,6 +255,24 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     ]) assert.deepEqual((await db.query(inspectTier,[recipient,year,at])).rows,[{units}]);
     assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,1);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.tier_awarded'")).rowCount,2);
+    const codes=[randomBytes(32),randomBytes(32),randomBytes(32)];
+    await db.query(`INSERT INTO referral_links(inviter_id,code_hash,expires_at)
+      VALUES($1,$2,now()+interval '1 hour'),($1,$3,now()+interval '1 hour'),($1,$4,now()-interval '1 hour')`,
+      [staff.id,...codes]);
+    const referral='SELECT public.attribute_verified_referral($1,$2) AS id';
+    await assert.rejects(runtime.query(referral,[customer.id,codes[0]]),{code:'42501'});
+    await assert.rejects(db.query(referral,[staff.id,codes[0]]),{code:'22023'});
+    await assert.rejects(db.query(referral,[customer.id,codes[2]]),{code:'22023'});
+    const referralRace=await Promise.allSettled(codes.slice(0,2).map(code=>db!.query(referral,[customer.id,code])));
+    const referralWinner=referralRace.findIndex(result=>result.status==='fulfilled');
+    const referralWon=referralRace[referralWinner],referralLost=referralRace[1-referralWinner];
+    assert.equal(referralWon?.status,'fulfilled');
+    assert.equal(referralLost?.status,'rejected');
+    assert.equal(referralLost.reason.code,'23505');
+    assert.deepEqual((await db.query(referral,[customer.id,codes[referralWinner]])).rows,referralWon.value.rows);
+    assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.referral_attributed'")).rowCount,1);
+    assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,1);
+    assert.equal((await db.query('SELECT 1 FROM tier_entries')).rowCount,2);
   } finally {
     try {
       await server?.app.close();
