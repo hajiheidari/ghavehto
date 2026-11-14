@@ -1,0 +1,9 @@
+{
+  "name": "Ghahvehto M1 development",
+  "dockerComposeFile": "../infra/compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/workspace/ghavehto",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [3000, 4101],
+  "postCreateCommand": "pnpm install --frozen-lockfile"
+}

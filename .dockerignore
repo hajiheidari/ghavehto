@@ -1,0 +1,9 @@
+.git
+**/node_modules
+**/.next
+**/dist
+**/.test-build
+**/.dart_tool
+**/build
+.env
+.env.*

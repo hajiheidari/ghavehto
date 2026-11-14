@@ -1,7 +1,40 @@
 # API specification
 
-Implemented read-only local probe: GET /health → 200 `{status:"ok"}`; GET /v1/bootstrap → 200 contract in packages/contracts/bootstrap.ts. Unknown routes return 404 JSON; unsupported methods return 405 with Allow: GET. No cookies, business writes or CORS wildcard. GET / serves a static Persian RTL connectivity harness.
+Nest binds loopback (4101). Swagger/OpenAPI is at /docs and /docs-json. This is a development API, without an initial public login or sending provider.
 
-Bootstrap reports `environment: development`, `dataMode: empty`, `loyaltyEnabled: false`; empty directory is not seeded commercial data. Process health deliberately makes no persistence claim.
+| Method / path | Behavior |
+|---|---|
+| GET /health/live | Process liveness only |
+| GET /health/ready | Restricted runtime DB plus all known migration checksums; otherwise 503 |
+| GET /v1/bootstrap | Validated Persian RTL development/empty bootstrap; loyalty disabled |
+| GET /v1/session | Authenticated user/session UUIDs only |
+| POST /v1/session/refresh | Strict {refreshToken}; rotates existing opaque credentials (201), invalid/reuse 401 |
+| POST /v1/session/logout | Access bearer; idempotent {revoked:true} (201) |
+| GET /v1/cafes/:cafeId/access | Membership-scoped café ID/name |
+| GET /v1/cafes/:cafeId/branches/:branchId/access | Branch-scoped IDs/name |
+| PATCH /v1/cafes/:cafeId/profile | Strict {name}, owner-only, atomic audit |
+| GET /v1/dashboards/cafe, /admin, /agents | Legacy shells remain 401 for every caller |
 
-M1 must introduce versioned OpenAPI, generated clients, uniform error/request IDs, schema validation, pagination and contract drift CI before adding business APIs. Suggested domains are documented in ARCHITECTURE.md; they are not live endpoints.
+Bearer tokens are random opaque credentials, not submitted actor/role IDs. Tenant operations authenticate, lock session/identity state, check wall-clock expiry, set the server-derived actor locally and switch to café RLS. Missing/invalid credentials yield 401; inaccessible café/branch data yields 404. Unknown body fields and invalid bounded names are rejected. Phone possession does not grant café ownership.
+
+Authenticated responses and errors are no-store. Refresh replay revokes descendants; duplicate logout/replay does not duplicate audit transitions. Clients must serialize refresh. No cookies are accepted as API authority; future web-cookie integration must include CSRF controls. TS lifecycle helpers omit cookies and reject redirects; Dart lifecycle helpers disable redirects and bound the full request/body read. No token is stored in localStorage or a repository default.
+
+Every request receives a server-generated X-Request-ID. Errors are flat {code,message,requestId}, with generic Persian text and no raw exception/SQL/credential details. The OpenAPI error schema and reviewed flat response schemas are exported. The custom generator supports only reviewed flat bootstrap/access/session responses; nested business APIs need explicit generator work.
+
+IDENTITY_DATABASE_URL must point to a distinct non-owner NOINHERIT/NOBYPASSRLS/NOSUPERUSER/NOCREATEDB/NOCREATEROLE login with non-inheriting SET ROLE membership in ghahvehto_identity and ghahvehto_app. Privileged, inherited or table-owner credentials are rejected at startup. Without that pool, authenticated routes deny access and readiness is 503. DATABASE_URL is for migration/tests, never runtime health queries.
+
+The historical dependency-free probe at 4100 is read-only diagnostics and is not the Nest identity backend.
+
+## Public directory discovery
+
+Authenticated navigation: `GET /v1/cafes` lists accessible café IDs/names and the server-derived `canManageStaff` flag. `GET /v1/cafes/:cafeId/branches` lists only accessible branch IDs/names. Both return `{items,nextCursor}`, accept an optional exclusive UUID `after` cursor, and cap pages at 50. They never use caller-supplied actor IDs.
+
+Owner-only staff roster: `GET /v1/cafes/:cafeId/branches/:branchId/staff` returns `{userIds,nextCursor}` with at most 50 staff account IDs and no contact data. Pass `?after=<nextCursor>` to continue. The cursor is exclusive; unauthorized and mismatched café/branch pairs return 404 for authenticated callers.
+
+Owner-only staff administration: `PUT /v1/cafes/:cafeId/branches/:branchId/staff/:userId` accepts `{enabled: boolean}` and returns the resulting state. The user ID is for an existing account; granting requires a verified phone. Revoking affects only the staff membership at the specified branch. The route cannot assign owner or manager roles, and does not send invitations.
+
+Ownership intake uses `POST /v1/ownership-claims` with `{branchId}`, `GET /v1/ownership-claims` for the actor's latest 50 requests, and `DELETE /v1/ownership-claims/:id` to withdraw a pending request. All require a valid access bearer. Duplicate open requests for the same café return the same ID. The API accepts only a published branch and grants no ownership, staff access or public partner status. Missing, unpublished or other-user records are not disclosed. Intake is limited per verified actor.
+
+`GET /v1/directory/branches/:id` returns one item from the same reviewed projection. A missing, withdrawn or otherwise unpublished branch returns 404. Invalid UUIDs return 400 and an unavailable runtime database returns 503. Responses are not cached.
+
+`GET /v1/directory?q=<text>&page=<1–100>` returns `{items,hasMore}`. Each item has `id` (branch UUID), `cafeName`, `branchName`, `province`, `city`, and `neighborhood`. Search is optional, literal and capped at 80 characters; page size is 24. Results contain only reviewed branch snapshots with permitted provenance, never private contacts or unreviewed tenant data. Returns 400 for invalid query and 503 when the restricted database is unavailable; an empty published result is 200. Responses are not cached. This early directory contract is consumed by web SSR; mobile binding follows after the directory contract is stable.
