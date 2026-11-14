@@ -1,5 +1,7 @@
 # Changelog
 
+- Cancel internal star reservations atomically with immutable replay receipts, original-lot recovery and one stock return.
+
 - Reject standalone star refunds for open reward reservations until atomic cancellation is implemented.
 
 - Atomically reserve internal star rewards with bounded stock, lot-backed debits and immutable replay receipts; keep delivery disabled.

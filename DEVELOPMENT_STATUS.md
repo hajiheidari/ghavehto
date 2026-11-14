@@ -1,4 +1,4 @@
-# Development status · 2026-11-10
+# Development status · 2026-11-15
 
 M0 planning is documented. M1 production identity activation is deferred at the founder's direction while independent M2 work proceeds. See [product delivery sequence](docs/PRODUCT_EXECUTION.md). No production launch or completed end-user login is claimed.
 
@@ -29,6 +29,14 @@ Initial public OTP/login routes and SMS delivery are NOT enabled. The only enabl
 The founder selected SMS.ir. Its Verify Send adapter is implemented and tested with an injected offline transport; it is not wired to startup. Genuine sign-in still needs an existing account and approved template, secure credentials (never chat/Git), and separate authorization for a narrowly scoped real test send.
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
+
+## M3 reservation recovery · 2026-11-15
+
+Resume verified branch/PR #1 head `bb836c9be696ab1170378e0088905c49eacfb8ea` and Foundation CI [43639225961](https://github.com/hajiheidari/ghavehto/actions/runs/43639225961) as Success from the GitHub run page. Local changes were absent.
+
+Migration 044 adds maintenance-only atomic reservation cancellation: one immutable cancellation receipt, exact original-lot reversal, one stock return and reasoned audit. A deferred FK requires the corresponding immutable reversal to exist at commit; the reserved-spend guard accepts only its matching cancellation. Same-operation retries return the receipt; competing cancellations cannot restock twice. Cancellation can recover inactive rewards but refuses expired original lots or unknown history. A stock overflow rolls back all cancellation/refund writes. New reservation and cancellation use the same stock-before-account lock order. No public route, runtime grant, delivery or real payout is enabled.
+
+The complete PostgreSQL/PostGIS suite passed 31 tests, zero failures/skips. M3 remains incomplete: expired/mixed-lot recovery policy, delivery/cancellation finalization and referral reward integration are still separate work. Continue independent milestones without activating external providers.
 
 ## M3 continuation · 2026-11-14
 
