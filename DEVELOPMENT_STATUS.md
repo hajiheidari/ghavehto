@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 032 adds internal issuance and revocation. It stores only hashes of random codes; public routing and tying attribution to a newly registered account remain pending.
+
 Migration 031 adds hashed referral link storage and atomic verified attribution with one inviter per invitee. There is no public route, registration attachment, risk scoring or reward payout yet.
 
 Migration 030 records internal tier awards and calculates points by qualification year and cutoff. It does not spend points, touch stars, or activate tiers and benefits; runtime access remains disabled.

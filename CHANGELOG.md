@@ -1,5 +1,7 @@
 # Changelog
 
+- Generate internal referral codes with hash-only storage and scoped revocation.
+
 - Record internal verified referral attribution without granting rewards.
 
 - Append non-spendable tier awards with UTC year assignment and scoped qualification totals.

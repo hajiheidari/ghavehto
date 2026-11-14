@@ -1,3 +1,4 @@
+import {hashReferralCode,issueReferralLink} from '../src/nest/referral-links.js';
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {test} from 'node:test';
@@ -255,6 +256,18 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     ]) assert.deepEqual((await db.query(inspectTier,[recipient,year,at])).rows,[{units}]);
     assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,1);
     assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='loyalty.tier_awarded'")).rowCount,2);
+    const issuedLink=await issueReferralLink(db,staff.id,60);
+    assert.match(issuedLink.code,/^[0-9a-f]{64}$/);
+    assert.deepEqual((await db.query('SELECT code_hash FROM referral_links WHERE id=$1',[issuedLink.id])).rows,
+      [{code_hash:hashReferralCode(issuedLink.code)}]);
+    const revoke='SELECT public.revoke_referral_link($1,$2) AS revoked';
+    await assert.rejects(runtime.query(revoke,[staff.id,issuedLink.id]),{code:'42501'});
+    await assert.rejects(issueReferralLink(runtime,staff.id,60),{code:'42501'});
+    assert.equal((await db.query(revoke,[customer.id,issuedLink.id])).rows[0].revoked,false);
+    assert.equal((await db.query(revoke,[staff.id,issuedLink.id])).rows[0].revoked,true);
+    assert.equal((await db.query(revoke,[staff.id,issuedLink.id])).rows[0].revoked,false);
+    await assert.rejects(db.query('SELECT public.attribute_verified_referral($1,$2)',
+      [customer.id,hashReferralCode(issuedLink.code)]),{code:'22023'});
     const codes=[randomBytes(32),randomBytes(32),randomBytes(32)];
     await db.query(`INSERT INTO referral_links(inviter_id,code_hash,expires_at)
       VALUES($1,$2,now()+interval '1 hour'),($1,$3,now()+interval '1 hour'),($1,$4,now()-interval '1 hour')`,
