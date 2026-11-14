@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 026 reconciles combined historical expiry entries against an explicit list of expired awards in one scope, requiring the full remainder of each award and an exact total. Reversal reconciliation remains open.
+
 Migration 025 links a documented legacy expiry to a single award in the same account and program if its full unspent remainder matches. Combined expiries, unresolved spending and reversals remain blocked.
 
 Migration 024 records the remaining units of an expired stamp award through a maintenance-only function. Redemption understands linked expiry entries. Unlinked legacy expiry and reversals still need separate reconciliation; no worker or endpoint is enabled.

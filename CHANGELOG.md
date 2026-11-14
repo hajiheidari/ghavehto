@@ -1,5 +1,7 @@
 # Changelog
 
+- Reconcile documented stamp expiries that exhausted multiple awards in one entry.
+
 - Added maintenance reconciliation for documented single-award legacy stamp expiries.
 
 - Record expired stamp remainders once, preserving both the original award and its allocations.
