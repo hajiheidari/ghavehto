@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Atomic experience participation · 2026-11-15
+
+Full PostgreSQL/PostGIS suite passed 41 tests with zero failures/skips after migration 047. New functional cases race stock and funding across members, retry receipts concurrently after deactivation, reject changed branch, enforce limits across versions, race first participation across separate campaigns, deny participation after an actual consumed stamp QR, check expiry after a capacity-lock wait with zero stock/budget/receipt effects, enforce immutable claims/first-visit links and deny runtime writes. Star/tier journals remain unchanged; the only stamp entry in the fixture is from its explicit QR confirmation.
+
+
 ## Experience policy foundation · 2026-11-15
 
 Full disposable PostgreSQL/PostGIS suite passed 37 tests with zero failures/skips after migration 046. The new fixture verifies inactive policies, start-inclusive/end-exclusive windows, branch and cross-café denial, absent stock/funding, immutable policy versions including cascading truncation refusal, unclaimed/revoked ownership, deleted member denial, restricted role denial and unchanged independent loyalty journals. Participation writes are not yet enabled by this increment.

@@ -1,5 +1,7 @@
 # Changelog
 
+- Reserve experience participation atomically with server-time eligibility, stock/budget limits and cross-campaign first-visit serialization.
+
 - Add private versioned experience eligibility with verified ownership, branch/window limits and independent stock/budget envelopes.
 
 - Issue internal funded referral stars once after reviewed eligibility and independent confirmed QR interaction.

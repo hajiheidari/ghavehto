@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M4 atomic experience participation · 2026-11-15
+
+Migration 047 adds maintenance-only participation claims with immutable replay receipts. Member, verified ownership, branch, policy window, stock and budget are rechecked after locks; the cutoff comes from the database clock. A shared member/café lock enforces first-recorded-participation across campaigns and member limits across policy versions. Claims atomically consume one stock unit, the explicit version budget cost, optional first-visit linkage and one audit event. Exact retries return the original receipt even after deactivation; changed payloads conflict. Confirmed QR history prevents first-recorded-visit participation. No loyalty journal is awarded/spent, and no public/runtime/provider activation is enabled.
+
+Full PostgreSQL/PostGIS suite passed 41 tests, zero failures/skips. Participation is internal reservation only; experience cancellation, campaign-specific fulfillment/UI and public reviewed projections remain later work. Continue independent M4 member/café founder windows next.
+
 ## M4 private experience policies · 2026-11-15
 
 Migration 046 starts M4 with disabled-by-default experience definitions, immutable policy versions, branch/date/member limits, per-café version stock and budget envelopes, append-only claims and first-recorded-visit linkage. Maintenance-only eligibility checks require an active café with a live verified ownership grant and owner, verified member, correct branch, half-open UTC window, capacity and per-experience member limits. First-visit eligibility uses recorded QR interactions and participation only; it does not assert absence of off-platform visits. Budget units are explicit internal accounting units, not customer fees or provider payments. No campaign catalog/UI, public offer, runtime write grant, seeds or real spending is enabled.
