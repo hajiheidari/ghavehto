@@ -1,3 +1,5 @@
+import {OtpCrypto} from '../src/nest/otp.js';
+import {PhoneVault} from '../src/nest/phone-vault.js';
 import {identityTransaction} from '../src/nest/identity-transaction.js';
 import {hashReferralCode,issueReferralLink} from '../src/nest/referral-links.js';
 import assert from 'node:assert/strict';
@@ -42,7 +44,11 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     const sessions=new SessionService(runtime);
     const customerSession=await sessions.issue(customer.id),staffSession=await sessions.issue(staff.id);
     const secondStaffSession=await sessions.issue(staff.id);
-    server=await createApp({runtimePool:runtime,enableStampQr:true});
+    let loginCode='';
+    server=await createApp({runtimePool:runtime,enableStampQr:true,initialLogin:{
+      crypto:new OtpCrypto(randomBytes(32)),vault:new PhoneVault(randomBytes(32),new Map([['test',randomBytes(32)]]),'test'),
+      provider:{enabled:true,async send({code}){loginCode=code;}},
+    }});
     await server.app.listen(0,'127.0.0.1');
     const url=await server.app.getUrl();
     const post=(action:string,token:string,body:object)=>fetch(`${url}/v1/stamp-qr/${action}`,{
@@ -316,6 +322,22 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
       return row.id;
     });
     assert.equal((await db.query('SELECT 1 FROM referral_attributions WHERE invitee_id=$1',[skipped])).rowCount,0);
+    const loginPost=(action:string,body:object)=>fetch(`${url}/v1/auth/otp/${action}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),
+    });
+    const mobile='+989120000041';
+    const challenge=await loginPost('request',{mobile});
+    assert.equal(challenge.status,201);
+    const {challengeId}=await challenge.json() as {challengeId:string};
+    const proof={mobile,challengeId,code:loginCode};
+    assert.equal((await loginPost('verify',{...proof,referralCode:'invalid'})).status,400);
+    const verifiedLogin=await loginPost('verify',{...proof,referralCode:registrationLink.code});
+    assert.equal(verifiedLogin.status,201);
+    const {accessToken}=await verifiedLogin.json() as {accessToken:string};
+    const registered=await sessions.authenticate(accessToken);
+    assert.ok(registered);
+    assert.deepEqual((await db.query('SELECT link_id FROM referral_attributions WHERE invitee_id=$1',[registered.userId])).rows,
+      [{link_id:registrationLink.id}]);
   } finally {
     try {
       await server?.app.close();

@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+The opt-in OTP verification handler accepts a referral code. Normal startup still leaves this handler and all SMS delivery disabled.
+
 Migration 034 attaches an optional referral during the verified identity insert. Existing accounts and unusable codes do not receive attribution. The HTTP handler does not accept referral codes yet.
 
 Identity verification now supports a transaction-local callback only for new verified registrations. Referral registration wiring and restricted database access remain pending; no HTTP handler provides the callback.

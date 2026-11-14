@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The disposable PostgreSQL HTTP fixture checks referral validation and attribution through real OTP verification with an in-memory provider.
+
 The PostgreSQL fixture checks referral attribution on verified insert through the identity role, and successful registration with a revoked code.
 
 The identity fixture checks that two successful concurrent verifications call the registration hook only once and that it can see the newly verified account.

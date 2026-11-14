@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Header, Inject, Ip, Post, UnauthorizedException } from '@nestjs/common';
-import { IsString, IsUUID, Length, Matches } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
 import { normalizeIranMobile } from './normalization.js';
 import type { IdentityService } from './identity.js';
 import type { OtpChallengeService } from './otp-challenges.js';
@@ -12,6 +12,7 @@ class RequestLoginDto {
   @IsString() @Length(10, 32) mobile!: string;
 }
 class VerifyLoginDto extends RequestLoginDto {
+  @IsOptional() @IsString() @Matches(/^[0-9a-f]{64}$/) referralCode?: string;
   @IsUUID('4') challengeId!: string;
   @IsString() @Matches(/^\d{6}$/) code!: string;
 }
@@ -34,7 +35,7 @@ export class InitialLoginController {
 
   @Post('verify') @Header('Cache-Control', 'no-store')
   async verify(@Body() body: VerifyLoginDto, @Ip() clientIp: string): Promise<SessionTokensDto> {
-    const result = await this.login.identity.verify(body.challengeId, this.phone(body.mobile), body.code, clientIp);
+    const result = await this.login.identity.verify(body.challengeId, this.phone(body.mobile), body.code, clientIp, {referralCode:body.referralCode});
     if (!result) throw new UnauthorizedException();
     return result.tokens;
   }

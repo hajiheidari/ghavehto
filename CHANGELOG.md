@@ -1,5 +1,7 @@
 # Changelog
 
+- Accept optional referral codes on the explicitly composed OTP verification route.
+
 - Bind optional referral attribution to newly created, verified identities.
 
 - Add a server-only transaction hook that runs once for a newly verified identity.
