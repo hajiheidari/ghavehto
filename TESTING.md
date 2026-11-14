@@ -1,5 +1,7 @@
 # Test plan and execution
 
+The PostgreSQL fixture tests balanced and mismatched star funding totals, missing budgets and denied runtime access.
+
 The PostgreSQL fixture verifies referral review denies over-cap eligibility and runtime access, records concurrent replay once and leaves the star journal unchanged.
 
 The PostgreSQL fixture tests referral review at the volume cap, denied runtime access and deleted account screening.

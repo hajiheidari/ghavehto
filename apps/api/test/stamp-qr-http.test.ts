@@ -354,6 +354,14 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.equal((await db.query('SELECT 1 FROM star_entries')).rowCount,3);
     await db.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1',[registered.userId]);
     assert.deepEqual((await db.query(review,[latestReferral.id,3])).rows,[{decision:'account_unavailable'}]);
+    const funding='SELECT * FROM public.inspect_star_funding($1)';
+    await assert.rejects(runtime.query(funding,[budget.id]),{code:'42501'});
+    assert.deepEqual((await db.query(funding,[budget.id])).rows,
+      [{funded_units:7,remaining_units:0,issued_units:'7',variance:'0'}]);
+    assert.equal((await db.query(funding,[randomUUID()])).rowCount,0);
+    await db.query('UPDATE star_award_budgets SET remaining_units=1 WHERE id=$1',[budget.id]);
+    assert.deepEqual((await db.query(funding,[budget.id])).rows,
+      [{funded_units:7,remaining_units:1,issued_units:'7',variance:'-1'}]);
   } finally {
     try {
       await server?.app.close();

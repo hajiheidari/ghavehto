@@ -1,5 +1,7 @@
 # Changelog
 
+- Add read-only reconciliation of funded star budgets against issued awards.
+
 - Store audited referral review decisions without issuing rewards.
 
 - Add private referral volume screening before any reward decisions.

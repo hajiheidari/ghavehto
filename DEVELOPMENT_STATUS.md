@@ -32,6 +32,8 @@ Initial login HTTP handlers are available only to explicitly composed apps; the 
 
 ## Other open gates
 
+Migration 037 lets database maintenance compare issued stars with funded and remaining units. A mismatch is reported without changing the journal or budget.
+
 Migration 036 records one immutable internal referral decision per attribution. Eligibility requires a passing screen and a recorded reason. No payout or public operator route is enabled.
 
 Migration 035 adds a maintenance-only referral review preview with a configurable rolling 24-hour cap. Meeting the cap is not reward approval; no reward is issued.
