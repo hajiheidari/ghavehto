@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M3 continuation · 2026-11-14
+
+Re-read PR #1 as Draft and its branch/ref as `a1dc4b42ce7f7442529d6094e7fefd3a2c091910`. The public GitHub page for Foundation CI 43636010467 reports Success for that checkpoint. GitHub API/GraphQL access returned Forbidden; the web page supplied the observed status.
+
+Migration 038 adds maintenance-only star debits and immutable earliest-expiry lot allocations. Per-account serialization prevents different operations from overspending; exact retries return the same entry, and changed payloads conflict. Expiry is checked after acquiring the balance lock. Balance inspection supports allocated spends and historical cutoffs, while unallocated or unsupported history remains unknown. No public route, runtime permission, reward payout or production budget is enabled. Stamp and tier journals remain independent.
+
 ## Other open gates
 
 Migration 037 lets database maintenance compare issued stars with funded and remaining units. A mismatch is reported without changing the journal or budget.
@@ -44,7 +50,7 @@ Migration 034 attaches an optional referral during the verified identity insert.
 
 Identity verification now supports a transaction-local callback only for new verified registrations. Referral registration wiring and restricted database access remain pending; no HTTP handler provides the callback.
 
-Migration 033 provides a private expiry-aware funded star balance for award-only accounts. Unsupported historical adjustments return an unknown balance. Star spending is not enabled.
+Migration 033 provides a private expiry-aware funded star balance for award-only accounts. Unsupported historical adjustments return an unknown balance. Maintenance-only lot-backed spending is added in migration 038; runtime spending remains disabled.
 
 Migration 032 adds internal issuance and revocation. It stores only hashes of random codes; public routing and tying attribution to a newly registered account remain pending.
 

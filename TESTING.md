@@ -1,5 +1,11 @@
 # Test plan and execution
 
+## Star spending · 2026-11-14
+
+The new disposable PostgreSQL/PostGIS test ran successfully: 4 reported tests (one parent and three subtests), no failures/skips. It verifies competing debits, exact concurrent retries, changed payload/account rejection, earliest-expiry allocations, historical balance before spending and at expiry, no funding refund, independent stamp/tier journals, immutable allocations, expiry while waiting on the account lock, rollback on insufficient balance, unsupported legacy history, deleted accounts and denied app/identity roles. Migrations were applied twice to verify repeatability. This is internal accounting only, not reward fulfillment. Full `test:db` passed 22 tests with zero failures/skips on PostgreSQL/PostGIS 17. Workspace build/typecheck, 10 API unit tests, 1 probe test, 3 contract tests, client drift and real Next→Nest SSR smoke passed on host Node 24.22.1/pnpm 11.25.0; exact pinned-container validation remains separate.
+
+
+
 The PostgreSQL fixture tests balanced and mismatched star funding totals, missing budgets and denied runtime access.
 
 The PostgreSQL fixture verifies referral review denies over-cap eligibility and runtime access, records concurrent replay once and leaves the star journal unchanged.

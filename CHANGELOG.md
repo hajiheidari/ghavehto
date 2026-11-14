@@ -1,5 +1,7 @@
 # Changelog
 
+- Add internal serialized star spending with immutable earliest-expiry allocations, idempotent audit and expiry-aware historical balances.
+
 - Add read-only reconciliation of funded star budgets against issued awards.
 
 - Store audited referral review decisions without issuing rewards.
