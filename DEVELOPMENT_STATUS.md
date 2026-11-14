@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## Verified execution checkpoint · 2026-11-15
+
+Exact executable code `5b2998ac03b33681ed065bec7822324052db56b0` passed Foundation CI [43648754783](https://github.com/hajiheidari/ghavehto/actions/runs/43648754783). The complete compiled API/database suite also passed all 65 tests on Node 24.19.0 against a newly initialized PostgreSQL/PostGIS cluster with no existing application roles or data; the disposable cluster was then removed. The production dependency audit reports no known vulnerabilities. This validation update changes documentation only; future executable changes require their own checks.
+
+Resume from PR #1 / `codex/m1-foundation`, never main. Next concrete code work is trusted new-registration tracking integration in the verified identity transaction (new accounts only, optional unusable attribution must not break sign-in), then consent/rate-limited landing behavior before link activation. Keep OTP/SMS startup disabled. Add campaign-specific participation recovery/client flows and independent M5 worker lease/approval/CMS work from ROADMAP. M3/M4 are still incomplete; no real budgets, café data, public campaign, provider, payout or release was enabled.
+
 ## Dependency security checkpoint · 2026-11-15
 
 The owner-preview code `1ed5c1016b96e280594b161ed43998c363172f6c` passed Foundation CI [43647945317](https://github.com/hajiheidari/ghavehto/actions/runs/43647945317). It also passed all 65 compiled API/database tests on the exact Node 24.19.0 image, with zero failures/skips.

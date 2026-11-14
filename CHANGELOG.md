@@ -1,5 +1,7 @@
 # Changelog
 
+- Record successful exact-code CI and 65-test clean-cluster validation for the M3/M4 continuation and dependency patches.
+
 - Patch 11 reported production dependency advisories with compatible Nest and targeted transitive updates; enforce high-severity production audit in CI.
 
 - Add read-only Persian RTL owner experience preview over restricted-session API, exact budget strings and bounded pagination; keep activation private.

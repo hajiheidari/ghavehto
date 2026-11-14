@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Exact-code CI and clean cluster · 2026-11-15
+
+Executable code `5b2998ac03b33681ed065bec7822324052db56b0` passed Foundation CI [43648754783](https://github.com/hajiheidari/ghavehto/actions/runs/43648754783). All 65 compiled API/database tests also passed on Node 24.19.0 against a completely fresh PostgreSQL/PostGIS cluster with no pre-existing application roles/data; zero failures/skips. The temporary database container was stopped and removed after the run. Production audit reported no known vulnerabilities. The following checkpoint commit records evidence only and does not extend these results to future code changes.
+
+
 ## Production dependency remediation · 2026-11-15
 
 Production audit initially reported 11 advisories: 6 high, 4 moderate, 1 low. Nest 11.1.18 plus targeted compatible path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 overrides reduced the repeat `pnpm audit --prod` report to no known vulnerabilities. Frozen installation/supply-chain checks, workspace build/typecheck, OpenAPI export with no additional schema drift, client drift, SSR smoke, 3 contract tests, 12 API unit tests and 1 probe passed. The complete compiled suite then passed 65 tests, zero failures/skips, on verified Node 24.19.0 after the patches; 53 are database-suite outcomes including parent accounting. The existing HTTP fixtures exercise routing, malformed JSON/error handling, OTP/session/tenant flows and real Next SSR with the patched packages. No CVE exploit reproduction or complete M6 security review is claimed. Foundation CI now runs `pnpm audit --prod --audit-level high`.
