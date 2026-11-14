@@ -165,6 +165,58 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
       assert.equal((await pool.query('SELECT 1 FROM star_entries WHERE reversal_of=$1',[spent.id])).rowCount,0);
     });
 
+    await t.test('reward reservation debits balance and stock atomically with permanent replay receipts',async()=>{
+      const who=await user();await award(who,6);
+      const {rows:[reward,other]}=await pool.query('INSERT INTO star_rewards(cost,stock,active) VALUES(5,1,true),(5,1,true) RETURNING id');
+      const redeem='SELECT public.redeem_star_reward($1,$2,$3) AS id';
+      const operations=[randomUUID(),randomUUID()];
+      const race=await Promise.allSettled([reward,other].map((r,i)=>pool.query(redeem,[who,r.id,operations[i]])));
+      assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+      const winning=race.findIndex(r=>r.status==='fulfilled');
+      const won=race[winning];assert.ok(won.status==='fulfilled');
+      const target=[reward,other][winning];
+      const args=[who,target.id,operations[winning]];
+      const repeats=await Promise.all([pool.query(redeem,args),pool.query(redeem,args)]);
+      for(const r of repeats) assert.deepEqual(r.rows,won.value.rows);
+      await assert.rejects(pool.query(redeem,[who,[other,reward][winning].id,args[2]]),{code:'23505'});
+      assert.equal(await balance(who),'1');
+      assert.equal((await pool.query('SELECT sum(stock) AS stock FROM star_rewards')).rows[0].stock,'1');
+      assert.equal((await pool.query('SELECT 1 FROM star_redemptions')).rowCount,1);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='loyalty.star_reward_reserved'")).rowCount,1);
+      const second=await user();await award(second,6);
+      const {rows:[disabled]}=await pool.query('INSERT INTO star_rewards(cost,stock) VALUES(1,1) RETURNING id');
+      await assert.rejects(pool.query(redeem,[second,disabled.id,randomUUID()]),{code:'22023'});
+      assert.equal(await balance(second),'6');
+      await assert.rejects(pool.query(redeem,[second,target.id,randomUUID()]),{code:'22023'});
+      const reused=randomUUID();
+      await pool.query(spend,[second,reused,1,'TEST direct debit']);
+      await assert.rejects(pool.query(redeem,[second,[other,reward][winning].id,reused]),{code:'23505'});
+      const {rows:[receipt]}=await pool.query('SELECT entry_id FROM star_redemptions WHERE id=$1',[won.value.rows[0].id]);
+      // Accounting reversal does not assert cancellation or refill reward inventory.
+      await pool.query('SELECT public.reverse_funded_star_spend($1,$2,$3,$4)',[who,receipt.entry_id,randomUUID(),'TEST accounting recovery']);
+      assert.equal((await pool.query('SELECT stock FROM star_rewards WHERE id=$1',[target.id])).rows[0].stock,0);
+      assert.deepEqual((await pool.query(redeem,args)).rows,won.value.rows);
+      for(const sql of ['UPDATE star_redemptions SET user_id=user_id','DELETE FROM star_redemptions','TRUNCATE star_redemptions'])
+        await assert.rejects(pool.query(sql),{code:'55000'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_app');
+        await assert.rejects(client.query(redeem,args),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+    });
+
+    await t.test('different accounts compete for one reward without negative stock',async()=>{
+      const users=await Promise.all([user(),user()]);
+      for(const who of users) await award(who,5);
+      const {rows:[reward]}=await pool.query('INSERT INTO star_rewards(cost,stock,active) VALUES(5,1,true) RETURNING id');
+      const race=await Promise.allSettled(users.map(who=>pool.query('SELECT public.redeem_star_reward($1,$2,$3)',[who,reward.id,randomUUID()])));
+      assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+      assert.equal((await pool.query('SELECT stock FROM star_rewards WHERE id=$1',[reward.id])).rows[0].stock,0);
+      const balances=await Promise.all(users.map(who=>balance(who)));
+      assert.deepEqual(balances.sort(),['0','5']);
+      assert.equal((await pool.query('SELECT 1 FROM star_redemptions WHERE reward_id=$1',[reward.id])).rowCount,1);
+    });
+
     await t.test('legacy history, invalid parameters, deleted accounts and runtime access fail closed',async()=>{
       const who=await user();await award(who,3);
       await pool.query(`INSERT INTO star_entries(user_id,operation_id,units,kind,reason,effective_at)

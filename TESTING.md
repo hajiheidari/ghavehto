@@ -1,5 +1,11 @@
 # Test plan and execution
 
+## Star reward reservation · 2026-11-14
+
+Full PostgreSQL/PostGIS suite passed 27 tests with zero failures/skips after migration 042. The star fixture has eight subtests plus parent accounting. New checks race different rewards against one balance and different accounts against one stock unit, then verify permanent concurrent replay receipts, changed reward conflict, disabled/default-inactive reward rejection, used operation conflict, unchanged stock after an accounting reversal, immutable receipts and runtime denial. Failed attempts leave balance and stock unchanged. OpenAPI export/client drift and tracked-schema no-diff passed. Host setup was rerun from its saved installation script successfully. Manually started API health/bootstrap and Persian RTL SSR responded successfully after the production build completed.
+
+Local full-container execution remains blocked by proxy denial of storage.googleapis.com for Dart SDK download. The initial SELF_SIGNED_CERT_IN_CHAIN npm failure was resolved by mounting the environment combined CA as a BuildKit secret; verification remained enabled. No local Flutter/native/container success is claimed. GitHub checks must be read for each exact head independently.
+
 ## Star account reconciliation · 2026-11-14
 
 Full PostgreSQL/PostGIS suite passed 25 tests with zero failures/skips after migration 041. Additional assertions verify pending-expiry units before accounting, zero pending after accounting, restored balances after reversal, zero supported variance, unknown balance/variance for unsupported legacy spends, and denied app/identity execution. The report does not modify historical records or provision budgets.

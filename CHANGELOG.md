@@ -1,5 +1,7 @@
 # Changelog
 
+- Atomically reserve internal star rewards with bounded stock, lot-backed debits and immutable replay receipts; keep delivery disabled.
+
 - Add maintenance-only star account reconciliation of journal totals, spendable units and pending expiries.
 
 - Restore full internal star spends to their still-valid original lots through audited immutable reversals.

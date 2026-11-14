@@ -42,6 +42,14 @@ Migration 040 adds full maintenance-only spend reversals with a reason and immut
 
 Migration 041 adds a maintenance-only read-only star account report: raw journal total, supported spendable balance, expired remainder awaiting accounting and their variance. Unsupported historical records preserve an unknown spendable balance/variance instead of inventing an answer. No automatic repair is performed.
 
+Migration 042 adds maintenance-only star reward stock and permanent reservation receipts. The spend, earliest-expiry allocations, stock decrement, receipt and audit share one transaction; different rewards compete for one balance and different accounts compete for one remaining item. Rewards default inactive and no inventory is seeded. Accounting reversal does not claim cancellation or restock a reservation. No delivery, payout, public endpoint or runtime permission is enabled.
+
+## Cloud continuation checkpoint · 2026-11-14
+
+Host frozen installation, build, typecheck, unit/contracts/client drift, SSR/API health/bootstrap and the complete disposable PostgreSQL/PostGIS test suite have run successfully. Local host Node is 24.22.1, pnpm 11.25.0. The repository-pinned complete container is not yet ready locally: after resolving proxy CA trust through BuildKit secret mounts, the Dart SDK download from storage.googleapis.com was denied with CONNECT 403. No TLS/checksum verification was disabled. The environment draft saves host installation/start instructions and the selected working checkout; it adds storage.googleapis.com and api.github.com to the custom network domains, preserving package-manager presets. Draft saving is not publication or evidence of network application.
+
+Exact next work: re-read current PR #1 head/checks; retain migrations 038–042 and run the new star fixture through exact-head CI. After the environment network edit is applied, retry the pinned container, then Flutter analyze/tests and the cloud validator. Next M3 logic is bounded reservation cancellation/recovery tied to accounting reversals, with stock restored at most once and concurrency/idempotency tests; do not infer cancellation from the current accounting-only reversal. Award reversal/refunding policy and mixed-expiry restoration remain unimplemented, and real reward fulfillment remains disabled. Then proceed through independent M4 eligibility/experience/founder/attribution work in ROADMAP; M3 and later milestones are not declared complete.
+
 ## Other open gates
 
 Migration 037 lets database maintenance compare issued stars with funded and remaining units. A mismatch is reported without changing the journal or budget.
