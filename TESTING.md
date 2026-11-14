@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Experience policy foundation · 2026-11-15
+
+Full disposable PostgreSQL/PostGIS suite passed 37 tests with zero failures/skips after migration 046. The new fixture verifies inactive policies, start-inclusive/end-exclusive windows, branch and cross-café denial, absent stock/funding, immutable policy versions including cascading truncation refusal, unclaimed/revoked ownership, deleted member denial, restricted role denial and unchanged independent loyalty journals. Participation writes are not yet enabled by this increment.
+
+
 ## Reviewed referral star funding · 2026-11-15
 
 Full PostgreSQL/PostGIS suite passed 34 tests, zero failures/skips after migration 045. Three reported tests in the new referral fixture exercise actual register/attribute/review/issue-QR/consume-QR flows, competing and exact-replay awards, derived recipient, changed amount, budget exhaustion and retry after rollback, rejected review, pre-attribution and inviter-awarded interactions, reversed interaction, deleted account, pre-used direct-award operation, immutable mapping and denied app/identity roles. Negative eligibility cases use an available independent budget so funding exhaustion cannot mask a missing authorization gate. No real SMS, commercial seed or external reward delivery is involved.

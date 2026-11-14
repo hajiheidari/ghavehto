@@ -1,5 +1,7 @@
 # Changelog
 
+- Add private versioned experience eligibility with verified ownership, branch/window limits and independent stock/budget envelopes.
+
 - Issue internal funded referral stars once after reviewed eligibility and independent confirmed QR interaction.
 
 - Cancel internal star reservations atomically with immutable replay receipts, original-lot recovery and one stock return.

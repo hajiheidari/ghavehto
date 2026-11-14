@@ -30,6 +30,12 @@ The founder selected SMS.ir. Its Verify Send adapter is implemented and tested w
 
 Initial login HTTP handlers are available only to explicitly composed apps; the standard executable does not register them. Next: review the approved template, compose secret/key configuration, add web HttpOnly/Secure/SameSite cookies with CSRF protection and mobile secure token storage, then verify the real-device flow. Public deployment still requires separate approval, TLS/ingress abuse controls and operational review.
 
+## M4 private experience policies · 2026-11-15
+
+Migration 046 starts M4 with disabled-by-default experience definitions, immutable policy versions, branch/date/member limits, per-café version stock and budget envelopes, append-only claims and first-recorded-visit linkage. Maintenance-only eligibility checks require an active café with a live verified ownership grant and owner, verified member, correct branch, half-open UTC window, capacity and per-experience member limits. First-visit eligibility uses recorded QR interactions and participation only; it does not assert absence of off-platform visits. Budget units are explicit internal accounting units, not customer fees or provider payments. No campaign catalog/UI, public offer, runtime write grant, seeds or real spending is enabled.
+
+Full PostgreSQL/PostGIS suite passed 37 tests, zero failures/skips. Atomic participation and concurrent first-visit/stock/budget enforcement are the next bounded M4 increment; the schema alone does not complete the milestone.
+
 ## M3 reviewed referral funding · 2026-11-15
 
 Migration 045 adds maintenance-only once-per-attribution star issuance from an explicitly supplied funded budget. The inviter is derived from the immutable verified attribution, both accounts must remain usable, and a terminal eligible review with passing stored-cap screening is required. A consumed stamp QR for the invitee after attribution is required; an interaction awarded by the inviter, a pre-attribution interaction or a reversed award is refused. A dedicated immutable link binds attribution, interaction and funded star entry. Exact replay returns the original entry; a different operation or payload cannot issue twice or appropriate a pre-existing direct award. Insufficient budget rolls back issuance, mapping and audit. No runtime/public function grant, default reward amount, seeded funding or external payout is enabled. Later fraud clawback remains policy work.

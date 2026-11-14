@@ -18,6 +18,7 @@
     "test/stamp-qr-http.test.ts",
     "test/star-spending.test.ts",
     "test/referral-rewards.test.ts",
+    "test/experiences.test.ts",
     "test/auth-operations.test.ts",
     "test/smsir-otp-provider.test.ts"
   ]
