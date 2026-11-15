@@ -5,6 +5,7 @@ import {test} from 'node:test';
 import pg from 'pg';
 import {migrate} from '../src/nest/migrations.js';
 import {prepareCafeTrackingQr} from '../src/nest/cafe-tracking-qr.js';
+import {createApp} from '../src/nest/app.js';
 import {IdentityService} from '../src/nest/identity.js';
 import {OtpChallengeService} from '../src/nest/otp-challenges.js';
 import {OtpCrypto} from '../src/nest/otp.js';
@@ -158,6 +159,71 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       const stale=service(),p='+989120000027',ch=await stale.otp.request(p,ip);
       const result=await stale.identity.verify(ch.challengeId,p,stale.code(),ip,{tracking:{code:staleCode,touchId:staleTouch.id}});assert.ok(result);
       assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
+    });
+    await t.test('explicit landing consent is rate limited across links and replicas, with read-only GET and rejection',async()=>{
+      const login='gh_tracking_'+randomBytes(8).toString('hex'),password=randomBytes(24).toString('hex');
+      await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      await host.query(`GRANT ghahvehto_tracking TO ${login}`);
+      const address=new URL(base);address.username=login;address.password=password;
+      const runtime=new pg.Pool({connectionString:address.toString()});
+      let server:Awaited<ReturnType<typeof createApp>>|undefined;
+      try {
+        const key=randomBytes(32),config={pool:runtime,ipKey:key,publicOrigin:'https://example.invalid'};
+        server=await createApp({tracking:config});await server.app.listen(0,'127.0.0.1');
+        let url=await server.app.getUrl();
+        const code=randomBytes(32).toString('hex'),hash=createHash('sha256').update(code,'ascii').digest();
+        await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
+          VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',3600)`,[cafe.id,branch.id,hash]);
+        const post=(body:object,origin:string|null=config.publicOrigin,linkCode=code)=>fetch(`${url}/q/${linkCode}`,{
+          method:'POST',headers:{'Content-Type':'application/json',...(origin?{Origin:origin}:{}),'X-Forwarded-For':`192.0.2.${Math.floor(Math.random()*200)+1}`},body:JSON.stringify(body),
+        });
+        const before=(await pool.query('SELECT 1 FROM cafe_tracking_touches')).rowCount;
+        const page=await fetch(`${url}/q/${code}`);assert.equal(page.status,200);assert.equal(page.headers.get('cache-control'),'no-store');
+        assert.match(await page.text(),/dir="rtl"/);assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_touches')).rowCount,before);
+        const body={consent:'yes',kind:'qr_scan',operationId:randomUUID()};
+        for(const origin of [null,'https://foreign.invalid']) assert.equal((await post(body,origin)).status,400);
+        assert.equal((await post({...body,consent:'no'})).status,201);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_rate_limits')).rowCount,0);
+        assert.equal((await post({...body,consent:true})).status,400);
+        const declinedForm=await fetch(`${url}/q/${code}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/x-www-form-urlencoded'},
+          body:new URLSearchParams({...body,consent:'no'})});
+        assert.equal(declinedForm.status,201);assert.match(declinedForm.headers.get('content-type')??'',/text\/html/);
+        assert.match(await declinedForm.text(),/بدون ثبت رهگیری/);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,0);
+        // An unavailable but syntactically valid code consumes the shared abuse budget.
+        assert.equal((await post({...body,operationId:randomUUID()},config.publicOrigin,randomBytes(32).toString('hex'))).status,400);
+        const responses=await Promise.all([post(body),post(body)]);
+        assert.deepEqual(responses.map(r=>r.status),[201,201]);
+        const [a,b]=await Promise.all(responses.map(r=>r.json()));assert.deepEqual(a,b);
+        assert.equal((await post({...body,kind:'store_click'})).status,409);
+        await server.app.close();server=await createApp({tracking:config});await server.app.listen(0,'127.0.0.1');url=await server.app.getUrl();
+        const clicks=await Promise.all(Array.from({length:29},()=>post({...body,kind:'store_click',operationId:randomUUID()})));
+        assert.equal(clicks.filter(r=>r.status===201).length,28);assert.equal(clicks.filter(r=>r.status===429).length,1);
+        const secondCode=randomBytes(32).toString('hex');
+        await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
+          VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',3600)`,[cafe.id,branch.id,createHash('sha256').update(secondCode,'ascii').digest()]);
+        const limited=await post({...body,operationId:randomUUID()},config.publicOrigin,secondCode);
+        assert.equal(limited.status,429);assert.equal(limited.headers.get('retry-after'),'3600');
+        // Exact retry remains usable after quota exhaustion and service restart.
+        assert.deepEqual(await (await post(body)).json(),a);
+        assert.deepEqual((await pool.query('SELECT attempts FROM cafe_tracking_rate_limits')).rows,[{attempts:30}]);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,29);
+        await pool.query("UPDATE cafe_tracking_rate_limits SET window_started_at=clock_timestamp()-interval '2 hours'");
+        const acceptedForm=await fetch(`${url}/q/${code}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/x-www-form-urlencoded'},
+          body:new URLSearchParams({...body,operationId:randomUUID()})});
+        assert.equal(acceptedForm.status,201);assert.match(await acceptedForm.text(),/رهگیری انتخاب‌شده ثبت شد/);
+        assert.deepEqual((await pool.query('SELECT attempts FROM cafe_tracking_rate_limits')).rows,[{attempts:1}]);
+        for(const sql of ['SELECT * FROM users','SELECT * FROM cafe_tracking_touches','UPDATE cafe_tracking_links SET active=true']){
+          const client=await runtime.connect();try{
+            await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_tracking');
+            await assert.rejects(client.query(sql),{code:'42501'});await client.query('ROLLBACK');
+          }finally{await client.query('ROLLBACK');client.release();}
+        }
+      }finally {
+        await server?.app.close();await runtime.end();
+        await pool.query(`REASSIGN OWNED BY ${login} TO CURRENT_USER`);await pool.query(`DROP OWNED BY ${login}`);
+        await host.query(`DROP ROLE ${login}`);
+      }
     });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});

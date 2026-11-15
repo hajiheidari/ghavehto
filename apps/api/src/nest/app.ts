@@ -3,6 +3,8 @@ import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException
 import { NestFactory } from '@nestjs/core';
 import { ApiProperty, ApiTags, ApiResponse, SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import {CafeTrackingService} from './cafe-tracking.js';
+import {CafeTrackingController} from './cafe-tracking-controller.js';
 import pg from 'pg';
 import { bootstrap } from '@ghahvehto/contracts';
 import { TenantController } from './tenant-controller.js';
@@ -70,11 +72,17 @@ export class AppModule {}
 export async function createApp(options: {
   runtimePool?: pg.Pool;
   enableStampQr?: boolean;
+  tracking?: {pool:pg.Pool;ipKey:Buffer;publicOrigin:string};
   initialLogin?: Readonly<{ crypto: OtpCrypto; vault: PhoneVault; provider: OtpProvider }>;
 } = {}) {
   const { runtimePool, initialLogin: config } = options;
   if (options.enableStampQr && !runtimePool) throw new Error('Stamp QR requires a restricted runtime pool');
   if (runtimePool) await validateRuntimePool(runtimePool);
+  let tracking:CafeTrackingService|undefined;
+  if(options.tracking) {
+    tracking=new CafeTrackingService(options.tracking.pool,options.tracking.ipKey,options.tracking.publicOrigin);
+    await tracking.validateRuntime();
+  }
   let initialLogin: InitialLogin | undefined;
   if (config) {
     if (!runtimePool || !config.provider.enabled) throw new Error('Initial login requires a restricted runtime pool and enabled provider');
@@ -82,8 +90,9 @@ export async function createApp(options: {
     initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
   }
   const app = await NestFactory.create({ module: AppModule,
-    controllers: [...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
+    controllers: [...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
     providers: [
+    ...(tracking ? [{provide:CafeTrackingService,useValue:tracking}] : []),
     ...(initialLogin ? [{ provide: INITIAL_LOGIN, useValue: initialLogin }] : []),
     { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },
     { provide: SessionService, useValue: options.runtimePool ? new SessionService(options.runtimePool) : null },

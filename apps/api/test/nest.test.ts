@@ -28,6 +28,7 @@ test('Nest API serves shared contract; privileged routes fail closed', async () 
     assert.equal((await fetch(`${base}/v1/directory?q=a&q=b`)).status, 400);
     assert.equal((await fetch(`${base}/v1/directory?page=101`)).status, 400);
     assert.equal((await fetch(`${base}/v1/auth/otp/request`, {method:'POST'})).status, 404);
+    assert.equal((await fetch(`${base}/q/${'a'.repeat(64)}`)).status,404);
     assert.equal((await fetch(`${base}/v1/auth/otp/verify`, {method:'POST'})).status, 404);
     assert.equal((await fetch(`${base}/v1/stamp-qr/issue`, {method:'POST'})).status,404);
     assert.equal((await fetch(`${base}/v1/stamp-qr/consume`, {method:'POST'})).status,404);

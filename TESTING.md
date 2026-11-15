@@ -1,5 +1,16 @@
 # Test plan and execution
 
+## Internal consent landing and shared tracking limits · 2026-11-15
+
+Migration 053 introduces a separate restricted tracking capability. Explicit composition with a private HMAC key, HTTPS public origin and non-inheriting runtime login exposes `/q/:code`; standard startup still returns 404. GET is Persian RTL/noindex/no-store and has no persistence. Form/JSON POST requires same-origin explicit consent; rejection has no storage effects. No cookies, store redirects, login, SMS or link activation are introduced. Tracking fingerprints canonical transport IPs with a separate domain-derived HMAC, ignores forwarded IPs and never stores raw addresses. Scan and store-click remain separate facts, with no inferred installations or visits.
+
+A database quota of 30 accepted/unavailable-link attempts per visitor/hour is shared across links, kinds, service replicas/restarts. Exact retries preserve their receipt without charging twice; changed operations conflict. Unknown/inactive links consume the quota, concurrent requests cannot exceed it, 429 includes Retry-After and old windows reopen. Consent policy version 1 is recorded separately. This is internal opt-in infrastructure, not approval to activate public tracking. Public deployment still needs retention/cleanup, ingress/global abuse review and reviewed store/client handoff; the form deliberately says login/download are unavailable.
+
+Validation: workspace build/typecheck passed; 9 selected real PostgreSQL/HTTP/default-startup tests passed on official Node 24.19.0 with zero failures/skips, including form acceptance/rejection, Origin rejection, no-write GET, quota concurrency/restart/cross-link checks and restricted-role denials. Prior registration commit `4b9c3aa` separately passed Foundation CI 43754919858, observed on its GitHub run page; this new code requires its own result.
+
+Continue independent internal experience recovery, then M5 worker leases, approval integrity and CMS drafts. M3/M4 remain incomplete; all external activation restrictions remain.
+
+
 ## Verified registration attribution · 2026-11-15
 
 Migration 052 attaches cafe tracking only on INSERT of a new verified identity. The optional code must hash to the recorded touch's link; live link/cafe/ownership/experience and attribution window are checked. Invalid, unknown, inactive, expired or mismatched optional evidence is ignored. Returning accounts cannot gain a registration fact. OTP consumption, identity, tracking facts/audit and session issuance share the original transaction; unexpected storage failures still abort it. No broad tracking grants were added. Explicitly composed login accepts optional tracking fields and ignores unusable acquisition metadata; default login routes and SMS remain disabled.

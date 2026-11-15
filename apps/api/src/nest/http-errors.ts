@@ -23,10 +23,12 @@ export class SafeHttpErrors implements ExceptionFilter {
       401: ['unauthorized','ورود معتبر لازم است.'],
       403: ['forbidden','دسترسی مجاز نیست.'],
       404: ['not_found','موردی پیدا نشد.'],
+      429: ['unavailable','تعداد درخواست‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.'],
       503: ['unavailable','سرویس فعلاً در دسترس نیست.'],
     };
     const [code,message] = codes[status] ?? (status >= 500 ? ['internal_error','خطایی رخ داد.'] : ['invalid_request','درخواست معتبر نیست.']);
     // Never return exception text, SQL details, submitted credentials or validation values.
+    if(status===429) response.setHeader('Retry-After','3600');
     response.setHeader('Cache-Control','no-store');
     response.status(status).json({code,message,requestId});
   }

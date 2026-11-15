@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 · consent landing foundation
+
+- Add opt-in Persian RTL landing/consent with a separate restricted capability, explicit Origin and shared transactional rate limits.
+- Keep default routes/link activation disabled and scan/click facts separate from installs or visits.
+
+
 ## 2026-11-15 · verified registration tracking
 
 - Attach optional cafe attribution in the atomic new-identity transaction; preserve valid sign-in for unusable metadata.
