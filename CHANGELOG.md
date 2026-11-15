@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 · M5 internal leases
+
+- Add paused, zero-cost draft queues with fenced leases, heartbeats, bounded retry and dead-letter recovery.
+- Keep all external effects unavailable; completion requires later human review.
+
+
 ## 2026-11-15 · experience recovery
 
 - Recover participation receipts by original operation and cancel internal reservations atomically, restoring capacity and version budget once.

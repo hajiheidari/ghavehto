@@ -1,5 +1,14 @@
 # Development status · 2026-11-15
 
+## M5 internal leased draft queue · 2026-11-15
+
+Migration 055 introduces four independent agent controls (discovery/research/content/outreach), unconfigured and paused by default, and maintenance-only zero-cost jobs. Exact enqueue retries preserve the same request; conflicting operation reuse fails. SKIP LOCKED leasing, random fencing tokens, post-lock expiry/worker checks, heartbeat, pause checks on transitions, bounded exponential retry and dead-letter handling are implemented. Completion stops at awaiting_review: there is no executing/succeeded provider state, adapter, scheduler, model call, sending, publication or spending path. No business/agent configuration is seeded and no runtime role receives agent access. This is infrastructure, not completed M5 agents.
+
+Validation: 5 real PostgreSQL/PostGIS tests passed on official Node 24.19.0 with no failures/skips, including competing workers, stale tokens, pause during an active lease, replay, SKIP LOCKED, backoff/attempt exhaustion, expired final leases, zero cost and ordinary-runtime denials. Test compilation/API typecheck passed. The suite is included in test:db/CI. Prior tracking head b10c525 CI 43755394438 was Cancelled after a subsequent push; it is not a passed result.
+
+Next independent M5 work: immutable CMS revisions and payload-bound, expiring approvals with actual internal role checks; no provider execution or public publication. Preserve all public identity/SMS/reward/launch gates.
+
+
 ## Internal experience participation recovery · 2026-11-15
 
 Migration 054 adds maintenance-only operation-based receipt recovery and atomic cancellation of an internal experience reservation. Cancellation restores exactly one stock unit and the claim's original version budget once, with immutable reasoned receipt/audit and matching claim lock order. Deactivation does not prevent recovery; foreign/deleted users, competing cancellations, changed requests and over-funded projections are refused. No fulfillment, external payout or runtime/public grant exists.
