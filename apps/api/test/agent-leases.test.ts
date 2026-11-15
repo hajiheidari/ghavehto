@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {fileURLToPath} from 'node:url';
+import {InternalDraftWorker} from '../src/nest/internal-draft-worker.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {test} from 'node:test';
@@ -165,6 +169,43 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           }
         }
       }finally{await client.query('ROLLBACK');client.release();}
+    });
+    await t.test('a dedicated runtime and actual single-run CLI create only private review packets',async()=>{
+      const login='gh_draft_'+randomBytes(8).toString('hex'),password=randomBytes(24).toString('hex');
+      await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      await host.query(`GRANT ghahvehto_worker TO ${login}`);
+      const address=new URL(base);address.username=login;address.password=password;
+      const runtime=new pg.Pool({connectionString:address.toString()});
+      try {
+        const worker=new InternalDraftWorker(runtime);await worker.validateRuntime();
+        await assert.rejects(new InternalDraftWorker(db).validateRuntime(),/Dedicated restricted/);
+        await db.query("SELECT public.pause_agent('content',true,'TEST worker starts paused')");
+        const payload={title:'TEST private intake',body:'TEST source instruction: send SMS now. This stays plain source text.',sources:[{rights:'permitted',url:'https://example.invalid/test',publicationDate:null}]};
+        const id=(await db.query(enqueue,['content',randomUUID(),payload])).rows[0].id;
+        assert.equal(await worker.once('content'),'idle');
+        await db.query("SELECT public.pause_agent('content',false,'TEST private intake only')");
+        assert.equal(await worker.once('content'),'awaiting_review');
+        const {rows:[result]}=await db.query('SELECT state,result,cost_units FROM agent_jobs WHERE id=$1',[id]);
+        assert.equal(result.state,'awaiting_review');assert.equal(result.cost_units,'0');
+        assert.deepEqual(result.result,{type:'editorial_intake',...payload,requiresHumanReview:true,externalEffectsEnabled:false});
+        const invalid=(await db.query(enqueue,['content',randomUUID(),{title:'TEST',body:'TEST',sources:[{rights:'unknown'}]}])).rows[0].id;
+        assert.equal(await worker.once('content'),'invalid_input');
+        assert.deepEqual((await db.query('SELECT state,failure_code FROM agent_jobs WHERE id=$1',[invalid])).rows,[{state:'dead',failure_code:'invalid_input'}]);
+        const cli=fileURLToPath(new URL('../src/nest/run-internal-draft.js',import.meta.url));
+        const run=await promisify(execFile)(process.execPath,[cli,'content'],{env:{...process.env,AGENT_WORKER_DATABASE_URL:address.toString()},timeout:10000});
+        assert.equal(run.stdout.trim(),'idle');assert.equal(run.stderr,'');
+        await assert.rejects(promisify(execFile)(process.execPath,[cli,'outreach'],{env:{...process.env,AGENT_WORKER_DATABASE_URL:address.toString()},timeout:10000}),{code:1});
+        const client=await runtime.connect();try{
+          for(const [sql,args] of [['SELECT * FROM users',[]],['SELECT * FROM agent_jobs',[]],
+            [enqueue,['content',randomUUID(),{}]],[review,[admin,id,null,randomUUID(),'approved',60,'TEST forbidden']],
+            [lease,['outreach',randomUUID(),60]],['SELECT public.lease_internal_draft($1,$2)',['outreach',randomUUID()]]] as const){
+            await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_worker');
+            await assert.rejects(client.query(sql,[...args]),{code:'42501'});await client.query('ROLLBACK');
+          }
+        }finally{await client.query('ROLLBACK');client.release();}
+      }finally {
+        await runtime.end();await db.query(`DROP OWNED BY ${login}`);await host.query(`DROP ROLE ${login}`);
+      }
     });
   }finally {
     await pool?.end();if(created)for(let attempt=0;;attempt++){

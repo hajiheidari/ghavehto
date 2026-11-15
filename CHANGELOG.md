@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 · restricted internal draft runner
+
+- Add a one-shot research/content intake worker using a dedicated restricted capability; stop at human review and refuse external adapters.
+- Execute its compiled CLI with disposable restricted credentials; all 77 compiled API/database tests pass with zero failures/skips.
+
+
 ## 2026-11-15 · M5 CMS and approvals
 
 - Add immutable source-backed content revisions, independent internal reviews and payload-bound expiring approvals.

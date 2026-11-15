@@ -10,6 +10,7 @@
     "start": "node dist/nest/main.js",
     "test": "tsc -p tsconfig.test.json && node --test .test-build/test/nest.test.js .test-build/test/domain.test.js .test-build/test/otp.test.js .test-build/test/phone-vault.test.js .test-build/test/smsir-otp-provider.test.js .test-build/test/cafe-tracking-qr.test.js",
     "db:migrate": "tsx src/nest/migrate.ts",
+    "agents:draft-once": "tsx src/nest/run-internal-draft.ts",
     "auth:cleanup": "tsx src/nest/prune-otp.ts",
     "directory:review": "tsx src/nest/review-directory.ts",
     "ownership:review": "tsx src/nest/review-ownership.ts",
