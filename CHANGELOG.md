@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 · verified registration tracking
+
+- Attach optional cafe attribution in the atomic new-identity transaction; preserve valid sign-in for unusable metadata.
+- Verify concurrency, replay, rollback and returning-account exclusions against disposable PostgreSQL/PostGIS. Public login and SMS remain disabled.
+
+
 - Record successful exact-code CI and 65-test clean-cluster validation for the M3/M4 continuation and dependency patches.
 
 - Patch 11 reported production dependency advisories with compatible Nest and targeted transitive updates; enforce high-severity production audit in CI.

@@ -330,7 +330,16 @@ test('real HTTP QR consumption awards exactly one stamp under concurrent scans',
     assert.equal(challenge.status,201);
     const {challengeId}=await challenge.json() as {challengeId:string};
     const proof={mobile,challengeId,code:loginCode};
-    assert.equal((await loginPost('verify',{...proof,referralCode:'invalid'})).status,400);
+    const invalidMobile='+989120000042';
+    const invalidChallenge=await loginPost('request',{mobile:invalidMobile});
+    assert.equal(invalidChallenge.status,201);
+    const invalidId=(await invalidChallenge.json() as {challengeId:string}).challengeId;
+    const invalidLogin=await loginPost('verify',{mobile:invalidMobile,challengeId:invalidId,code:loginCode,
+      referralCode:{invalid:true},trackingCode:['invalid'],trackingTouchId:'invalid'});
+    assert.equal(invalidLogin.status,201);
+    const invalidSession=await sessions.authenticate((await invalidLogin.json() as {accessToken:string}).accessToken);assert.ok(invalidSession);
+    assert.equal((await db.query('SELECT 1 FROM referral_attributions WHERE invitee_id=$1',[invalidSession.userId])).rowCount,0);
+    assert.equal((await db.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[invalidSession.userId])).rowCount,0);
     const verifiedLogin=await loginPost('verify',{...proof,referralCode:registrationLink.code});
     assert.equal(verifiedLogin.status,201);
     const {accessToken}=await verifiedLogin.json() as {accessToken:string};

@@ -5,6 +5,11 @@ import {test} from 'node:test';
 import pg from 'pg';
 import {migrate} from '../src/nest/migrations.js';
 import {prepareCafeTrackingQr} from '../src/nest/cafe-tracking-qr.js';
+import {IdentityService} from '../src/nest/identity.js';
+import {OtpChallengeService} from '../src/nest/otp-challenges.js';
+import {OtpCrypto} from '../src/nest/otp.js';
+import {PhoneVault} from '../src/nest/phone-vault.js';
+import {SessionService} from '../src/nest/sessions.js';
 import {createHash} from 'node:crypto';
 
 test('cafe attribution counts touches, verified identity and confirmed interactions separately',async t=>{
@@ -87,6 +92,72 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       assert.deepEqual((await pool.query('SELECT active,code_hash,attribution_window_seconds FROM cafe_tracking_links WHERE id=$1',[draft.id])).rows,
         [{active:false,code_hash:hash,attribution_window_seconds:600}]);
       await assert.rejects(pool.query(touch,[hash,'qr_scan',randomUUID()]),{code:'22023'});
+    });
+    await t.test('verified identity creation attaches tracking once, atomically, without changing returning users',async()=>{
+      const code=randomBytes(32).toString('hex'),hash=createHash('sha256').update(code,'ascii').digest();
+      const {rows:[l]}=await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
+        VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',3600) RETURNING id`,[cafe.id,branch.id,hash]);
+      const {rows:[scan]}=await pool.query(touch,[hash,'qr_scan',randomUUID()]);
+      const vault=new PhoneVault(randomBytes(32),new Map([['test',randomBytes(32)]]),'test');
+      const ip='192.0.2.18',phone='+989120000018';
+      const service=()=>{
+        let captured='';
+        const otp=new OtpChallengeService(pool,new OtpCrypto(randomBytes(32)),{enabled:true,async send(input){captured=input.code;}});
+        return {otp,identity:new IdentityService(pool,otp,vault),code:()=>captured};
+      };
+      const a=service(),b=service();
+      const [ca,cb]=await Promise.all([a.otp.request(phone,ip),b.otp.request(phone,ip)]);
+      const tracking={code,touchId:scan.id};
+      const [ra,rb]=await Promise.all([a.identity.verify(ca.challengeId,phone,a.code(),ip,{tracking}),b.identity.verify(cb.challengeId,phone,b.code(),ip,{tracking})]);
+      assert.ok(ra);assert.ok(rb);assert.equal(ra.userId,rb.userId);
+      assert.equal(await a.identity.verify(ca.challengeId,phone,a.code(),ip,{tracking}),null);
+      assert.equal((await new SessionService(pool).authenticate(ra.tokens.accessToken))?.userId,ra.userId);
+      assert.deepEqual((await pool.query(metrics,[l.id])).rows,[{qr_scans:'1',store_clicks:'0',registrations:'1',phone_verifications:'1',confirmed_interactions:'0'}]);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='tracking.registration_attributed' AND metadata->>'touchId'=$1",[scan.id])).rowCount,1);
+      const factsBefore=(await pool.query('SELECT * FROM cafe_tracking_identity_facts WHERE user_id=$1',[ra.userId])).rows;
+      const returning=service(),cr=await returning.otp.request(phone,ip);
+      assert.ok(await returning.identity.verify(cr.challengeId,phone,returning.code(),ip,{tracking:{code,touchId:randomUUID()}}));
+      assert.deepEqual((await pool.query('SELECT * FROM cafe_tracking_identity_facts WHERE user_id=$1',[ra.userId])).rows,factsBefore);
+      // An account first created without attribution never acquires a registration later.
+      const oldPhone='+989120000019',old=service(),co=await old.otp.request(oldPhone,ip);
+      const ro=await old.identity.verify(co.challengeId,oldPhone,old.code(),ip);assert.ok(ro);
+      const again=service(),cg=await again.otp.request(oldPhone,ip);
+      assert.ok(await again.identity.verify(cg.challengeId,oldPhone,again.code(),ip,{tracking}));
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[ro.userId])).rowCount,0);
+      const rollbackPhone='+989120000020',failed=service(),cf=await failed.otp.request(rollbackPhone,ip);
+      const auditCount=(await pool.query("SELECT 1 FROM audit_events WHERE action='tracking.registration_attributed'")).rowCount;
+      let rolledBackId='';
+      await assert.rejects(failed.identity.verify(cf.challengeId,rollbackPhone,failed.code(),ip,{tracking,onRegistration:async(client,id)=>{
+        rolledBackId=id;
+        // Fail after attribution AND session insertion to demonstrate the whole commit boundary.
+        await new SessionService(pool).issueInTransaction(client,id);
+        throw new Error('TEST rollback tracking');
+      }}),/TEST rollback tracking/);
+      for(const table of ['users','sessions','cafe_tracking_identity_facts'])
+        assert.equal((await pool.query(`SELECT 1 FROM ${table} WHERE ${table==='users'?'id':'user_id'}=$1`,[rolledBackId])).rowCount,0);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='tracking.registration_attributed'")).rowCount,auditCount);
+      assert.equal((await pool.query('SELECT status FROM otp_challenges WHERE id=$1',[cf.challengeId])).rows[0].status,'sent');
+      assert.ok(await failed.identity.verify(cf.challengeId,rollbackPhone,failed.code(),ip,{tracking}));
+      const invalid=[undefined,{code:'bad',touchId:'bad'},{code,touchId:randomUUID()},{code:randomBytes(32).toString('hex'),touchId:scan.id}];
+      for(let i=0;i<invalid.length;i++){
+        const p='+98912000002'+(i+1),svc=service(),ch=await svc.otp.request(p,ip);
+        const result=await svc.identity.verify(ch.challengeId,p,svc.code(),ip,{tracking:invalid[i]});assert.ok(result);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
+      }
+      for(const change of ["expires_at=clock_timestamp()-interval '1 second'",'active=false']){
+        await pool.query(`UPDATE cafe_tracking_links SET ${change} WHERE id=$1`,[l.id]);
+        const p=change.startsWith('expires')?'+989120000025':'+989120000026',svc=service(),ch=await svc.otp.request(p,ip);
+        const result=await svc.identity.verify(ch.challengeId,p,svc.code(),ip,{tracking});assert.ok(result);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
+      }
+      // A valid link with an out-of-window touch is also optional, not a login failure.
+      const staleCode=randomBytes(32).toString('hex'),staleHash=createHash('sha256').update(staleCode,'ascii').digest();
+      const {rows:[staleLink]}=await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
+        VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',1) RETURNING id`,[cafe.id,branch.id,staleHash]);
+      const {rows:[staleTouch]}=await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at) VALUES($1,$2,'qr_scan',clock_timestamp()-interval '1 hour') RETURNING id`,[staleLink.id,randomUUID()]);
+      const stale=service(),p='+989120000027',ch=await stale.otp.request(p,ip);
+      const result=await stale.identity.verify(ch.challengeId,p,stale.code(),ip,{tracking:{code:staleCode,touchId:staleTouch.id}});assert.ok(result);
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
     });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});

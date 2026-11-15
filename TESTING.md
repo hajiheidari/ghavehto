@@ -1,5 +1,16 @@
 # Test plan and execution
 
+## Verified registration attribution · 2026-11-15
+
+Migration 052 attaches cafe tracking only on INSERT of a new verified identity. The optional code must hash to the recorded touch's link; live link/cafe/ownership/experience and attribution window are checked. Invalid, unknown, inactive, expired or mismatched optional evidence is ignored. Returning accounts cannot gain a registration fact. OTP consumption, identity, tracking facts/audit and session issuance share the original transaction; unexpected storage failures still abort it. No broad tracking grants were added. Explicitly composed login accepts optional tracking fields and ignores unusable acquisition metadata; default login routes and SMS remain disabled.
+
+Observed before editing: PR #1 is Draft at `0bbb753420df09b4b63e1b640dfa001c5dea1a16`; Foundation run 43649473468 for that documentation head and run 43648754783 for `5b2998a` both show Success on GitHub's web pages. API/GraphQL returned Forbidden, so web pages and Git refs were used. No new-code CI result is implied.
+
+Local validation: frozen install/supply-chain checks, build, typecheck, 12 unit tests, 1 probe, 3 contract tests, generated-client drift, OpenAPI/no-diff and real SSR smoke passed on host Node 24.22.1. All 54 database tests passed on exact Node 24.19.0 (official image) against newly created PostgreSQL 17/PostGIS 3.5, zero failures/skips. Tracking tests cover concurrent verification, one-time attribution, returning accounts, rollback after session insertion, malformed/mismatched/stale/expired/inactive evidence; HTTP tests verify malformed optional metadata does not invalidate a genuine proof. Synthetic fixtures remain disposable.
+
+Next: consent and rate-limited landing flow before tracking activation; participation recovery and independent M5 leases/approvals/CMS. M3/M4 remain incomplete. No public login, SMS, real budget, publication or payout enabled.
+
+
 ## Exact-code CI and clean cluster · 2026-11-15
 
 Executable code `5b2998ac03b33681ed065bec7822324052db56b0` passed Foundation CI [43648754783](https://github.com/hajiheidari/ghavehto/actions/runs/43648754783). All 65 compiled API/database tests also passed on Node 24.19.0 against a completely fresh PostgreSQL/PostGIS cluster with no pre-existing application roles/data; zero failures/skips. The temporary database container was stopped and removed after the run. Production audit reported no known vulnerabilities. The following checkpoint commit records evidence only and does not extend these results to future code changes.

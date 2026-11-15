@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Header, Inject, Ip, Post, UnauthorizedException } from '@nestjs/common';
-import { IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator';
+import { Allow, IsString, IsUUID, Length, Matches } from 'class-validator';
 import { normalizeIranMobile } from './normalization.js';
 import type { IdentityService } from './identity.js';
 import type { OtpChallengeService } from './otp-challenges.js';
@@ -12,7 +12,11 @@ class RequestLoginDto {
   @IsString() @Length(10, 32) mobile!: string;
 }
 class VerifyLoginDto extends RequestLoginDto {
-  @IsOptional() @IsString() @Matches(/^[0-9a-f]{64}$/) referralCode?: string;
+  // Optional acquisition metadata is untrusted and sanitized by IdentityService.
+  // It must never turn a valid identity proof into a failed login.
+  @Allow() referralCode?: string;
+  @Allow() trackingCode?: string;
+  @Allow() trackingTouchId?: string;
   @IsUUID('4') challengeId!: string;
   @IsString() @Matches(/^\d{6}$/) code!: string;
 }
@@ -35,7 +39,7 @@ export class InitialLoginController {
 
   @Post('verify') @Header('Cache-Control', 'no-store')
   async verify(@Body() body: VerifyLoginDto, @Ip() clientIp: string): Promise<SessionTokensDto> {
-    const result = await this.login.identity.verify(body.challengeId, this.phone(body.mobile), body.code, clientIp, {referralCode:body.referralCode});
+    const result = await this.login.identity.verify(body.challengeId, this.phone(body.mobile), body.code, clientIp, {referralCode:body.referralCode,tracking:{code:body.trackingCode,touchId:body.trackingTouchId}});
     if (!result) throw new UnauthorizedException();
     return result.tokens;
   }
