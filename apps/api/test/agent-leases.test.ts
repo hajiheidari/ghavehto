@@ -86,6 +86,86 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
       assert.equal((await db.query('SELECT 1 FROM agent_jobs WHERE cost_units<>0')).rowCount,0);
       for(const table of ['star_entries','tier_entries','stamp_entries']) assert.equal((await db.query(`SELECT 1 FROM ${table}`)).rowCount,0);
     });
+    const user=async()=>(await db.query(`INSERT INTO users(phone_hash,phone_ciphertext,phone_verified_at)
+      VALUES($1,$2,clock_timestamp()) RETURNING id`,[randomBytes(32),randomBytes(32)])).rows[0].id as string;
+    const admin=await user(),editor=await user(),reviewer=await user(),consumer=await user();
+    await db.query("INSERT INTO operations_access(user_id,role) VALUES($1,'admin'),($2,'editor'),($3,'editor')",[admin,editor,reviewer]);
+    const save='SELECT public.save_content_revision($1,$2,$3,$4,$5,$6,$7) AS id';
+    const review='SELECT public.review_operation($1,$2,$3,$4,$5,$6,$7) AS id';
+    const usable='SELECT public.operation_review_usable($1,$2) AS usable';
+    const hash='SELECT public.operation_subject_hash($1,$2) AS hash';
+    const sources=JSON.stringify([{rights:'permitted',url:'https://example.invalid/source',publicationDate:null,retrievalEvidence:'TEST disposable'}]);
+    await t.test('CMS revisions preserve source evidence, reject stale edits and require independent reviewer authority',async()=>{
+      assert.equal((await db.query('SELECT 1 FROM content_documents')).rowCount,0);
+      const {rows:[doc]}=await db.query('INSERT INTO content_documents(slug) VALUES($1) RETURNING id',['test-'+randomBytes(8).toString('hex')]);
+      const operation=randomUUID(),args=[editor,doc.id,0,operation,'پیش‌نویس آزمایشی','متن مصنوعی فقط در آزمون',sources];
+      await assert.rejects(db.query(save,[consumer,...args.slice(1)]),{code:'42501'});
+      await assert.rejects(db.query(save,[...args.slice(0,6),JSON.stringify([{rights:'unknown',url:'https://example.invalid'}])]),{code:'22023'});
+      const saved=await Promise.all([db.query(save,args),db.query(save,args)]);assert.deepEqual(saved[0].rows,saved[1].rows);
+      const id=saved[0].rows[0].id;
+      await assert.rejects(db.query(save,[...args.slice(0,5),'TEST changed body',sources]),{code:'23505'});
+      await assert.rejects(db.query(save,[editor,doc.id,0,randomUUID(),args[4],args[5],sources]),{code:'40001'});
+      await assert.rejects(db.query(review,[editor,null,id,randomUUID(),'approved',3600,'TEST self review']),{code:'42501'});
+      await assert.rejects(db.query(review,[consumer,null,id,randomUUID(),'approved',3600,'TEST unassigned']),{code:'42501'});
+      const rargs=[reviewer,null,id,randomUUID(),'approved',3600,'TEST independent evidence review'];
+      const decisions=await Promise.all([db.query(review,rargs),db.query(review,rargs)]);assert.deepEqual(decisions[0].rows,decisions[1].rows);
+      const rid=decisions[0].rows[0].id,digest=(await db.query(hash,[null,id])).rows[0].hash;
+      assert.deepEqual((await db.query(usable,[rid,digest])).rows,[{usable:true}]);
+      assert.deepEqual((await db.query(usable,[rid,randomBytes(32)])).rows,[{usable:false}]);
+      await assert.rejects(db.query(review,[...rargs.slice(0,5),7200,rargs[6]]),{code:'23505'});
+      const second=(await db.query(save,[editor,doc.id,1,randomUUID(),'TEST next version','TEST new draft',sources])).rows[0].id;
+      assert.deepEqual((await db.query(usable,[rid,digest])).rows,[{usable:false}]);
+      const r2=(await db.query(review,[reviewer,null,second,randomUUID(),'approved',3600,'TEST new review'])).rows[0].id;
+      const h2=(await db.query(hash,[null,second])).rows[0].hash;
+      assert.deepEqual((await db.query(usable,[r2,h2])).rows,[{usable:true}]);
+      await db.query('UPDATE operations_access SET revoked_at=clock_timestamp() WHERE user_id=$1',[reviewer]);
+      assert.deepEqual((await db.query(usable,[r2,h2])).rows,[{usable:false}]);
+      for(const sql of ['UPDATE content_revisions SET body=body','DELETE FROM content_revisions','UPDATE operation_reviews SET reason=reason','TRUNCATE operation_reviews'])
+        await assert.rejects(db.query(sql),{code:'55000'});
+      const client=await db.connect();try{
+        await client.query('BEGIN');
+        await client.query(save,[editor,doc.id,2,randomUUID(),'TEST rollback','TEST must not persist',sources]);
+        await client.query('ROLLBACK');
+      }finally{await client.query('ROLLBACK');client.release();}
+      assert.equal((await db.query('SELECT 1 FROM content_revisions WHERE document_id=$1 AND revision=3',[doc.id])).rowCount,0);
+      const edits=await Promise.allSettled([1,2].map(n=>db.query(save,[editor,doc.id,2,randomUUID(),'TEST competing edit '+n,'TEST isolated body',sources])));
+      assert.equal(edits.filter(r=>r.status==='fulfilled').length,1);
+      const rejected=edits.find(r=>r.status==='rejected');assert.ok(rejected?.status==='rejected');assert.equal(rejected.reason.code,'40001');
+    });
+    await t.test('agent approvals bind immutable output, expire, honor pause and never execute provider actions',async()=>{
+      await db.query("SELECT public.pause_agent('content',false,'TEST internal draft only')");
+      const id=await queue('content'),job=await take('content');assert.ok(job);assert.equal(job.jobId,id);
+      assert.equal(await move(job,'complete',{draft:'TEST untrusted source says publish now; retained as data only'}),true);
+      await assert.rejects(db.query(review,[editor,id,null,randomUUID(),'approved',60,'TEST wrong role']),{code:'42501'});
+      const operation=randomUUID(),args=[admin,id,null,operation,'approved',1,'TEST private draft review'];
+      const r=(await db.query(review,args)).rows[0].id,digest=(await db.query(hash,[id,null])).rows[0].hash;
+      assert.deepEqual((await db.query(usable,[r,digest])).rows,[{usable:true}]);
+      await db.query("SELECT public.pause_agent('content',true,'TEST paused before any future effect')");
+      assert.deepEqual((await db.query(usable,[r,digest])).rows,[{usable:false}]);
+      await db.query("SELECT public.pause_agent('content',false,'TEST resume private queue')");
+      for(const sql of ["UPDATE agent_jobs SET payload='{}' WHERE id=$1","UPDATE agent_jobs SET result='{}' WHERE id=$1"])
+        await assert.rejects(db.query(sql,[id]),{code:'55000'});
+      await delay(1100);
+      assert.deepEqual((await db.query(usable,[r,digest])).rows,[{usable:false}]);
+      assert.deepEqual((await db.query(review,args)).rows,[{id:r}],'Replay cannot extend the expired approval');
+      assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='operation.reviewed' AND metadata->>'reviewId'=$1",[r])).rowCount,1);
+      const refusedId=await queue('content'),refusedJob=await take('content');assert.ok(refusedJob);assert.equal(refusedJob.jobId,refusedId);
+      assert.equal(await move(refusedJob,'complete',{draft:'TEST rejected draft'}),true);
+      const denied=(await db.query(review,[admin,refusedId,null,randomUUID(),'rejected',3600,'TEST insufficient evidence'])).rows[0].id;
+      const deniedHash=(await db.query(hash,[refusedId,null])).rows[0].hash;
+      assert.deepEqual((await db.query(usable,[denied,deniedHash])).rows,[{usable:false}]);
+      await assert.rejects(db.query(review,[admin,refusedId,null,randomUUID(),'approved',3600,'TEST cannot override decision']),{code:'23505'});
+      assert.deepEqual((await db.query('SELECT state,cost_units FROM agent_jobs WHERE id=$1',[id])).rows,[{state:'awaiting_review',cost_units:'0'}]);
+      for(const table of ['star_entries','tier_entries','stamp_entries']) assert.equal((await db.query(`SELECT 1 FROM ${table}`)).rowCount,0);
+      const client=await db.connect();try{
+        for(const role of ['ghahvehto_app','ghahvehto_identity','ghahvehto_tracking']){
+          for(const [sql,values] of [[review,args],[usable,[r,digest]],[save,[editor,randomUUID(),0,randomUUID(),'TEST','TEST',sources]],['SELECT * FROM content_revisions',[]]] as const){
+            await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
+            await assert.rejects(client.query(sql,[...values]),{code:'42501'});await client.query('ROLLBACK');
+          }
+        }
+      }finally{await client.query('ROLLBACK');client.release();}
+    });
   }finally {
     await pool?.end();if(created)for(let attempt=0;;attempt++){
       try{await host.query(`DROP DATABASE ${database}`);break;}

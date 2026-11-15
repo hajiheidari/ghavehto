@@ -9,3 +9,7 @@
 7. M6: security review, physical-device Iranian connectivity, performance, privacy/deletion, backup restoration, store assets and approved deployment plan. Releases/submissions/marketing require founder authorization separately.
 
 No date estimates before toolchain and distribution blockers are resolved. Keep tasks small enough for one reviewable commit with executed checks. Do not mark milestones complete from scaffold presence.
+
+## Internal continuation checkpoint · 2026-11-15
+
+New-registration attribution, opt-in consent/rate-limited landing, internal experience reservation recovery and M5 lease/CMS/review storage are implemented and tested. These do not complete M3/M4/M5 or activate public services. Continue with a restricted internal worker runner and session-derived private reviewer/CMS transport, then reviewed client handoff/retention and campaign-specific participation flows. Agent work must stop at private drafts; approval evidence never enables spending, sending or publication on its own. Keep current PR #1 and read each exact head's CI separately.

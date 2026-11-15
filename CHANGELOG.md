@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-15 · M5 CMS and approvals
+
+- Add immutable source-backed content revisions, independent internal reviews and payload-bound expiring approvals.
+- Enforce stale-edit/replay/tamper/revocation checks, retain zero-cost private agent drafts, and keep providers/publication unavailable.
+- Fresh PostgreSQL/PostGIS and pinned Node validation: 76 compiled API/database tests passed, no failures/skips.
+
+
 ## 2026-11-15 · M5 internal leases
 
 - Add paused, zero-cost draft queues with fenced leases, heartbeats, bounded retry and dead-letter recovery.
