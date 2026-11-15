@@ -1,5 +1,14 @@
 # Test plan and execution
 
+## Internal experience participation recovery · 2026-11-15
+
+Migration 054 adds maintenance-only operation-based receipt recovery and atomic cancellation of an internal experience reservation. Cancellation restores exactly one stock unit and the claim's original version budget once, with immutable reasoned receipt/audit and matching claim lock order. Deactivation does not prevent recovery; foreign/deleted users, competing cancellations, changed requests and over-funded projections are refused. No fulfillment, external payout or runtime/public grant exists.
+
+Cancellation preserves historical participation, first-recorded-visit evidence and member limits; it does not promise renewed eligibility or erase a recorded visit. Recovering an old operation returns reserved/cancelled status without allocating again. Changing that conservative eligibility policy requires separate product work before public use.
+
+Validation: 10 selected PostgreSQL/PostGIS tests passed on official Node 24.19.0, zero failures/skips, including current owner-preview HTTP, cancellation concurrency, replay, first-visit preservation, foreign-user/runtime denial, original-claim replay and full rollback on capacity overflow. TypeScript test compilation passed. Continue independent M5 internal leases, approval integrity and CMS drafts; public tracking/identity/SMS/real budgets/payouts remain disabled.
+
+
 ## Internal consent landing and shared tracking limits · 2026-11-15
 
 Migration 053 introduces a separate restricted tracking capability. Explicit composition with a private HMAC key, HTTPS public origin and non-inheriting runtime login exposes `/q/:code`; standard startup still returns 404. GET is Persian RTL/noindex/no-store and has no persistence. Form/JSON POST requires same-origin explicit consent; rejection has no storage effects. No cookies, store redirects, login, SMS or link activation are introduced. Tracking fingerprints canonical transport IPs with a separate domain-derived HMAC, ignores forwarded IPs and never stores raw addresses. Scan and store-click remain separate facts, with no inferred installations or visits.

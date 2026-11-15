@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 · experience recovery
+
+- Recover participation receipts by original operation and cancel internal reservations atomically, restoring capacity and version budget once.
+- Retain immutable participation/first-recorded-visit history and deny public/runtime cancellation.
+
+
 ## 2026-11-15 · consent landing foundation
 
 - Add opt-in Persian RTL landing/consent with a separate restricted capability, explicit Origin and shared transactional rate limits.

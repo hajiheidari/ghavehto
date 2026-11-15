@@ -118,6 +118,60 @@ test('private experience policies enforce verified ownership, scope, dates and i
           [{remaining_stock:2,remaining_budget_units:'4'}]);
       } finally {await lock.query('ROLLBACK');lock.release();}
     });
+    await t.test('cancelled participation restores internal stock and budget once, preserving history and replay',async()=>{
+      const who=await user(),x=await make({active:true,first:true,stock:1,budget:2}),operation=randomUUID();
+      const claimSql='SELECT public.claim_experience($1,$2,1,$3,$4) AS id';
+      const {rows:[receipt]}=await pool.query(claimSql,[who,x.id,branch.id,operation]);
+      const recover='SELECT public.recover_experience_claim($1,$2) AS receipt';
+      assert.equal((await pool.query(recover,[who,operation])).rows[0].receipt.state,'reserved');
+      assert.deepEqual((await pool.query(recover,[await user(),operation])).rows,[{receipt:null}]);
+      await pool.query('UPDATE experiences SET active=false WHERE id=$1',[x.id]);
+      const cancel='SELECT public.cancel_experience_claim($1,$2,$3,$4) AS id';
+      const args=[who,receipt.id,randomUUID(),'TEST interrupted participation'];
+      const race=await Promise.allSettled([pool.query(cancel,args),pool.query(cancel,[who,receipt.id,randomUUID(),args[3]])]);
+      assert.equal(race.filter(r=>r.status==='fulfilled').length,1);
+      const {rows:[c]}=await pool.query('SELECT * FROM experience_cancellations WHERE claim_id=$1',[receipt.id]);
+      const retry=[who,receipt.id,c.operation_id,c.reason];
+      for(const result of await Promise.all([pool.query(cancel,retry),pool.query(cancel,retry)])) assert.deepEqual(result.rows,[{id:c.id}]);
+      await assert.rejects(pool.query(cancel,[...retry.slice(0,3),'TEST changed reason']),{code:'23505'});
+      await assert.rejects(pool.query(cancel,[await user(),receipt.id,randomUUID(),'TEST foreign']),{code:'22023'});
+      assert.deepEqual((await pool.query('SELECT remaining_stock,remaining_budget_units FROM experience_capacity WHERE experience_id=$1',[x.id])).rows,[{remaining_stock:1,remaining_budget_units:'2'}]);
+      assert.equal((await pool.query(recover,[who,operation])).rows[0].receipt.state,'cancelled');
+      assert.deepEqual((await pool.query(claimSql,[who,x.id,branch.id,operation])).rows,[{id:receipt.id}]);
+      assert.equal((await pool.query('SELECT 1 FROM experience_first_visits WHERE claim_id=$1',[receipt.id])).rowCount,1);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='experience.cancelled' AND metadata->>'claimId'=$1",[receipt.id])).rowCount,1);
+      await pool.query('UPDATE experiences SET active=true WHERE id=$1',[x.id]);
+      await assert.rejects(pool.query(claimSql,[who,x.id,branch.id,randomUUID()]),{code:'22023'});
+      for(const sql of ['UPDATE experience_cancellations SET reason=reason','DELETE FROM experience_cancellations','TRUNCATE experience_cancellations'])
+        await assert.rejects(pool.query(sql),{code:'55000'});
+      for(const role of ['ghahvehto_app','ghahvehto_identity','ghahvehto_tracking']){
+        const client=await pool.connect();try{
+          for(const [sql,values] of [[cancel,retry],[recover,[who,operation]]] as const){
+            await client.query('BEGIN');await client.query(`SET LOCAL ROLE ${role}`);
+            await assert.rejects(client.query(sql,[...values]),{code:'42501'});await client.query('ROLLBACK');
+          }
+        }finally{await client.query('ROLLBACK');client.release();}
+      }
+    });
+    await t.test('cancellation and new claims serialize capacity; failed recovery rolls back all writes',async()=>{
+      const claimSql='SELECT public.claim_experience($1,$2,1,$3,$4) AS id',cancel='SELECT public.cancel_experience_claim($1,$2,$3,$4) AS id';
+      const who=await user(),next=await user(),x=await make({active:true,stock:1,budget:2});
+      const {rows:[receipt]}=await pool.query(claimSql,[who,x.id,branch.id,randomUUID()]);
+      const results=await Promise.allSettled([pool.query(cancel,[who,receipt.id,randomUUID(),'TEST recovery']),pool.query(claimSql,[next,x.id,branch.id,randomUUID()])]);
+      assert.equal(results[0].status,'fulfilled');
+      const remaining=results[1].status==='fulfilled'?0:1;
+      assert.deepEqual((await pool.query('SELECT remaining_stock,remaining_budget_units FROM experience_capacity WHERE experience_id=$1',[x.id])).rows,[{remaining_stock:remaining,remaining_budget_units:String(remaining*2)}]);
+      const broken=await make({active:true,stock:1,budget:2}),actor=await user();
+      const {rows:[r]}=await pool.query(claimSql,[actor,broken.id,branch.id,randomUUID()]);
+      // Disposable projection corruption; recovery must not manufacture an over-funded balance.
+      await pool.query('UPDATE experience_capacity SET remaining_budget_units=funded_budget_units WHERE experience_id=$1',[broken.id]);
+      const op=randomUUID();await assert.rejects(pool.query(cancel,[actor,r.id,op,'TEST overflow']),{code:'22023'});
+      assert.equal((await pool.query('SELECT 1 FROM experience_cancellations WHERE operation_id=$1',[op])).rowCount,0);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='experience.cancelled' AND metadata->>'claimId'=$1",[r.id])).rowCount,0);
+      assert.deepEqual((await pool.query('SELECT remaining_stock,remaining_budget_units FROM experience_capacity WHERE experience_id=$1',[broken.id])).rows,[{remaining_stock:0,remaining_budget_units:'2'}]);
+      await pool.query('UPDATE experience_capacity SET remaining_budget_units=0 WHERE experience_id=$1',[broken.id]);
+      assert.ok((await pool.query(cancel,[actor,r.id,op,'TEST overflow'])).rows[0].id);
+    });
     await t.test('unclaimed or revoked ownership and deleted accounts cannot participate',async()=>{
       const x=await make({active:true});
       const unowned=await make({active:true,cafe:unclaimed.id});
