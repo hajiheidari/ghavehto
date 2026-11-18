@@ -172,6 +172,45 @@ test('private experience policies enforce verified ownership, scope, dates and i
       await pool.query('UPDATE experience_capacity SET remaining_budget_units=0 WHERE experience_id=$1',[broken.id]);
       assert.ok((await pool.query(cancel,[actor,r.id,op,'TEST overflow'])).rows[0].id);
     });
+    await t.test('private fulfillment is branch scoped, immutable and mutually exclusive with cancellation',async()=>{
+      const x=await make({active:true,stock:2,budget:4}),who=await user(),otherStaff=await user();
+      await pool.query("INSERT INTO cafe_memberships(user_id,cafe_id,branch_id,role) VALUES($1,$2,$3,'staff')",[otherStaff,cafe.id,other.id]);
+      const claimSql='SELECT public.claim_experience($1,$2,1,$3,$4) AS id';
+      const fulfill='SELECT public.record_experience_fulfillment($1,$2,$3,$4) AS id';
+      const cancel='SELECT public.cancel_experience_claim($1,$2,$3,$4) AS id';
+      const recover='SELECT public.recover_experience_claim($1,$2) AS receipt';
+      const operation=randomUUID();
+      const {rows:[c]}=await pool.query(claimSql,[who,x.id,branch.id,operation]);
+      const args=[owner,c.id,randomUUID(),'TEST recorded delivery'];
+      for(const unauthorized of [who,otherStaff]) await assert.rejects(pool.query(fulfill,[unauthorized,...args.slice(1)]),{code:'42501'});
+      const receipts=await Promise.all([pool.query(fulfill,args),pool.query(fulfill,args)]);
+      assert.deepEqual(receipts[0].rows,receipts[1].rows);
+      const recovered=(await pool.query(recover,[who,operation])).rows[0].receipt;
+      assert.equal(recovered.state,'fulfilled');
+      assert.equal(recovered.fulfillmentId,receipts[0].rows[0].id);
+      await assert.rejects(pool.query(fulfill,[...args.slice(0,3),'TEST changed']),{code:'23505'});
+      await assert.rejects(pool.query(cancel,[who,c.id,randomUUID(),'TEST late cancellation']),{code:'22023'});
+      await assert.rejects(pool.query('DELETE FROM experience_fulfillments'),{code:'55000'});
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='experience.fulfilled' AND metadata->>'claimId'=$1",[c.id])).rowCount,1);
+
+      const second=await user(),secondOperation=randomUUID();
+      const {rows:[d]}=await pool.query(claimSql,[second,x.id,branch.id,secondOperation]);
+      const race=await Promise.allSettled([
+        pool.query(fulfill,[owner,d.id,randomUUID(),'TEST racing fulfillment']),
+        pool.query(cancel,[second,d.id,randomUUID(),'TEST racing cancellation']),
+      ]);
+      assert.equal(race.filter(outcome=>outcome.status==='fulfilled').length,1);
+      const final=(await pool.query(recover,[second,secondOperation])).rows[0].receipt.state;
+      assert.equal(final,race[0].status==='fulfilled'?'fulfilled':'cancelled');
+      const {rows:[capacity]}=await pool.query('SELECT remaining_stock,remaining_budget_units FROM experience_capacity WHERE experience_id=$1',[x.id]);
+      assert.deepEqual(capacity,final==='fulfilled'?{remaining_stock:0,remaining_budget_units:'0'}:{remaining_stock:1,remaining_budget_units:'2'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL ROLE ghahvehto_app');
+        await assert.rejects(client.query(fulfill,args),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+    });
     await t.test('unclaimed or revoked ownership and deleted accounts cannot participate',async()=>{
       const x=await make({active:true});
       const unowned=await make({active:true,cafe:unclaimed.id});

@@ -1,5 +1,9 @@
 # Changelog
 
+## Private experience fulfillment · 2026-11-18
+
+Add immutable internal experience fulfillment evidence and prevent cancellation from restoring delivered capacity.
+
 ## Consented registration handoff · 2026-11-18
 
 Return an optional registration handoff from the private JSON landing and require stored consent before new-account attribution.

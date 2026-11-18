@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private experience fulfillment · 2026-11-18
+
+Migration 065 adds immutable private fulfillment receipts with verified cafe ownership, branch-scoped staff authority, exact retry and audit. Cancellation and fulfillment serialize on the existing member/cafe lock. Recovery now reports fulfilled where applicable. This is a maintenance-only record of delivery; no payout, provider, public transport or loyalty movement is enabled. Next: reviewed campaign-specific transport and participation presentation, plus consent/touch retention policy.
+
 ## Consented registration handoff · 2026-11-18
 
 Migration 064 requires a stored landing consent receipt for optional attribution during new verification. The explicitly composed JSON landing returns registrationTracking with trackingCode and trackingTouchId after consent, or null after refusal. A future same-origin registration client can send these optional fields in its verification body. No public UI, redirect, persistent client storage or initial-login activation was added. Next: campaign-specific private participation fulfillment and the consent/touch retention policy.

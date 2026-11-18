@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private experience fulfillment · 2026-11-18
+
+On Windows, 12 API tests and one loopback probe passed, and API typecheck passed. The disposable database suite adds scope, replay, immutability, audit, restricted-role denial and a fulfillment/cancellation race with stock and budget assertions. Previous head 1504fd6 completed Foundation CI 44305965770 successfully.
+
 ## Consented registration handoff · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The disposable database suite now bridges the JSON consent response into real verified identity creation. It checks successful consented attribution and refusal of an otherwise valid touch without consent, while retaining rollback and stale-evidence tests. Previous fa42632 completed Foundation CI 44302418098 successfully.
