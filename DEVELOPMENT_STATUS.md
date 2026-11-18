@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Tracking retention decision checkpoint · 2026-11-18
+
+The tracking retention decision is recorded in SECURITY.md. Remaining parameters are the consent/touch lifetime, exact replay window, legacy fingerprints, linked facts and historical counts. The read-only inventory supports comparing cutoffs. Foundation 44342992291 completed all five jobs for 9b46c0b.
+
 ## In-branch receipt handoff · 2026-11-18
 
 Private cafe branch navigation links to fulfillment when enabled and at least one branch is accessible. Reserved member receipts identify the claim ID to present in person. The receipt lookup and write retain server-side branch checks. Next: founder decision on tracking retention and remaining milestone acceptance.

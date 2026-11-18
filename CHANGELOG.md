@@ -1,5 +1,9 @@
 # Changelog
 
+## Tracking retention decision checkpoint · 2026-11-18
+
+Document the decisions and acceptance checks required for tracking retention and deletion.
+
 ## In-branch receipt handoff · 2026-11-18
 
 Connect private cafe navigation and member receipt instructions to the staff fulfillment handoff.

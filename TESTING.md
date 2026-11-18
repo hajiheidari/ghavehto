@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Tracking retention decision checkpoint · 2026-11-18
+
+Foundation 44342992291 for exact code 9b46c0b completed all five jobs successfully. The retention decision checkpoint changes documentation. Git diff whitespace validation was executed.
+
 ## In-branch receipt handoff · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. The built web fixture checks the fulfillment link for owner and branch staff, its absence for a consumer, and member instructions on reserved receipts.

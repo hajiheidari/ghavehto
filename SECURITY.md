@@ -18,6 +18,24 @@ Current scope is loopback development, with real transactional identity/session/
 
 The production audit reported 11 advisories in the previous lock (6 high, 4 moderate, 1 low). The compatible Nest 11.1.18 patch addresses GHSA-36xv-jgw5-4q75; targeted same-major overrides select path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 for affected ranges. A repeat production audit reported no known vulnerabilities and all 65 compiled API/database tests passed on pinned Node 24.19.0 after the changes. The Foundation workflow enforces the high-severity production audit. Advisory scan scope is production dependencies; operational, device, privacy and independent security review remain M6 gates.
 
+## Tracking retention decision
+
+Tracking remains private and opt-in. Retention for quota buckets, consent receipts, touches and identity-linked attribution has different effects on replay and reporting.
+
+| Record | Current behavior | Decision before deletion |
+| --- | --- | --- |
+| Hourly quota buckets | Maintenance can prune expired windows in batches of 1000. | Decide whether approved hosting should schedule that existing cleanup. |
+| Consent receipts and touches without linked identity facts | New consent receipts store a per-operation replay digest. Legacy receipts still retain the previous fingerprint. A touch can support attribution until its configured window ends. | Set the maximum consent and touch retention and the replay period. Decide whether legacy fingerprints need earlier removal. |
+| Touches with registration, verification or confirmed interaction facts | The fact chain references the touch. Confirmed interactions reference existing stamp entries. | Decide whether to retain linked evidence for a separate period or retire the attribution chain and preserve only agreed aggregate counts. |
+
+In an approved environment, use a maintenance account to compare candidate cutoffs with the read-only aggregate inventory. Bind the cutoff as a past UTC instant. The window count is conservative and can include touches whose link is already unavailable.
+
+```sql
+SELECT public.inspect_tracking_retention($1::timestamptz);
+```
+
+A deletion implementation must define what exact retries return after expiry, whether historical analytics may change, and how backup expiry or restoration affects deletion. Acceptance should cover unexpired attribution, legacy replay policy, dependent facts and audited batch recovery. Stamp, star and membership-tier history remain immutable and outside the deletion scope.
+
 ## Activation and release gates
 
 An approved provider, secure key/credential provisioning and explicit real-send authorization are required for initial sign-in. Input IP must come from a trusted transport boundary and reviewed reverse-proxy policy. Secret rotation/recovery, real delivery reconciliation, transport/global abuse limits, HTTPS/TLS, request logging redaction/monitoring, web secure cookies/CSRF and mobile secure storage must be completed/reviewed before public authentication.
