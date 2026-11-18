@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Consented registration handoff · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The disposable database suite now bridges the JSON consent response into real verified identity creation. It checks successful consented attribution and refusal of an otherwise valid touch without consent, while retaining rollback and stale-evidence tests. Previous fa42632 completed Foundation CI 44302418098 successfully.
+
 ## Private draft submissions · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe, and API typecheck passed on Node 24.22.3. The existing database suite now also checks submission authorization, rejected source rights and outreach, concurrent replay, cross-actor conflict, one audit event and transition to review. Exact-head PostgreSQL evidence is tracked in Foundation CI.

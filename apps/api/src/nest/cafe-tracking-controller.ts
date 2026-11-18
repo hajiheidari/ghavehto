@@ -32,6 +32,6 @@ export class CafeTrackingController {
       response.setHeader('Content-Type','text/html; charset=utf-8');
       return page(touchId?'<p>رهگیری انتخاب‌شده ثبت شد. این ثبت به‌معنای نصب، بازدید واقعی یا دریافت پاداش نیست. ورود و دریافت برنامه فعلاً فعال نیست.</p>':'<p>بدون ثبت رهگیری ادامه دادید. ورود و دریافت برنامه فعلاً فعال نیست.</p>');
     }
-    return {tracked:touchId!==null,touchId};
+    return {tracked:touchId!==null,touchId,registrationTracking:touchId?{trackingCode:code,trackingTouchId:touchId}:null};
   }
 }

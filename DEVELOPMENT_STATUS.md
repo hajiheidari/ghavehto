@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Consented registration handoff · 2026-11-18
+
+Migration 064 requires a stored landing consent receipt for optional attribution during new verification. The explicitly composed JSON landing returns registrationTracking with trackingCode and trackingTouchId after consent, or null after refusal. A future same-origin registration client can send these optional fields in its verification body. No public UI, redirect, persistent client storage or initial-login activation was added. Next: campaign-specific private participation fulfillment and the consent/touch retention policy.
+
 ## Private draft submissions · 2026-11-18
 
 Migration 063 connects explicit private HTTP submission to the existing research/content queue. A live operator or admin can submit supplied text and source-rights evidence. Identical retries are bound to the submitting identity; changed payloads, other actors and pre-existing maintenance operations cannot reuse the same operation ID. The worker still stops at human review. Next: reviewed tracking handoff to the registration client, with its activation gates closed.

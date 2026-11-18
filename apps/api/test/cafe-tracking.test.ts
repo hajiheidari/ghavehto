@@ -98,7 +98,10 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       const code=randomBytes(32).toString('hex'),hash=createHash('sha256').update(code,'ascii').digest();
       const {rows:[l]}=await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
         VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',3600) RETURNING id`,[cafe.id,branch.id,hash]);
-      const {rows:[scan]}=await pool.query(touch,[hash,'qr_scan',randomUUID()]);
+      const operation=randomUUID();
+      const {rows:[scan]}=await pool.query(touch,[hash,'qr_scan',operation]);
+      await pool.query('INSERT INTO cafe_tracking_consents(operation_id,visitor_hash) VALUES($1,$2)',[operation,randomBytes(32)]);
+      const {rows:[unconsented]}=await pool.query(touch,[hash,'qr_scan',randomUUID()]);
       const vault=new PhoneVault(randomBytes(32),new Map([['test',randomBytes(32)]]),'test');
       const ip='192.0.2.18',phone='+989120000018';
       const service=()=>{
@@ -113,7 +116,7 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       assert.ok(ra);assert.ok(rb);assert.equal(ra.userId,rb.userId);
       assert.equal(await a.identity.verify(ca.challengeId,phone,a.code(),ip,{tracking}),null);
       assert.equal((await new SessionService(pool).authenticate(ra.tokens.accessToken))?.userId,ra.userId);
-      assert.deepEqual((await pool.query(metrics,[l.id])).rows,[{qr_scans:'1',store_clicks:'0',registrations:'1',phone_verifications:'1',confirmed_interactions:'0'}]);
+      assert.deepEqual((await pool.query(metrics,[l.id])).rows,[{qr_scans:'2',store_clicks:'0',registrations:'1',phone_verifications:'1',confirmed_interactions:'0'}]);
       assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='tracking.registration_attributed' AND metadata->>'touchId'=$1",[scan.id])).rowCount,1);
       const factsBefore=(await pool.query('SELECT * FROM cafe_tracking_identity_facts WHERE user_id=$1',[ra.userId])).rows;
       const returning=service(),cr=await returning.otp.request(phone,ip);
@@ -139,9 +142,9 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE action='tracking.registration_attributed'")).rowCount,auditCount);
       assert.equal((await pool.query('SELECT status FROM otp_challenges WHERE id=$1',[cf.challengeId])).rows[0].status,'sent');
       assert.ok(await failed.identity.verify(cf.challengeId,rollbackPhone,failed.code(),ip,{tracking}));
-      const invalid=[undefined,{code:'bad',touchId:'bad'},{code,touchId:randomUUID()},{code:randomBytes(32).toString('hex'),touchId:scan.id}];
+      const invalid=[undefined,{code:'bad',touchId:'bad'},{code,touchId:randomUUID()},{code:randomBytes(32).toString('hex'),touchId:scan.id},{code,touchId:unconsented.id}];
       for(let i=0;i<invalid.length;i++){
-        const p='+98912000002'+(i+1),svc=service(),ch=await svc.otp.request(p,ip);
+        const p='+98912000003'+(i+1),svc=service(),ch=await svc.otp.request(p,ip);
         const result=await svc.identity.verify(ch.challengeId,p,svc.code(),ip,{tracking:invalid[i]});assert.ok(result);
         assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
       }
@@ -155,7 +158,9 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       const staleCode=randomBytes(32).toString('hex'),staleHash=createHash('sha256').update(staleCode,'ascii').digest();
       const {rows:[staleLink]}=await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
         VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',1) RETURNING id`,[cafe.id,branch.id,staleHash]);
-      const {rows:[staleTouch]}=await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at) VALUES($1,$2,'qr_scan',clock_timestamp()-interval '1 hour') RETURNING id`,[staleLink.id,randomUUID()]);
+      const staleOperation=randomUUID();
+      const {rows:[staleTouch]}=await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at) VALUES($1,$2,'qr_scan',clock_timestamp()-interval '1 hour') RETURNING id`,[staleLink.id,staleOperation]);
+      await pool.query('INSERT INTO cafe_tracking_consents(operation_id,visitor_hash) VALUES($1,$2)',[staleOperation,randomBytes(32)]);
       const stale=service(),p='+989120000027',ch=await stale.otp.request(p,ip);
       const result=await stale.identity.verify(ch.challengeId,p,stale.code(),ip,{tracking:{code:staleCode,touchId:staleTouch.id}});assert.ok(result);
       assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_identity_facts WHERE user_id=$1',[result.userId])).rowCount,0);
@@ -178,23 +183,39 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
           method:'POST',headers:{'Content-Type':'application/json',...(origin?{Origin:origin}:{}),'X-Forwarded-For':`192.0.2.${Math.floor(Math.random()*200)+1}`},body:JSON.stringify(body),
         });
         const before=(await pool.query('SELECT 1 FROM cafe_tracking_touches')).rowCount;
+        const consentBefore=(await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount ?? 0;
         const page=await fetch(`${url}/q/${code}`);assert.equal(page.status,200);assert.equal(page.headers.get('cache-control'),'no-store');
         assert.match(await page.text(),/dir="rtl"/);assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_touches')).rowCount,before);
         const body={consent:'yes',kind:'qr_scan',operationId:randomUUID()};
         for(const origin of [null,'https://foreign.invalid']) assert.equal((await post(body,origin)).status,400);
-        assert.equal((await post({...body,consent:'no'})).status,201);
+        const refusal=await post({...body,consent:'no'});
+        assert.equal(refusal.status,201);
+        assert.deepEqual(await refusal.json(),{tracked:false,touchId:null,registrationTracking:null});
         assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_rate_limits')).rowCount,0);
         assert.equal((await post({...body,consent:true})).status,400);
         const declinedForm=await fetch(`${url}/q/${code}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams({...body,consent:'no'})});
         assert.equal(declinedForm.status,201);assert.match(declinedForm.headers.get('content-type')??'',/text\/html/);
         assert.match(await declinedForm.text(),/بدون ثبت رهگیری/);
-        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,0);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,consentBefore);
         // An unavailable but syntactically valid code consumes the shared abuse budget.
         assert.equal((await post({...body,operationId:randomUUID()},config.publicOrigin,randomBytes(32).toString('hex'))).status,400);
         const responses=await Promise.all([post(body),post(body)]);
         assert.deepEqual(responses.map(r=>r.status),[201,201]);
         const [a,b]=await Promise.all(responses.map(r=>r.json()));assert.deepEqual(a,b);
+        assert.deepEqual(a.registrationTracking,{trackingCode:code,trackingTouchId:a.touchId});
+        let proof='';
+        const otp=new OtpChallengeService(pool,new OtpCrypto(randomBytes(32)),{enabled:true,async send(input){proof=input.code;}});
+        const vault=new PhoneVault(randomBytes(32),new Map([['test',randomBytes(32)]]),'test');
+        const phone='+989120000040',ip='192.0.2.40';
+        const challenge=await otp.request(phone,ip);
+        const {trackingCode,trackingTouchId}=a.registrationTracking;
+        const registration=await new IdentityService(pool,otp,vault).verify(challenge.challengeId,phone,proof,ip,
+          {tracking:{code:trackingCode,touchId:trackingTouchId}});
+        assert.ok(registration);
+        const facts=await pool.query('SELECT fact FROM cafe_tracking_identity_facts WHERE user_id=$1 AND touch_id=$2 ORDER BY fact',
+          [registration.userId,trackingTouchId]);
+        assert.deepEqual(facts.rows,[{fact:'phone_verified'},{fact:'registration'}]);
         assert.equal((await post({...body,kind:'store_click'})).status,409);
         await server.app.close();server=await createApp({tracking:config});await server.app.listen(0,'127.0.0.1');url=await server.app.getUrl();
         const clicks=await Promise.all(Array.from({length:29},()=>post({...body,kind:'store_click',operationId:randomUUID()})));
@@ -207,7 +228,7 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         // Exact retry remains usable after quota exhaustion and service restart.
         assert.deepEqual(await (await post(body)).json(),a);
         assert.deepEqual((await pool.query('SELECT attempts FROM cafe_tracking_rate_limits')).rows,[{attempts:30}]);
-        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,29);
+        assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,consentBefore+29);
         await pool.query("UPDATE cafe_tracking_rate_limits SET window_started_at=clock_timestamp()-interval '2 hours'");
         const acceptedForm=await fetch(`${url}/q/${code}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams({...body,operationId:randomUUID()})});

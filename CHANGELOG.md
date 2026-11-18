@@ -1,5 +1,9 @@
 # Changelog
 
+## Consented registration handoff · 2026-11-18
+
+Return an optional registration handoff from the private JSON landing and require stored consent before new-account attribution.
+
 ## Private draft submissions · 2026-11-18
 
 Connect authorized private research/content requests to the internal draft queue with actor-bound retry and audit.
