@@ -130,8 +130,18 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},
             body:JSON.stringify(input),
           });
-          const {rows:[documentRow]}=await db.query('INSERT INTO content_documents(slug) VALUES($1) RETURNING id',['test-'+randomBytes(8).toString('hex')]);
-          const revision={documentId:documentRow.id,operationId:randomUUID(),expectedRevision:0,title:'Test draft',body:'Test body',sources:[{rights:'original'}]};
+          const documentInput={documentId:randomUUID(),slug:'test-'+randomBytes(8).toString('hex')};
+          assert.equal((await post('documents',documentInput,consumer.accessToken)).status,403);
+          const creates=await Promise.all([post('documents',documentInput,author.accessToken),post('documents',documentInput,author.accessToken)]);
+          for(const response of creates) {
+            assert.equal(response.status,201);
+            assert.deepEqual(await response.json(),{id:documentInput.documentId});
+          }
+          assert.equal((await post('documents',documentInput,reviewerSession.accessToken)).status,409);
+          assert.equal((await post('documents',{...documentInput,slug:documentInput.slug+'-changed'},author.accessToken)).status,409);
+          const auditCount=await db.query("SELECT 1 FROM audit_events WHERE action='content.document_created' AND actor_id=$1 AND metadata->>'documentId'=$2",[editor,documentInput.documentId]);
+          assert.equal(auditCount.rowCount,1);
+          const revision={documentId:documentInput.documentId,operationId:randomUUID(),expectedRevision:0,title:'Test draft',body:'Test body',sources:[{rights:'original'}]};
           assert.equal((await post('revisions',revision)).status,401);
           assert.equal((await post('revisions',revision,consumer.accessToken)).status,403);
           assert.equal((await post('revisions',{...revision,actorId:admin},author.accessToken)).status,400);

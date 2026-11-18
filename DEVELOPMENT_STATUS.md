@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private CMS document creation · 2026-11-18
+
+Migration 062 adds audited document creation through explicitly composed private editorial HTTP. An editor supplies a document UUID and slug. Concurrent exact retries by that editor return the same ID. The private workflow can now create a document and submit its first revision without direct database provisioning. Next: bounded private research/content submission, then reviewed client handoff. Consent/touch retention policy and production activation approvals remain open.
+
 ## Tracking quota retention · 2026-11-18
 
 Migration 061 adds maintenance-only cleanup for expired tracking quota fingerprints. Run SELECT public.prune_expired_tracking_buckets() with the migration owner to remove up to 1000 expired rows per call. Consent/touch retention, reviewed registration/client handoff and campaign-specific fulfillment remain open. No scheduler or public tracking activation is registered.

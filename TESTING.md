@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private CMS document creation · 2026-11-18
+
+On Windows Node 24.22.3, the frozen API/contracts filtered install, pnpm test (12 API tests and one loopback probe), API typecheck and git diff --check passed. The database fixture exercises concurrent exact document replay, conflicting slug, cross-editor replay and consumer denial. It requires exact-head PostgreSQL CI. Prior fd2b439 CI 44300472278 had four successful jobs, with iOS still queued at read-back.
+
 ## Tracking quota retention · 2026-11-18
 
 The loopback probe passed on Windows Node 24.22.3 (1 test). The disposable PostgreSQL fixture checks the 1000-row bound, repeat cleanup, current-window and consent preservation, and runtime denial. Foundation 44299926023 for e124bca was cancelled after the administration push. Its two probe runs succeeded.

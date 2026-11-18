@@ -1,5 +1,9 @@
 # Changelog
 
+## Private CMS document creation · 2026-11-18
+
+Allow verified internal editors to create private CMS documents with exact retry and a single audited creation.
+
 ## Tracking quota retention · 2026-11-18
 
 Add maintenance-only bounded pruning of expired tracking quota buckets with counts-only audit.

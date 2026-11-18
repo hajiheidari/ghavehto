@@ -4,8 +4,13 @@ import {
   Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, UnauthorizedException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 import type { Pool } from 'pg';
+
+class DocumentInput {
+  @IsUUID() documentId!: string;
+  @IsString() @Matches(/^[a-z0-9][a-z0-9-]{0,119}$/) slug!: string;
+}
 
 class RevisionInput {
   @IsUUID() documentId!: string;
@@ -51,6 +56,11 @@ export class PrivateEditorial {
       AND NOT EXISTS(SELECT 1 FROM pg_class c WHERE c.relnamespace='public'::regnamespace AND pg_has_role(r.oid,c.relowner,'MEMBER'))
       AS allowed FROM pg_roles r WHERE rolname=session_user`);
     if(!row?.allowed) throw new Error('Dedicated restricted editorial login required');
+  }
+
+  document(header: string | undefined, input: DocumentInput) {
+    return this.run<{id:string}>(header,'SELECT public.create_private_content_document($1,$2,$3) AS id',
+      [input.documentId,input.slug]);
   }
 
   revision(header: string | undefined, input: RevisionInput) {
@@ -125,6 +135,11 @@ export class PrivateEditorialController {
   @Get('jobs/:id') @Header('Cache-Control','no-store')
   jobSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
     return this.editorial.subject(header,'job',id);
+  }
+
+  @Post('documents') @Header('Cache-Control','no-store')
+  document(@Headers('authorization') header: string | undefined, @Body() input: DocumentInput) {
+    return this.editorial.document(header,input);
   }
 
   @Post('revisions') @Header('Cache-Control','no-store')
