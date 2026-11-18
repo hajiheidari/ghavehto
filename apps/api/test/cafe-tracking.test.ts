@@ -256,6 +256,32 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         await host.query(`DROP ROLE ${login}`);
       }
     });
+    await t.test('retention inventory counts dependency types without exposing or changing records',async()=>{
+      const report='SELECT public.inspect_tracking_retention($1) AS inventory';
+      const cutoff=new Date();
+      const expected=await pool.query(`SELECT
+        (SELECT count(*)::integer FROM cafe_tracking_touches WHERE recorded_at<$1) AS touches,
+        (SELECT count(*)::integer FROM cafe_tracking_consents c JOIN cafe_tracking_touches t USING(operation_id) WHERE t.recorded_at<$1) AS "consentReceipts",
+        (SELECT count(*)::integer FROM cafe_tracking_consents c JOIN cafe_tracking_touches t USING(operation_id) WHERE t.recorded_at<$1 AND NOT c.operation_scoped) AS "legacyConsentReceipts",
+        (SELECT count(*)::integer FROM cafe_tracking_identity_facts f JOIN cafe_tracking_touches t ON t.id=f.touch_id WHERE t.recorded_at<$1) AS "identityFacts",
+        (SELECT count(*)::integer FROM cafe_tracking_interactions i JOIN cafe_tracking_touches t ON t.id=i.touch_id WHERE t.recorded_at<$1) AS interactions`,[cutoff]);
+      const {rows:[{inventory}]}=await pool.query(report,[cutoff]);
+      for(const [key,value] of Object.entries(expected.rows[0])) {
+        assert.ok(Number(value)>0);
+        assert.equal(inventory[key],value);
+      }
+      assert.ok(Object.values(inventory).every(value=>typeof value==='number'));
+      assert.ok(inventory.withinAttributionWindow>0);
+      assert.equal((await pool.query(report,['2000-01-01T00:00:00Z'])).rows[0].inventory.touches,0);
+      for(const invalid of [null,'infinity','9999-01-01T00:00:00Z']) await assert.rejects(pool.query(report,[invalid]),{code:'22023'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL ROLE ghahvehto_tracking');
+        await assert.rejects(client.query(report,[cutoff]),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+      assert.deepEqual((await pool.query(report,[cutoff])).rows[0].inventory,inventory);
+    });
     await t.test('maintenance prunes old quota buckets in bounded batches and preserves active windows and consent',async()=>{
       const prune='SELECT public.prune_expired_tracking_buckets() AS removed';
       const consentCount=(await pool.query('SELECT count(*) FROM public.cafe_tracking_consents')).rows[0].count;

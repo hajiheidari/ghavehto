@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Tracking retention inventory · 2026-11-18
+
+Migration 070 adds a maintenance-only read-only retention inventory. Run SELECT public.inspect_tracking_retention($1::timestamptz) with a bound historical cutoff for counts of older touches, consent and legacy receipts, attribution windows and dependent identity/interaction facts. The inventory is global and intended for a reviewed maintenance window. The cutoff is a planning input. Choose retention periods and treatment of linked facts before implementing deletion.
+
 ## Consent receipt data minimization · 2026-11-18
 
 Migration 069 stores an operation-scoped replay digest in new consent receipts, so records from the same visitor no longer share a directly joinable fingerprint. The hourly quota still uses its independent existing bucket. Legacy immutable receipts retain exact replay behavior. The consent/touch retention duration and treatment of legacy records remain founder decisions.

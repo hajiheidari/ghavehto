@@ -1,5 +1,9 @@
 # Changelog
 
+## Tracking retention inventory · 2026-11-18
+
+Add a maintenance-only aggregate inventory for tracking retention decisions.
+
 ## Consent receipt data minimization · 2026-11-18
 
 Minimize tracking consent correlation by deriving the stored replay digest per operation.

@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Tracking retention inventory · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture checks inventory totals against independent counts, live attribution windows, invalid cutoff rejection, restricted-role denial and unchanged results after repeated inspection.
+
 ## Consent receipt data minimization · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture adds legacy replay, distinct digests across operations from the same quota bucket, different-visitor replay rejection and absence of digest equality with quota records.
