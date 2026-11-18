@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private campaign reservation form · 2026-11-18
+
+The private participation page can render a reservation form when supplied experience, branch and version parameters and an HTTPS PANEL_WRITE_ORIGIN. Same-origin POST uses the existing session-backed API, then redirects to receipt recovery by operation UUID. Public discovery and login remain closed. Next: campaign-specific offer presentation and consent/touch retention policy.
+
 ## Persian participation receipts · 2026-11-18
 
 An opt-in Persian RTL receipt page at /dashboard/participation reads the existing member-scoped API using a server-side verified bearer from the access cookie. It displays reserved, cancelled or fulfilled status. PRIVATE_PARTICIPATION_VIEW=1 is required and the API must be explicitly composed. No cookie issuance, public navigation or new writes are enabled. Next: consent/touch retention policy and campaign-specific participation UI.

@@ -9,7 +9,7 @@ const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 export const panelId = (input:unknown):input is string => typeof input === 'string' && uuid.test(input);
 const object = (value:unknown):value is Record<string,unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-async function read<T>(path:string,parse:(input:unknown)=>T,change?:{method:'PUT'|'PATCH';body:object}):Promise<PanelResult<T>> {
+async function read<T>(path:string,parse:(input:unknown)=>T,change?:{method:'PUT'|'PATCH'|'POST';body:object}):Promise<PanelResult<T>> {
   const token = (await cookies()).get(accessCookieName)?.value;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return {state:'signed-out'};
   try {
@@ -89,4 +89,17 @@ export async function getParticipationReceipt(operationId:string) {
       (input.state!=='reserved'&&input.state!=='cancelled'&&input.state!=='fulfilled')) throw new Error('Invalid participation receipt');
     return {claimId:input.claimId,state:input.state} as const;
   });
+}
+
+export function participationVersion(input:unknown):number|null {
+  if(typeof input!=='string'||!/^[1-9][0-9]{0,9}$/.test(input)) return null;
+  const version=Number(input);
+  return version<=2147483647?version:null;
+}
+
+export function reserveParticipation(input:{experienceId:string;branchId:string;operationId:string;version:number}) {
+  return read('/v1/internal/participation/reservations',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid reservation response');
+    return receipt.id;
+  },{method:'POST',body:input});
 }

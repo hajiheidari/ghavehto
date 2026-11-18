@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private campaign reservation form · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. API test TypeScript compilation passed. The built Next/Nest/PostgreSQL fixture checks form rendering, foreign or missing Origin rejection and one reservation from concurrent exact submissions.
+
 ## Persian participation receipts · 2026-11-18
 
 On e686463, Foundation 44309190915 passed the Next build and test:db but the separate web smoke step failed. The public job metadata did not expose the failing assertion. The follow-up smoke adds a default-off route assertion and per-dashboard diagnostics. Local JavaScript syntax check passed.

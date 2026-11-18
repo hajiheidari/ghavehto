@@ -266,6 +266,28 @@ test('private experience policies enforce verified ownership, scope, dates and i
             const page=(operation:string,token?:string)=>fetch(web.url+'/dashboard/participation?operation='+operation,{
               headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{},
             });
+            const campaign=await make({active:true});
+            const formPage=await fetch(web.url+'/dashboard/participation?'+new URLSearchParams({
+              experience:campaign.id,branch:branch.id,version:'1',
+            }),{headers:{Cookie:'__Host-ghahvehto-access='+memberSession.accessToken}});
+            const formHtml=await formPage.text();
+            assert.match(formHtml,/رزرو این تجربه/);
+            const operationId=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(formHtml)?.[1];
+            assert.ok(operationId);
+            const form=new URLSearchParams({experienceId:campaign.id,branchId:branch.id,operationId,version:'1'});
+            const submit=(origin?:string)=>fetch(web.url+'/dashboard/participation/reserve',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+memberSession.accessToken,
+                ...(origin?{Origin:origin}:{})},body:form,
+            });
+            assert.equal((await submit()).status,403);
+            assert.equal((await submit('https://foreign.invalid')).status,403);
+            const submissions=await Promise.all([submit('https://panel.example.test'),submit('https://panel.example.test')]);
+            for(const submission of submissions) {
+              assert.equal(submission.status,303);
+              assert.equal(submission.headers.get('location'),'/dashboard/participation?operation='+operationId);
+            }
+            assert.match(await (await page(operationId,memberSession.accessToken)).text(),/رزرو شده/);
+            assert.equal((await pool.query('SELECT 1 FROM experience_claims WHERE operation_id=$1',[operationId])).rowCount,1);
             const response=await page(input.operationId,memberSession.accessToken);
             assert.equal(response.status,200);
             assert.match(response.headers.get('cache-control')??'',/no-store/);
