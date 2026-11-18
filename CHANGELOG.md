@@ -1,5 +1,9 @@
 # Changelog
 
+## Private reservation cancellation · 2026-11-18
+
+Add member cancellation to the private Persian receipt with same-origin submission and receipt recovery.
+
 ## Private campaign offer preview · 2026-11-18
 
 Show verified private campaign details and availability before rendering the reservation form.

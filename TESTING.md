@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private reservation cancellation · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. The Next/Nest/PostgreSQL fixture checks Origin denial, foreign-member refusal, concurrent cancellation replay, updated receipt and one cancellation row.
+
 ## Private campaign offer preview · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. API typecheck passed. The built Next/Nest/PostgreSQL fixture checks scoped offer reads, private title escaping, eligible presentation and state after reservation.

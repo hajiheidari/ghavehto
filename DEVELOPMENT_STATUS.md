@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private reservation cancellation · 2026-11-18
+
+The opt-in Persian member receipt now supports cancellation for reserved receipts. The web POST checks the configured HTTPS origin, looks up the member-owned receipt server-side, sends a reason and operation UUID, and returns to receipt recovery. Fulfilled and cancelled receipts do not show the form. Next: private staff handoff for fulfillment and founder decision on consent/touch retention.
+
 ## Private campaign offer preview · 2026-11-18
 
 Migration 067 adds an authenticated private offer preview scoped to the requested campaign version and branch. The Persian receipt page now displays the server title, branch, window and eligibility, and offers reservation only when the preview is eligible. Reservation rechecks eligibility transactionally. Next: consent/touch retention policy and remaining campaign-specific workflows.

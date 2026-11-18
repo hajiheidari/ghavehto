@@ -122,3 +122,10 @@ export function getParticipationOffer(experienceId:string,branchId:string,versio
       eligibility:input.eligibility as keyof typeof participationEligibility};
   });
 }
+
+export function cancelParticipation(input:{claimId:string;operationId:string;reason:string}) {
+  return read('/v1/internal/participation/cancellations',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid cancellation response');
+    return receipt.id;
+  },{method:'POST',body:input});
+}

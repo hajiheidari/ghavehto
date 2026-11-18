@@ -296,6 +296,27 @@ test('private experience policies enforce verified ownership, scope, dates and i
             assert.equal((await pool.query('SELECT 1 FROM experience_claims WHERE operation_id=$1',[operationId])).rowCount,1);
             const exhausted=await request('offer?'+offerQuery(branch.id),memberSession.accessToken);
             assert.equal((await exhausted.json() as {eligibility:string}).eligibility,'limit_reached');
+            const reservationHtml=await (await page(operationId,memberSession.accessToken)).text();
+            assert.match(reservationHtml,/action="\/dashboard\/participation\/cancel"/);
+            const cancellationOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(reservationHtml)?.[1];
+            assert.ok(cancellationOperation);
+            const cancelForm=new URLSearchParams({reservationId:operationId,operationId:cancellationOperation,reason:'تغییر برنامه'});
+            const cancelFromWeb=(token:string,origin:string)=>fetch(web.url+'/dashboard/participation/cancel',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:origin},body:cancelForm,
+            });
+            assert.equal((await cancelFromWeb(memberSession.accessToken,'https://foreign.invalid')).status,403);
+            const foreignCancellation=await cancelFromWeb(foreignSession.accessToken,'https://panel.example.test');
+            assert.match(foreignCancellation.headers.get('location')??'',/cancellation=unconfirmed/);
+            assert.match(await (await page(operationId,memberSession.accessToken)).text(),/رزرو شده/);
+            const cancels=await Promise.all(Array.from({length:2},()=>cancelFromWeb(memberSession.accessToken,'https://panel.example.test')));
+            for(const cancellation of cancels) {
+              assert.equal(cancellation.status,303);
+              assert.equal(cancellation.headers.get('location'),'/dashboard/participation?operation='+operationId);
+            }
+            const cancelledHtml=await (await page(operationId,memberSession.accessToken)).text();
+            assert.match(cancelledHtml,/لغو شده/);
+            assert.doesNotMatch(cancelledHtml,/action="\/dashboard\/participation\/cancel"/);
+            assert.equal((await pool.query('SELECT 1 FROM experience_cancellations WHERE operation_id=$1',[cancellationOperation])).rowCount,1);
             const response=await page(input.operationId,memberSession.accessToken);
             assert.equal(response.status,200);
             assert.match(response.headers.get('cache-control')??'',/no-store/);

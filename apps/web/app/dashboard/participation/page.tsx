@@ -8,9 +8,9 @@ export const metadata={title:'رسید مشارکت',robots:{index:false,follow:
 const dates=new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Tehran'});
 const labels={reserved:'رزرو شده',cancelled:'لغو شده',fulfilled:'تحویل ثبت شده'};
 
-export default async function ParticipationPage({searchParams}:{searchParams:Promise<{operation?:string|string[];experience?:string|string[];branch?:string|string[];version?:string|string[];reservation?:string|string[]}>}) {
+export default async function ParticipationPage({searchParams}:{searchParams:Promise<{operation?:string|string[];experience?:string|string[];branch?:string|string[];version?:string|string[];reservation?:string|string[];cancellation?:string|string[]}>}) {
   if(process.env.PRIVATE_PARTICIPATION_VIEW!=='1') notFound();
-  const {operation,experience,branch,version,reservation}=await searchParams;
+  const {operation,experience,branch,version,reservation,cancellation}=await searchParams;
   const versionNumber=participationVersion(version);
   const [result,offer]=await Promise.all([
     panelId(operation)?getParticipationReceipt(operation):null,
@@ -49,5 +49,15 @@ export default async function ParticipationPage({searchParams}:{searchParams:Pro
       <dt>وضعیت</dt><dd>{labels[result.data.state]}</dd>
       <dt>شناسهٔ رسید</dt><dd><bdi dir="ltr">{result.data.claimId}</bdi></dd>
     </dl>}
+    {cancellation==='unconfirmed'&&!(result?.state==='ready'&&result.data.state==='cancelled')&&
+      <p role="status">لغو رزرو تأیید نشد. وضعیت رسید را بررسی کنید.</p>}
+    {result?.state==='ready'&&result.data.state==='reserved'&&panelId(operation)&&staffPanelOrigin()&&
+      <form method="post" action="/dashboard/participation/cancel">
+        <input type="hidden" name="reservationId" value={operation}/>
+        <input type="hidden" name="operationId" value={randomUUID()}/>
+        <label htmlFor="cancellationReason">دلیل لغو رزرو</label>{' '}
+        <input id="cancellationReason" name="reason" required maxLength={240}/>{' '}
+        <button type="submit">لغو رزرو</button>
+      </form>}
   </section>;
 }
