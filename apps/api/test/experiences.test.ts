@@ -266,12 +266,18 @@ test('private experience policies enforce verified ownership, scope, dates and i
             const page=(operation:string,token?:string)=>fetch(web.url+'/dashboard/participation?operation='+operation,{
               headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{},
             });
-            const campaign=await make({active:true});
+            const campaign=await make({active:true,branch:branch.id});
+            await pool.query("UPDATE experiences SET title='TEST <b>پیشنهاد خصوصی</b>' WHERE id=$1",[campaign.id]);
+            const offerQuery=(branchId:string)=>new URLSearchParams({experienceId:campaign.id,branchId,version:'1'});
+            assert.equal((await request('offer?'+offerQuery(branch.id))).status,401);
+            assert.equal((await request('offer?'+offerQuery(foreign.id),memberSession.accessToken)).status,404);
             const formPage=await fetch(web.url+'/dashboard/participation?'+new URLSearchParams({
               experience:campaign.id,branch:branch.id,version:'1',
             }),{headers:{Cookie:'__Host-ghahvehto-access='+memberSession.accessToken}});
             const formHtml=await formPage.text();
             assert.match(formHtml,/رزرو این تجربه/);
+            assert.match(formHtml,/TEST &lt;b&gt;پیشنهاد خصوصی&lt;\/b&gt;/);
+            assert.match(formHtml,/قابل رزرو/);
             const operationId=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(formHtml)?.[1];
             assert.ok(operationId);
             const form=new URLSearchParams({experienceId:campaign.id,branchId:branch.id,operationId,version:'1'});
@@ -288,6 +294,8 @@ test('private experience policies enforce verified ownership, scope, dates and i
             }
             assert.match(await (await page(operationId,memberSession.accessToken)).text(),/رزرو شده/);
             assert.equal((await pool.query('SELECT 1 FROM experience_claims WHERE operation_id=$1',[operationId])).rowCount,1);
+            const exhausted=await request('offer?'+offerQuery(branch.id),memberSession.accessToken);
+            assert.equal((await exhausted.json() as {eligibility:string}).eligibility,'limit_reached');
             const response=await page(input.operationId,memberSession.accessToken);
             assert.equal(response.status,200);
             assert.match(response.headers.get('cache-control')??'',/no-store/);
@@ -297,9 +305,9 @@ test('private experience policies enforce verified ownership, scope, dates and i
             assert.ok(html.includes(id));
             assert.ok(!html.includes(memberSession.accessToken));
             assert.match(await (await page(cancelInput.operationId,memberSession.accessToken)).text(),/لغو شده/);
-            const foreign=await (await page(input.operationId,foreignSession.accessToken)).text();
-            assert.match(foreign,/رسید مشارکت در دسترس نیست/);
-            assert.ok(!foreign.includes(id));
+            const foreignHtml=await (await page(input.operationId,foreignSession.accessToken)).text();
+            assert.match(foreignHtml,/رسید مشارکت در دسترس نیست/);
+            assert.ok(!foreignHtml.includes(id));
             assert.match(await (await page(input.operationId)).text(),/به نشست معتبر نیاز دارید/);
           } finally {await web.close();}
           await sessions.revoke(memberSession.accessToken);

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private campaign offer preview · 2026-11-18
+
+Migration 067 adds an authenticated private offer preview scoped to the requested campaign version and branch. The Persian receipt page now displays the server title, branch, window and eligibility, and offers reservation only when the preview is eligible. Reservation rechecks eligibility transactionally. Next: consent/touch retention policy and remaining campaign-specific workflows.
+
 ## Private campaign reservation form · 2026-11-18
 
 The private participation page can render a reservation form when supplied experience, branch and version parameters and an HTTPS PANEL_WRITE_ORIGIN. Same-origin POST uses the existing session-backed API, then redirects to receipt recovery by operation UUID. Public discovery and login remain closed. Next: campaign-specific offer presentation and consent/touch retention policy.

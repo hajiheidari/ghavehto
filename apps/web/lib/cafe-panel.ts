@@ -103,3 +103,22 @@ export function reserveParticipation(input:{experienceId:string;branchId:string;
     return receipt.id;
   },{method:'POST',body:input});
 }
+export const participationEligibility={
+  eligible:'قابل رزرو',
+  outside_window:'خارج از بازهٔ رزرو',
+  capacity_unavailable:'ظرفیت رزرو تکمیل است',
+  limit_reached:'به سقف مشارکت رسیده‌اید',
+  prior_participation:'این پیشنهاد ویژهٔ نخستین مشارکت ثبت‌شده است',
+} as const;
+
+export function getParticipationOffer(experienceId:string,branchId:string,version:number) {
+  const query=new URLSearchParams({experienceId,branchId,version:String(version)});
+  return read('/v1/internal/participation/offer?'+query,input=>{
+    if(!object(input)||(input.title!==null&&typeof input.title!=='string')||typeof input.branchName!=='string'||
+      typeof input.startsAt!=='string'||!Number.isFinite(Date.parse(input.startsAt))||
+      typeof input.endsAt!=='string'||!Number.isFinite(Date.parse(input.endsAt))||
+      typeof input.eligibility!=='string'||!Object.hasOwn(participationEligibility,input.eligibility)) throw new Error('Invalid participation offer');
+    return {title:input.title,branchName:input.branchName,startsAt:new Date(input.startsAt),endsAt:new Date(input.endsAt),
+      eligibility:input.eligibility as keyof typeof participationEligibility};
+  });
+}

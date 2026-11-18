@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private campaign offer preview · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. API typecheck passed. The built Next/Nest/PostgreSQL fixture checks scoped offer reads, private title escaping, eligible presentation and state after reservation.
+
 ## Private campaign reservation form · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. API test TypeScript compilation passed. The built Next/Nest/PostgreSQL fixture checks form rendering, foreign or missing Origin rejection and one reservation from concurrent exact submissions.

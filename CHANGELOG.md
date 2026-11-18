@@ -1,5 +1,9 @@
 # Changelog
 
+## Private campaign offer preview · 2026-11-18
+
+Show verified private campaign details and availability before rendering the reservation form.
+
 ## Private campaign reservation form · 2026-11-18
 
 Add a private Persian campaign reservation form with same-origin enforcement and operation-based receipt recovery.
