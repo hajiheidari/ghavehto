@@ -1,4 +1,9 @@
-# Development status · 2026-11-15
+# Development status · 2026-11-18
+
+## Private editorial writes · 2026-11-18
+
+Migration 058 and the opt-in Nest composition add private CMS revision and editorial review writes. PostgreSQL derives the actor from the bearer hash and checks live session and role in the write transaction. The dedicated login has only two entry points. The default server does not register these routes. Documents still need maintenance provisioning. Next, add role-scoped private reads and audited role/control administration. Public activation gates remain closed.
+
 
 ## M5 restricted one-shot draft worker · 2026-11-15
 

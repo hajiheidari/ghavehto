@@ -1,5 +1,10 @@
 # Test plan and execution
 
+## Private editorial writes · 2026-11-18
+
+The disposable PostgreSQL integration case covers optional route registration, restricted database credentials, missing bearer, unassigned users, forged actor input, exact revision replay, independent review and revoked sessions. Run it through the existing API test:db suite. The standalone loopback probe passed (1 test) on Node 24.22.3. Foundation validation 43757339140 and both probe runs succeeded for baseline cf13097. The new database case requires its own exact-head execution.
+
+
 ## M5 restricted one-shot draft worker · 2026-11-15
 
 Migration 057 gives a dedicated NOINHERIT worker login only three narrow draft lease/finish/fail wrappers. The deterministic runner accepts supplied research/content text and source-rights attestations and creates a private human-review packet; it performs no HTTP fetch, model call, ingestion, outreach, sending, publication, approval or spending. External agent kinds are refused. Invalid input is dead-lettered with a sanitized code; no source text or credentials are logged. Separate runtime validation rejects owner/privileged/identity/app/tracking logins. There is no daemon, schedule or seeded control/job.

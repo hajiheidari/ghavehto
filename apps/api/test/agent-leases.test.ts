@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {createApp} from '../src/nest/app.js';
+import {SessionService} from '../src/nest/sessions.js';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
@@ -99,8 +101,60 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
     const usable='SELECT public.operation_review_usable($1,$2) AS usable';
     const hash='SELECT public.operation_subject_hash($1,$2) AS hash';
     const sources=JSON.stringify([{rights:'permitted',url:'https://example.invalid/source',publicationDate:null,retrievalEvidence:'TEST disposable'}]);
+    assert.equal((await db.query('SELECT 1 FROM content_documents')).rowCount,0);
+    await t.test('private editorial HTTP derives writes from live sessions and isolates its database login',async()=>{
+      const login='gh_editorial_'+randomBytes(8).toString('hex');
+      const password=randomBytes(24).toString('hex');
+      await db.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      const url=new URL(base);url.username=login;url.password=password;
+      const editorialPool=new pg.Pool({connectionString:url.toString()});
+      try {
+        await db.query(`GRANT ghahvehto_editorial TO ${login}`);
+        await assert.rejects(createApp({editorialPool:db}),/Dedicated restricted editorial login/);
+        await assert.rejects(editorialPool.query('SELECT * FROM public.sessions'),{code:'42501'});
+        const standard=await createApp();
+        try {
+          await standard.app.listen(0,'127.0.0.1');
+          const response=await fetch((await standard.app.getUrl())+'/v1/internal/editorial/revisions',{method:'POST'});
+          assert.equal(response.status,404);
+        } finally {await standard.app.close();}
+        const {app,document}=await createApp({editorialPool});
+        try {
+          assert.ok(!document.paths['/v1/internal/editorial/revisions']);
+          await app.listen(0,'127.0.0.1');
+          const origin=await app.getUrl();
+          const sessions=new SessionService(db);
+          const [author,reviewerSession,consumer]=await Promise.all([sessions.issue(editor),sessions.issue(reviewer),sessions.issue(await user())]);
+          const post=(path:string,input:object,token?:string)=>fetch(origin+'/v1/internal/editorial/'+path,{
+            method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},
+            body:JSON.stringify(input),
+          });
+          const {rows:[documentRow]}=await db.query('INSERT INTO content_documents(slug) VALUES($1) RETURNING id',['test-'+randomBytes(8).toString('hex')]);
+          const revision={documentId:documentRow.id,operationId:randomUUID(),expectedRevision:0,title:'Test draft',body:'Test body',sources:[{rights:'original'}]};
+          assert.equal((await post('revisions',revision)).status,401);
+          assert.equal((await post('revisions',revision,consumer.accessToken)).status,403);
+          assert.equal((await post('revisions',{...revision,actorId:admin},author.accessToken)).status,400);
+          const saved=await post('revisions',revision,author.accessToken);
+          assert.equal(saved.status,201);
+          assert.equal(saved.headers.get('cache-control'),'no-store');
+          const receipt=await saved.json() as {id:string};
+          assert.deepEqual(await (await post('revisions',revision,author.accessToken)).json(),receipt);
+          const review={revisionId:receipt.id,operationId:randomUUID(),decision:'approved',lifetimeSeconds:60,reason:'Test independent review'};
+          assert.equal((await post('reviews',review,author.accessToken)).status,403);
+          assert.equal((await post('reviews',review,reviewerSession.accessToken)).status,201);
+          await sessions.revoke(reviewerSession.accessToken);
+          assert.equal((await post('reviews',review,reviewerSession.accessToken)).status,401);
+          const {rows:[audit]}=await db.query("SELECT actor_id FROM audit_events WHERE action='content.revised' AND metadata->>'revisionId'=$1",[receipt.id]);
+          assert.equal(audit.actor_id,editor);
+        } finally {await app.close();}
+      } finally {
+        await editorialPool.end();
+        await db.query(`DROP ROLE ${login}`);
+      }
+    });
+
     await t.test('CMS revisions preserve source evidence, reject stale edits and require independent reviewer authority',async()=>{
-      assert.equal((await db.query('SELECT 1 FROM content_documents')).rowCount,0);
+
       const {rows:[doc]}=await db.query('INSERT INTO content_documents(slug) VALUES($1) RETURNING id',['test-'+randomBytes(8).toString('hex')]);
       const operation=randomUUID(),args=[editor,doc.id,0,operation,'پیش‌نویس آزمایشی','متن مصنوعی فقط در آزمون',sources];
       await assert.rejects(db.query(save,[consumer,...args.slice(1)]),{code:'42501'});

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-18 · Private editorial writes
+
+- Add opt-in internal revision and review endpoints that derive their actor from a live verified bearer session and use a dedicated PostgreSQL role.
+
+
 ## 2026-11-15 · restricted internal draft runner
 
 - Add a one-shot research/content intake worker using a dedicated restricted capability; stop at human review and refuse external adapters.

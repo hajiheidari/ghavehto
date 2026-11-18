@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { PrivateEditorial, PrivateEditorialController } from './private-editorial.js';
 import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ApiProperty, ApiTags, ApiResponse, SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -72,6 +73,7 @@ export class AppModule {}
 export async function createApp(options: {
   runtimePool?: pg.Pool;
   enableStampQr?: boolean;
+  editorialPool?: pg.Pool;
   tracking?: {pool:pg.Pool;ipKey:Buffer;publicOrigin:string};
   initialLogin?: Readonly<{ crypto: OtpCrypto; vault: PhoneVault; provider: OtpProvider }>;
 } = {}) {
@@ -83,6 +85,8 @@ export async function createApp(options: {
     tracking=new CafeTrackingService(options.tracking.pool,options.tracking.ipKey,options.tracking.publicOrigin);
     await tracking.validateRuntime();
   }
+  const editorial = options.editorialPool ? new PrivateEditorial(options.editorialPool) : undefined;
+  if (editorial) await editorial.validateRuntime();
   let initialLogin: InitialLogin | undefined;
   if (config) {
     if (!runtimePool || !config.provider.enabled) throw new Error('Initial login requires a restricted runtime pool and enabled provider');
@@ -90,8 +94,9 @@ export async function createApp(options: {
     initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
   }
   const app = await NestFactory.create({ module: AppModule,
-    controllers: [...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
+    controllers: [...(editorial ? [PrivateEditorialController] : []), ...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
     providers: [
+    ...(editorial ? [{ provide: PrivateEditorial, useValue: editorial }] : []),
     ...(tracking ? [{provide:CafeTrackingService,useValue:tracking}] : []),
     ...(initialLogin ? [{ provide: INITIAL_LOGIN, useValue: initialLogin }] : []),
     { provide: 'RUNTIME_POOL', useValue: options.runtimePool ?? null },
