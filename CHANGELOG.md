@@ -1,5 +1,9 @@
 # Changelog
 
+## Private review subjects · 2026-11-18
+
+Add role-checked private revision and agent draft reads with canonical payload hashes.
+
 ## 2026-11-18 · Private editorial writes
 
 - Add opt-in internal revision and review endpoints that derive their actor from a live verified bearer session and use a dedicated PostgreSQL role.

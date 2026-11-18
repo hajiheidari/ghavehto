@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private review subjects · 2026-11-18
+
+Migration 059 adds opt-in single-subject GET routes. Editors can read CMS revisions and admins can read completed agent drafts awaiting review. Responses bind the returned payload to its canonical hash and use no-store. Next, add audited internal role and control administration. The prior private-write head b4e592a passed Foundation CI 44296822890 and both probes.
+
 ## Private editorial writes · 2026-11-18
 
 Migration 058 and the opt-in Nest composition add private CMS revision and editorial review writes. PostgreSQL derives the actor from the bearer hash and checks live session and role in the write transaction. The dedicated login has only two entry points. The default server does not register these routes. Documents still need maintenance provisioning. Next, add role-scoped private reads and audited role/control administration. Public activation gates remain closed.

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   BadRequestException, Body, ConflictException, Controller, ForbiddenException,
-  Header, Headers, Inject, Post, UnauthorizedException,
+  Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, UnauthorizedException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
@@ -40,23 +40,30 @@ export class PrivateEditorial {
   }
 
   revision(header: string | undefined, input: RevisionInput) {
-    return this.write(header,'SELECT public.save_private_content($1,$2,$3,$4,$5,$6,$7) AS id',
+    return this.run<{id:string}>(header,'SELECT public.save_private_content($1,$2,$3,$4,$5,$6,$7) AS id',
       [input.documentId,input.expectedRevision,input.operationId,input.title,input.body,JSON.stringify(input.sources)]);
   }
 
   review(header: string | undefined, input: ReviewInput) {
-    return this.write(header,'SELECT public.review_private_operation($1,$2,$3,$4,$5,$6,$7) AS id',
+    return this.run<{id:string}>(header,'SELECT public.review_private_operation($1,$2,$3,$4,$5,$6,$7) AS id',
       [input.jobId ?? null,input.revisionId ?? null,input.operationId,input.decision,input.lifetimeSeconds,input.reason]);
   }
 
-  private async write(header: string | undefined, sql: string, values: unknown[]): Promise<{id:string}> {
+  async subject(header: string | undefined, kind: 'revision' | 'job', id: string) {
+    const {subject}=await this.run<{subject:Record<string,unknown> | null}>(header,
+      'SELECT public.read_private_review_subject($1,$2,$3) AS subject',[kind,id]);
+    if(!subject) throw new NotFoundException();
+    return subject;
+  }
+
+  private async run<T extends Record<string,unknown>>(header: string | undefined, sql: string, values: unknown[]): Promise<T> {
     const token=/^Bearer ([A-Za-z0-9_-]{43})$/.exec(header ?? '')?.[1];
     if(!token) throw new UnauthorizedException();
     const client=await this.pool.connect();
     try {
       await client.query('BEGIN');
       await client.query('SET LOCAL ROLE ghahvehto_editorial');
-      const {rows:[receipt]}=await client.query<{id:string}>(sql,[createHash('sha256').update(token).digest(),...values]);
+      const {rows:[receipt]}=await client.query<T>(sql,[createHash('sha256').update(token).digest(),...values]);
       await client.query('COMMIT');
       return receipt;
     } catch(error) {
@@ -75,6 +82,16 @@ export class PrivateEditorial {
 @Controller('v1/internal/editorial')
 export class PrivateEditorialController {
   constructor(@Inject(PrivateEditorial) private readonly editorial: PrivateEditorial) {}
+
+  @Get('revisions/:id') @Header('Cache-Control','no-store')
+  revisionSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
+    return this.editorial.subject(header,'revision',id);
+  }
+
+  @Get('jobs/:id') @Header('Cache-Control','no-store')
+  jobSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
+    return this.editorial.subject(header,'job',id);
+  }
 
   @Post('revisions') @Header('Cache-Control','no-store')
   revision(@Headers('authorization') header: string | undefined, @Body() input: RevisionInput) {

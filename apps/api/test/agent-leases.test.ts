@@ -139,10 +139,31 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           assert.equal(saved.headers.get('cache-control'),'no-store');
           const receipt=await saved.json() as {id:string};
           assert.deepEqual(await (await post('revisions',revision,author.accessToken)).json(),receipt);
+          const get=(path:string,token?:string)=>fetch(origin+'/v1/internal/editorial/'+path,{
+            headers:token?{authorization:'Bearer '+token}:{},
+          });
+          const revisionPath='revisions/'+receipt.id;
+          assert.equal((await get(revisionPath)).status,401);
+          assert.equal((await get(revisionPath,consumer.accessToken)).status,403);
+          assert.equal((await get('revisions/'+randomUUID(),author.accessToken)).status,404);
+          const subject=await get(revisionPath,reviewerSession.accessToken);
+          assert.equal(subject.status,200);
+          assert.equal(subject.headers.get('cache-control'),'no-store');
+          const {rows:[expected]}=await db.query("SELECT encode(public.operation_subject_hash(NULL,$1),'hex') AS hash",[receipt.id]);
+          const draft=await subject.json() as {body:string;payloadHash:string};
+          assert.equal(draft.body,revision.body);
+          assert.equal(draft.payloadHash,expected.hash);
+          const adminSession=await sessions.issue(admin);
+          const {rows:[job]}=await db.query("SELECT id FROM agent_jobs WHERE state='awaiting_review' LIMIT 1");
+          assert.ok(job);
+          assert.equal((await get('jobs/'+job.id,author.accessToken)).status,403);
+          assert.equal((await get('jobs/'+job.id,adminSession.accessToken)).status,200);
+          assert.equal((await get('jobs/'+randomUUID(),adminSession.accessToken)).status,404);
           const review={revisionId:receipt.id,operationId:randomUUID(),decision:'approved',lifetimeSeconds:60,reason:'Test independent review'};
           assert.equal((await post('reviews',review,author.accessToken)).status,403);
           assert.equal((await post('reviews',review,reviewerSession.accessToken)).status,201);
           await sessions.revoke(reviewerSession.accessToken);
+          assert.equal((await get(revisionPath,reviewerSession.accessToken)).status,401);
           assert.equal((await post('reviews',review,reviewerSession.accessToken)).status,401);
           const {rows:[audit]}=await db.query("SELECT actor_id FROM audit_events WHERE action='content.revised' AND metadata->>'revisionId'=$1",[receipt.id]);
           assert.equal(audit.actor_id,editor);

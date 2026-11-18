@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private review subjects · 2026-11-18
+
+The loopback probe passed on Windows Node 24.22.3 (1 test). The expanded PostgreSQL fixture checks role isolation, revoked sessions, absent subjects and payload-hash parity. Read its own exact-head Foundation result separately.
+
 ## Private editorial writes · 2026-11-18
 
 The disposable PostgreSQL integration case covers optional route registration, restricted database credentials, missing bearer, unassigned users, forged actor input, exact revision replay, independent review and revoked sessions. Run it through the existing API test:db suite. The standalone loopback probe passed (1 test) on Node 24.22.3. Foundation validation 43757339140 and both probe runs succeeded for baseline cf13097. The new database case requires its own exact-head execution.
