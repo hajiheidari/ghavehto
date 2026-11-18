@@ -3,6 +3,8 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {test} from 'node:test';
 import pg from 'pg';
+import {createApp} from '../src/nest/app.js';
+import {SessionService} from '../src/nest/sessions.js';
 import {migrate} from '../src/nest/migrations.js';
 
 test('private experience policies enforce verified ownership, scope, dates and independent capacity',async t=>{
@@ -210,6 +212,58 @@ test('private experience policies enforce verified ownership, scope, dates and i
         await client.query('SET LOCAL ROLE ghahvehto_app');
         await assert.rejects(client.query(fulfill,args),{code:'42501'});
       } finally {await client.query('ROLLBACK');client.release();}
+    });
+    await t.test('opt-in participation HTTP derives member and staff from restricted live sessions',async()=>{
+      const login='gh_participation_'+randomBytes(8).toString('hex'),password=randomBytes(24).toString('hex');
+      await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      const address=new URL(base);address.username=login;address.password=password;
+      const runtime=new pg.Pool({connectionString:address.toString()});
+      try {
+        await host.query(`GRANT ghahvehto_participation TO ${login}`);
+        await assert.rejects(createApp({participationPool:pool}),/Dedicated restricted participation login/);
+        const standard=await createApp();
+        try {
+          await standard.app.listen(0,'127.0.0.1');
+          assert.equal((await fetch((await standard.app.getUrl())+'/v1/internal/participation/reservations/'+randomUUID())).status,404);
+        } finally {await standard.app.close();}
+        const {app}=await createApp({participationPool:runtime});
+        try {
+          await app.listen(0,'127.0.0.1');
+          const origin=(await app.getUrl())+'/v1/internal/participation/';
+          const sessions=new SessionService(pool);
+          const [memberSession,ownerSession,foreignSession]=await Promise.all([sessions.issue(await user()),sessions.issue(owner),sessions.issue(await user())]);
+          const request=(path:string,token?:string,input?:object)=>fetch(origin+path,{
+            method:input?'POST':'GET',headers:{...(token?{authorization:'Bearer '+token}:{}),...(input?{'content-type':'application/json'}:{})},
+            body:input?JSON.stringify(input):undefined,
+          });
+          const x=await make({active:true}),input={experienceId:x.id,branchId:branch.id,version:1,operationId:randomUUID()};
+          assert.equal((await request('reservations',undefined,input)).status,401);
+          assert.equal((await request('reservations',memberSession.accessToken,{...input,actorId:owner})).status,400);
+          const reserved=await request('reservations',memberSession.accessToken,input);
+          assert.equal(reserved.status,201);
+          const {id}=await reserved.json() as {id:string};
+          const path='reservations/'+input.operationId;
+          assert.equal((await request(path,foreignSession.accessToken)).status,404);
+          const initial=await request(path,memberSession.accessToken);
+          assert.equal(initial.headers.get('cache-control'),'no-store');
+          assert.equal((await initial.json() as {state:string}).state,'reserved');
+          const resolution={claimId:id,operationId:randomUUID(),reason:'TEST witnessed delivery'};
+          assert.equal((await request('fulfillments',memberSession.accessToken,resolution)).status,403);
+          assert.equal((await request('fulfillments',ownerSession.accessToken,resolution)).status,201);
+          assert.equal((await (await request(path,memberSession.accessToken)).json() as {state:string}).state,'fulfilled');
+          const other=await make({active:true});
+          const cancelInput={...input,experienceId:other.id,operationId:randomUUID()};
+          const second=await request('reservations',memberSession.accessToken,cancelInput);
+          assert.equal(second.status,201);
+          const secondReceipt=await second.json() as {id:string};
+          const cancellation={...resolution,claimId:secondReceipt.id,operationId:randomUUID()};
+          assert.equal((await request('cancellations',memberSession.accessToken,cancellation)).status,201);
+          const cancelled=await request('reservations/'+cancelInput.operationId,memberSession.accessToken);
+          assert.equal((await cancelled.json() as {state:string}).state,'cancelled');
+          await sessions.revoke(memberSession.accessToken);
+          assert.equal((await request(path,memberSession.accessToken)).status,401);
+        } finally {await app.close();}
+      } finally {await runtime.end();await host.query(`DROP ROLE ${login}`);}
     });
     await t.test('unclaimed or revoked ownership and deleted accounts cannot participate',async()=>{
       const x=await make({active:true});

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private campaign participation API · 2026-11-18
+
+Migration 066 adds opt-in private participation HTTP for reservation, receipt recovery, cancellation and staff fulfillment. A separate restricted login invokes four session-derived functions. Receipt status is member-scoped and types of resolution retain their existing database authorization. Default startup remains closed. Next: Persian participation presentation and consent/touch retention policy.
+
 ## Private experience fulfillment · 2026-11-18
 
 Migration 065 adds immutable private fulfillment receipts with verified cafe ownership, branch-scoped staff authority, exact retry and audit. Cancellation and fulfillment serialize on the existing member/cafe lock. Recovery now reports fulfilled where applicable. This is a maintenance-only record of delivery; no payout, provider, public transport or loyalty movement is enabled. Next: reviewed campaign-specific transport and participation presentation, plus consent/touch retention policy.

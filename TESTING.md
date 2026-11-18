@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private campaign participation API · 2026-11-18
+
+On Windows, 12 API tests and one loopback probe passed; API typecheck passed. The disposable PostgreSQL HTTP fixture covers default-off composition, dedicated login, forged actor rejection, member isolation, revoked bearer and reserved/fulfilled/cancelled receipts. Previous 626bd35 passed the web-api-database and mobile-source jobs in run 44307548262.
+
 ## Private experience fulfillment · 2026-11-18
 
 On Windows, 12 API tests and one loopback probe passed, and API typecheck passed. The disposable database suite adds scope, replay, immutability, audit, restricted-role denial and a fulfillment/cancellation race with stock and budget assertions. Previous head 1504fd6 completed Foundation CI 44305965770 successfully.

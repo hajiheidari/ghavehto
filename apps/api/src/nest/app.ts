@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { PARTICIPATION_DB, PrivateParticipationController } from './private-participation.js';
+import { PrivateSessionDatabase } from './private-session-database.js';
 import { PrivateEditorial, PrivateEditorialController } from './private-editorial.js';
 import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -74,6 +76,7 @@ export async function createApp(options: {
   runtimePool?: pg.Pool;
   enableStampQr?: boolean;
   editorialPool?: pg.Pool;
+  participationPool?: pg.Pool;
   tracking?: {pool:pg.Pool;ipKey:Buffer;publicOrigin:string};
   initialLogin?: Readonly<{ crypto: OtpCrypto; vault: PhoneVault; provider: OtpProvider }>;
 } = {}) {
@@ -87,6 +90,8 @@ export async function createApp(options: {
   }
   const editorial = options.editorialPool ? new PrivateEditorial(options.editorialPool) : undefined;
   if (editorial) await editorial.validateRuntime();
+  const participation = options.participationPool ? new PrivateSessionDatabase(options.participationPool,'ghahvehto_participation') : undefined;
+  if (participation) await participation.validateRuntime();
   let initialLogin: InitialLogin | undefined;
   if (config) {
     if (!runtimePool || !config.provider.enabled) throw new Error('Initial login requires a restricted runtime pool and enabled provider');
@@ -94,8 +99,9 @@ export async function createApp(options: {
     initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
   }
   const app = await NestFactory.create({ module: AppModule,
-    controllers: [...(editorial ? [PrivateEditorialController] : []), ...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
+    controllers: [...(participation ? [PrivateParticipationController] : []), ...(editorial ? [PrivateEditorialController] : []), ...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
     providers: [
+    ...(participation ? [{ provide: PARTICIPATION_DB, useValue: participation }] : []),
     ...(editorial ? [{ provide: PrivateEditorial, useValue: editorial }] : []),
     ...(tracking ? [{provide:CafeTrackingService,useValue:tracking}] : []),
     ...(initialLogin ? [{ provide: INITIAL_LOGIN, useValue: initialLogin }] : []),

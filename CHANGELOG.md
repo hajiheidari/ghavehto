@@ -1,5 +1,9 @@
 # Changelog
 
+## Private campaign participation API · 2026-11-18
+
+Expose opt-in private campaign participation and status through a dedicated session-scoped database capability.
+
 ## Private experience fulfillment · 2026-11-18
 
 Add immutable internal experience fulfillment evidence and prevent cancellation from restoring delivered capacity.
