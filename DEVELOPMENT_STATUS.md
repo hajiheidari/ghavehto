@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Tracking link stop · 2026-11-18
+
+Migration 072 adds maintenance-only link stopping for a verified cafe owner. It locks the link, records one reasoned audit event and prevents new touches after the stop. Exact touch retries and existing history are preserved. Link activation remains outside this routine. Tracking retention decisions remain open.
+
 ## Tracking retention decision checkpoint · 2026-11-18
 
 The tracking retention decision is recorded in SECURITY.md. Remaining parameters are the consent/touch lifetime, exact replay window, legacy fingerprints, linked facts and historical counts. The read-only inventory supports comparing cutoffs. Foundation 44342992291 completed all five jobs for 9b46c0b.

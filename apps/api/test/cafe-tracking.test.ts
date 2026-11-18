@@ -301,6 +301,24 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       assert.equal((await pool.query('SELECT count(*) FROM public.cafe_tracking_rate_limits')).rows[0].count,active);
       assert.equal((await pool.query('SELECT count(*) FROM public.cafe_tracking_consents')).rows[0].count,consentCount);
     });
+    await t.test('verified owners can stop a link once while preserving existing receipts',async()=>{
+      const l=await link(),op=randomUUID();
+      const {rows:[existing]}=await pool.query(touch,[l.hash,'qr_scan',op]);
+      const stop='SELECT public.stop_cafe_tracking_link($1,$2,$3) AS changed';
+      await assert.rejects(pool.query(stop,[await user(),l.id,'TEST foreign owner']),{code:'42501'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL ROLE ghahvehto_tracking');
+        await assert.rejects(client.query(stop,[owner,l.id,'TEST restricted runtime']),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+      const results=await Promise.all(Array.from({length:2},()=>pool.query(stop,[owner,l.id,'TEST stop link'])));
+      assert.deepEqual(results.map(result=>result.rows[0].changed).sort(),[false,true]);
+      await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
+      assert.deepEqual((await pool.query(touch,[l.hash,'qr_scan',op])).rows,[existing]);
+      const audit=await pool.query("SELECT actor_id FROM audit_events WHERE action='tracking.link_stopped' AND metadata->>'linkId'=$1",[l.id]);
+      assert.deepEqual(audit.rows,[{actor_id:owner}]);
+    });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
       const l=await link();

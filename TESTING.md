@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Tracking link stop · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture checks concurrent stop, owner and runtime authorization, one audit event, blocked new touches and preserved exact replay.
+
 ## Tracking retention decision checkpoint · 2026-11-18
 
 Foundation 44342992291 for exact code 9b46c0b completed all five jobs successfully. The retention decision checkpoint changes documentation. Git diff whitespace validation was executed.
