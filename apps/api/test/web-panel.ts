@@ -4,7 +4,7 @@ import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {setTimeout} from 'node:timers/promises';
 
-export async function startWebPanel(apiUrl:string) {
+export async function startWebPanel(apiUrl:string,privateParticipation=false) {
   let root=dirname(fileURLToPath(import.meta.url));
   while(!existsSync(join(root,'pnpm-workspace.yaml'))) {
     const parent=dirname(root);
@@ -12,7 +12,7 @@ export async function startWebPanel(apiUrl:string) {
     root=parent;
   }
   const child=spawn(process.execPath,[join(root,'apps/web/node_modules/next/dist/bin/next'),'start',join(root,'apps/web'),'--hostname','127.0.0.1','--port','0'],{
-    env:{...process.env,API_BASE_URL:apiUrl,NEXT_TELEMETRY_DISABLED:'1',PANEL_WRITE_ORIGIN:'https://panel.example.test'},stdio:['ignore','pipe','pipe'],
+    env:{...process.env,API_BASE_URL:apiUrl,NEXT_TELEMETRY_DISABLED:'1',PRIVATE_PARTICIPATION_VIEW:privateParticipation?'1':'0',PANEL_WRITE_ORIGIN:'https://panel.example.test'},stdio:['ignore','pipe','pipe'],
   });
   let output='';
   child.stdout.on('data',chunk=>{output=(output+String(chunk)).slice(-8000)});

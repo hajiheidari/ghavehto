@@ -81,3 +81,12 @@ export function getOwnerExperiences(cafeId:string,after?:string):Promise<PanelRe
       &&Number.isInteger(row.remainingStock)&&Number(row.remainingStock)>=0
       &&typeof row.remainingBudgetUnits==='string'&&/^(0|[1-9][0-9]{0,18})$/.test(row.remainingBudgetUnits)));
 }
+
+export async function getParticipationReceipt(operationId:string) {
+  if(!panelId(operationId)) return {state:'unavailable'} as const;
+  return read('/v1/internal/participation/reservations/'+operationId,input=>{
+    if(!object(input)||!panelId(input.claimId)||
+      (input.state!=='reserved'&&input.state!=='cancelled'&&input.state!=='fulfilled')) throw new Error('Invalid participation receipt');
+    return {claimId:input.claimId,state:input.state} as const;
+  });
+}

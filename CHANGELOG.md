@@ -1,5 +1,9 @@
 # Changelog
 
+## Persian participation receipts · 2026-11-18
+
+Add a private Persian RTL member receipt view for reserved, cancelled and fulfilled participation.
+
 ## Private campaign participation API · 2026-11-18
 
 Expose opt-in private campaign participation and status through a dedicated session-scoped database capability.

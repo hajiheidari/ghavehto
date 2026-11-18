@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Persian participation receipts · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe; test TypeScript compilation passed. The database fixture launches built Next against the restricted live Nest API and checks disabling, RTL, no-store, receipt states and foreign-member isolation. Previous f82cec4 completed Foundation 44308406108 successfully.
+
 ## Private campaign participation API · 2026-11-18
 
 On Windows, 12 API tests and one loopback probe passed; API typecheck passed. The disposable PostgreSQL HTTP fixture covers default-off composition, dedicated login, forged actor rejection, member isolation, revoked bearer and reserved/fulfilled/cancelled receipts. Previous 626bd35 passed the web-api-database and mobile-source jobs in run 44307548262.

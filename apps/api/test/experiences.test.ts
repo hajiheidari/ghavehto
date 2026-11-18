@@ -5,6 +5,7 @@ import {test} from 'node:test';
 import pg from 'pg';
 import {createApp} from '../src/nest/app.js';
 import {SessionService} from '../src/nest/sessions.js';
+import {startWebPanel} from './web-panel.js';
 import {migrate} from '../src/nest/migrations.js';
 
 test('private experience policies enforce verified ownership, scope, dates and independent capacity',async t=>{
@@ -260,6 +261,25 @@ test('private experience policies enforce verified ownership, scope, dates and i
           assert.equal((await request('cancellations',memberSession.accessToken,cancellation)).status,201);
           const cancelled=await request('reservations/'+cancelInput.operationId,memberSession.accessToken);
           assert.equal((await cancelled.json() as {state:string}).state,'cancelled');
+          const web=await startWebPanel(await app.getUrl(),true);
+          try {
+            const page=(operation:string,token?:string)=>fetch(web.url+'/dashboard/participation?operation='+operation,{
+              headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{},
+            });
+            const response=await page(input.operationId,memberSession.accessToken);
+            assert.equal(response.status,200);
+            assert.match(response.headers.get('cache-control')??'',/no-store/);
+            const html=await response.text();
+            assert.match(html,/dir="rtl"/);
+            assert.match(html,/تحویل ثبت شده/);
+            assert.ok(html.includes(id));
+            assert.ok(!html.includes(memberSession.accessToken));
+            assert.match(await (await page(cancelInput.operationId,memberSession.accessToken)).text(),/لغو شده/);
+            const foreign=await (await page(input.operationId,foreignSession.accessToken)).text();
+            assert.match(foreign,/رسید مشارکت در دسترس نیست/);
+            assert.ok(!foreign.includes(id));
+            assert.match(await (await page(input.operationId)).text(),/به نشست معتبر نیاز دارید/);
+          } finally {await web.close();}
           await sessions.revoke(memberSession.accessToken);
           assert.equal((await request(path,memberSession.accessToken)).status,401);
         } finally {await app.close();}

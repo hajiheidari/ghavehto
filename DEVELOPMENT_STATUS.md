@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Persian participation receipts · 2026-11-18
+
+An opt-in Persian RTL receipt page at /dashboard/participation reads the existing member-scoped API using a server-side verified bearer from the access cookie. It displays reserved, cancelled or fulfilled status. PRIVATE_PARTICIPATION_VIEW=1 is required and the API must be explicitly composed. No cookie issuance, public navigation or new writes are enabled. Next: consent/touch retention policy and campaign-specific participation UI.
+
 ## Private campaign participation API · 2026-11-18
 
 Migration 066 adds opt-in private participation HTTP for reservation, receipt recovery, cancellation and staff fulfillment. A separate restricted login invokes four session-derived functions. Receipt status is member-scoped and types of resolution retain their existing database authorization. Default startup remains closed. Next: Persian participation presentation and consent/touch retention policy.
