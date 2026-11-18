@@ -1,5 +1,9 @@
 # Changelog
 
+## Consent receipt data minimization · 2026-11-18
+
+Minimize tracking consent correlation by deriving the stored replay digest per operation.
+
 ## Private staff fulfillment page · 2026-11-18
 
 Add private Persian staff fulfillment handoff with server-checked receipt scope and same-origin recording.

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Consent receipt data minimization · 2026-11-18
+
+Migration 069 stores an operation-scoped replay digest in new consent receipts, so records from the same visitor no longer share a directly joinable fingerprint. The hourly quota still uses its independent existing bucket. Legacy immutable receipts retain exact replay behavior. The consent/touch retention duration and treatment of legacy records remain founder decisions.
+
 ## Private staff fulfillment page · 2026-11-18
 
 Migration 068 adds a minimal private staff preview by claim UUID and shares verified cafe and branch authorization with the fulfillment write. The Persian staff page reads the preview and can record delivery from the configured HTTPS panel origin. The member can share the receipt ID separately. No contact details, payment or public access are introduced. Next: consent/touch retention decision and remaining campaign policy work.

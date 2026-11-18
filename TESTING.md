@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Consent receipt data minimization · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture adds legacy replay, distinct digests across operations from the same quota bucket, different-visitor replay rejection and absence of digest equality with quota records.
+
 ## Private staff fulfillment page · 2026-11-18
 
 Foundation 44337933196 for d96bfe3 passed the web build and PostgreSQL/Next integration, then failed the separate loopback smoke. Its bounded logs omit the failure detail. The follow-up smoke starts Nest and Next sequentially on assigned loopback ports and reports which service fails readiness without dumping process output. Local node --check passed.

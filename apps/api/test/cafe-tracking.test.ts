@@ -100,7 +100,10 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         VALUES($1,$2,$3,true,clock_timestamp()+interval '1 hour',3600) RETURNING id`,[cafe.id,branch.id,hash]);
       const operation=randomUUID();
       const {rows:[scan]}=await pool.query(touch,[hash,'qr_scan',operation]);
-      await pool.query('INSERT INTO cafe_tracking_consents(operation_id,visitor_hash) VALUES($1,$2)',[operation,randomBytes(32)]);
+      const legacyVisitor=randomBytes(32);
+      await pool.query('INSERT INTO cafe_tracking_consents(operation_id,visitor_hash) VALUES($1,$2)',[operation,legacyVisitor]);
+      const {rows:[legacy]}=await pool.query("SELECT public.record_consented_cafe_touch($1,'qr_scan',$2,$3,true) AS result",[hash,operation,legacyVisitor]);
+      assert.deepEqual(legacy.result,{state:'recorded',touchId:scan.id});
       const {rows:[unconsented]}=await pool.query(touch,[hash,'qr_scan',randomUUID()]);
       const vault=new PhoneVault(randomBytes(32),new Map([['test',randomBytes(32)]]),'test');
       const ip='192.0.2.18',phone='+989120000018';
@@ -229,6 +232,13 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         assert.deepEqual(await (await post(body)).json(),a);
         assert.deepEqual((await pool.query('SELECT attempts FROM cafe_tracking_rate_limits')).rows,[{attempts:30}]);
         assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents')).rowCount,consentBefore+29);
+        const {rows:[digests]}=await pool.query(`SELECT count(DISTINCT c.visitor_hash)::integer AS distinct_receipts,
+          count(*) FILTER (WHERE q.visitor_hash IS NOT NULL)::integer AS quota_matches
+          FROM cafe_tracking_consents c LEFT JOIN cafe_tracking_rate_limits q USING(visitor_hash)
+          WHERE c.operation_scoped`);
+        assert.deepEqual(digests,{distinct_receipts:29,quota_matches:0});
+        await assert.rejects(pool.query("SELECT public.record_consented_cafe_touch($1,'qr_scan',$2,$3,true)",
+          [hash,body.operationId,randomBytes(32)]),{code:'23505'});
         await pool.query("UPDATE cafe_tracking_rate_limits SET window_started_at=clock_timestamp()-interval '2 hours'");
         const acceptedForm=await fetch(`${url}/q/${code}`,{method:'POST',headers:{Origin:config.publicOrigin,'Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams({...body,operationId:randomUUID()})});
