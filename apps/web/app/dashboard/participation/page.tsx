@@ -65,6 +65,8 @@ export default async function ParticipationPage({searchParams}:{searchParams:Pro
       <dt>وضعیت</dt><dd>{labels[result.data.state]}</dd>
       <dt>شناسهٔ رسید</dt><dd><bdi dir="ltr">{result.data.claimId}</bdi></dd>
     </dl>}
+    {result?.state==='ready'&&result.data.state==='reserved'&&
+      <p>برای دریافت تجربه در شعبه، شناسهٔ رسید بالا را به کارکنان شعبه نشان دهید.</p>}
     {cancellation==='unconfirmed'&&!(result?.state==='ready'&&result.data.state==='cancelled')&&
       <p role="status">لغو رزرو تأیید نشد. وضعیت رسید را بررسی کنید.</p>}
     {result?.state==='ready'&&result.data.state==='reserved'&&panelId(operation)&&staffPanelOrigin()&&

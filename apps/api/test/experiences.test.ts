@@ -297,6 +297,7 @@ test('private experience policies enforce verified ownership, scope, dates and i
             const exhausted=await request('offer?'+offerQuery(branch.id),memberSession.accessToken);
             assert.equal((await exhausted.json() as {eligibility:string}).eligibility,'limit_reached');
             const reservationHtml=await (await page(operationId,memberSession.accessToken)).text();
+            assert.match(reservationHtml,/شناسهٔ رسید بالا را به کارکنان شعبه نشان دهید/);
             assert.match(reservationHtml,/action="\/dashboard\/participation\/cancel"/);
             const cancellationOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(reservationHtml)?.[1];
             assert.ok(cancellationOperation);

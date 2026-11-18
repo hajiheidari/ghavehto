@@ -48,9 +48,13 @@ test('private experience preview uses actual verified sessions and restricted ow
     const data=await response.json();assert.equal(data.items.length,1);
     assert.equal(data.items[0].experienceId,experience.id);assert.equal(data.items[0].remainingBudgetUnits,'9007199254740993');
     assert.equal(data.items[0].active,false);assert.equal(data.items[0].branchName,'TEST branch');assert.equal(data.nextCursor,null);
-    const web=await startWebPanel(api);
+    const web=await startWebPanel(api,true);
     try {
-      assert.equal((await fetch(web.url+'/dashboard/participation?operation='+randomUUID())).status,404);
+      const branches=(token:string)=>fetch(web.url+'/dashboard/cafe/'+cafe.id,{headers:{Cookie:'__Host-ghahvehto-access='+token}});
+      for(const token of [ownerSession.accessToken,staffSession.accessToken]) {
+        assert.match(await (await branches(token)).text(),/href="\/dashboard\/participation\/fulfillment"/);
+      }
+      assert.doesNotMatch(await (await branches(consumerSession.accessToken)).text(),/href="\/dashboard\/participation\/fulfillment"/);
       const page=(token?:string)=>fetch(`${web.url}/dashboard/cafe/${cafe.id}/experiences`,{headers:token?{Cookie:`__Host-ghahvehto-access=${token}`}:{}});
       const ownerPage=await (await page(ownerSession.accessToken)).text();
       assert.match(ownerPage,/dir="rtl"/);assert.ok(ownerPage.includes('TEST &lt;b&gt;تجربهٔ خصوصی&lt;/b&gt;'));

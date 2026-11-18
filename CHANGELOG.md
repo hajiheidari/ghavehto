@@ -1,5 +1,9 @@
 # Changelog
 
+## In-branch receipt handoff · 2026-11-18
+
+Connect private cafe navigation and member receipt instructions to the staff fulfillment handoff.
+
 ## Private participation history · 2026-11-18
 
 List private participation receipts for the authenticated member with bounded pagination.

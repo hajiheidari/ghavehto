@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## In-branch receipt handoff · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe. The built web fixture checks the fulfillment link for owner and branch staff, its absence for a consumer, and member instructions on reserved receipts.
+
 ## Private participation history · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks member history, ownership of the pagination cursor, two pages without duplicates, receipt state and isolation in rendered HTML.

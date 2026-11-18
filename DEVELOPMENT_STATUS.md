@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## In-branch receipt handoff · 2026-11-18
+
+Private cafe branch navigation links to fulfillment when enabled and at least one branch is accessible. Reserved member receipts identify the claim ID to present in person. The receipt lookup and write retain server-side branch checks. Next: founder decision on tracking retention and remaining milestone acceptance.
+
 ## Private participation history · 2026-11-18
 
 Migration 071 adds member-scoped private receipt history with a stable, indexed 20-item page and an owner-validated cursor. The Persian participation page links each receipt and exposes older pages without requiring operation IDs. Consent/touch deletion still awaits a retention decision.

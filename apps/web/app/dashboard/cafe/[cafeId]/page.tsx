@@ -19,6 +19,8 @@ export default async function CafeBranches({params,searchParams}:{params:Promise
       <ul>{result.data.items.map(branch=><li key={branch.branchId}>{branch.name}{' · '}
         <Link href={`/dashboard/cafe/${cafeId}/branches/${branch.branchId}/staff`}>فهرست کارکنان (ویژه مالک)</Link>
       </li>)}</ul>}
+    {process.env.PRIVATE_PARTICIPATION_VIEW==='1'&&result.state==='ready'&&result.data.items.length>0&&
+      <p><Link href="/dashboard/participation/fulfillment">بررسی رسید و ثبت تحویل تجربه</Link></p>}
     {result.state==='ready'&&result.data.nextCursor&&<Link href={{pathname:`/dashboard/cafe/${cafeId}`,query:{after:result.data.nextCursor}}}>صفحه بعد</Link>}
     {profile?.state==='ready'&&<form method="post" action={`/dashboard/cafe/${cafeId}/profile`}>
       <label htmlFor="cafe-name">نام کافه در پنل</label>{' '}
