@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import {
   BadRequestException, Body, ConflictException, Controller, ForbiddenException,
-  Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, UnauthorizedException,
+  Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, UnauthorizedException,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import type { Pool } from 'pg';
 
 class RevisionInput {
@@ -22,6 +22,20 @@ class ReviewInput {
   @IsUUID() operationId!: string;
   @IsIn(['approved','rejected']) decision!: string;
   @IsInt() @Min(1) @Max(604800) lifetimeSeconds!: number;
+  @IsString() @MaxLength(240) reason!: string;
+}
+
+class RoleInput {
+  @IsUUID() userId!: string;
+  @IsIn(['editor','operator']) role!: string;
+  @IsBoolean() enabled!: boolean;
+  @IsString() @MaxLength(240) reason!: string;
+}
+
+class ControlInput {
+  @IsIn(['research','content']) kind!: string;
+  @IsBoolean() paused!: boolean;
+  @IsInt() @Min(1) @Max(10) attemptLimit!: number;
   @IsString() @MaxLength(240) reason!: string;
 }
 
@@ -47,6 +61,16 @@ export class PrivateEditorial {
   review(header: string | undefined, input: ReviewInput) {
     return this.run<{id:string}>(header,'SELECT public.review_private_operation($1,$2,$3,$4,$5,$6,$7) AS id',
       [input.jobId ?? null,input.revisionId ?? null,input.operationId,input.decision,input.lifetimeSeconds,input.reason]);
+  }
+
+  role(header: string | undefined, input: RoleInput) {
+    return this.run<{changed:boolean}>(header,'SELECT public.set_private_operations_role($1,$2,$3,$4,$5) AS changed',
+      [input.userId,input.role,input.enabled,input.reason]);
+  }
+
+  control(header: string | undefined, input: ControlInput) {
+    return this.run<{changed:boolean}>(header,'SELECT public.set_private_draft_control($1,$2,$3,$4,$5) AS changed',
+      [input.kind,input.paused,input.attemptLimit,input.reason]);
   }
 
   async subject(header: string | undefined, kind: 'revision' | 'job', id: string) {
@@ -82,6 +106,16 @@ export class PrivateEditorial {
 @Controller('v1/internal/editorial')
 export class PrivateEditorialController {
   constructor(@Inject(PrivateEditorial) private readonly editorial: PrivateEditorial) {}
+
+  @Put('roles') @Header('Cache-Control','no-store')
+  role(@Headers('authorization') header: string | undefined, @Body() input: RoleInput) {
+    return this.editorial.role(header,input);
+  }
+
+  @Put('controls') @Header('Cache-Control','no-store')
+  control(@Headers('authorization') header: string | undefined, @Body() input: ControlInput) {
+    return this.editorial.control(header,input);
+  }
 
   @Get('revisions/:id') @Header('Cache-Control','no-store')
   revisionSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {

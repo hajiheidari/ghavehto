@@ -1,5 +1,9 @@
 # Changelog
 
+## Private operations administration · 2026-11-18
+
+Add session-derived, audited internal role delegation and research/content control updates.
+
 ## Private review subjects · 2026-11-18
 
 Add role-checked private revision and agent draft reads with canonical payload hashes.

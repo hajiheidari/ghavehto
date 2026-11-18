@@ -124,7 +124,8 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           await app.listen(0,'127.0.0.1');
           const origin=await app.getUrl();
           const sessions=new SessionService(db);
-          const [author,reviewerSession,consumer]=await Promise.all([sessions.issue(editor),sessions.issue(reviewer),sessions.issue(await user())]);
+          const consumerId=await user();
+          const [author,reviewerSession,consumer]=await Promise.all([sessions.issue(editor),sessions.issue(reviewer),sessions.issue(consumerId)]);
           const post=(path:string,input:object,token?:string)=>fetch(origin+'/v1/internal/editorial/'+path,{
             method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},
             body:JSON.stringify(input),
@@ -165,6 +166,25 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           await sessions.revoke(reviewerSession.accessToken);
           assert.equal((await get(revisionPath,reviewerSession.accessToken)).status,401);
           assert.equal((await post('reviews',review,reviewerSession.accessToken)).status,401);
+          const put=(path:string,input:object,token:string)=>fetch(origin+'/v1/internal/editorial/'+path,{
+            method:'PUT',headers:{'content-type':'application/json',authorization:'Bearer '+token},
+            body:JSON.stringify(input),
+          });
+          const assignment={userId:consumerId,role:'editor',enabled:true,reason:'Test delegated editor'};
+          assert.equal((await put('roles',assignment,author.accessToken)).status,403);
+          assert.equal((await put('roles',{...assignment,role:'admin'},adminSession.accessToken)).status,400);
+          assert.deepEqual(await (await put('roles',assignment,adminSession.accessToken)).json(),{changed:true});
+          assert.deepEqual(await (await put('roles',assignment,adminSession.accessToken)).json(),{changed:false});
+          assert.equal((await get(revisionPath,consumer.accessToken)).status,200);
+          assert.deepEqual(await (await put('roles',{...assignment,enabled:false},adminSession.accessToken)).json(),{changed:true});
+          assert.equal((await get(revisionPath,consumer.accessToken)).status,403);
+          const control={kind:'content',paused:true,attemptLimit:4,reason:'Test draft control change'};
+          assert.equal((await put('controls',control,author.accessToken)).status,403);
+          assert.equal((await put('controls',{...control,kind:'outreach'},adminSession.accessToken)).status,400);
+          assert.deepEqual(await (await put('controls',control,adminSession.accessToken)).json(),{changed:true});
+          assert.deepEqual(await (await put('controls',control,adminSession.accessToken)).json(),{changed:false});
+          const changes=await db.query("SELECT action FROM audit_events WHERE actor_id=$1 AND action IN ('operations.role_changed','agent.control_changed') ORDER BY action",[admin]);
+          assert.deepEqual(changes.rows.map(row=>row.action),['agent.control_changed','operations.role_changed','operations.role_changed']);
           const {rows:[audit]}=await db.query("SELECT actor_id FROM audit_events WHERE action='content.revised' AND metadata->>'revisionId'=$1",[receipt.id]);
           assert.equal(audit.actor_id,editor);
         } finally {await app.close();}

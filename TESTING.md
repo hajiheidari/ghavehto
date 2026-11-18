@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private operations administration · 2026-11-18
+
+The loopback probe passed on Windows Node 24.22.3 (1 test). The disposable PostgreSQL fixture checks administrator-only changes, immediate role revocation, refusal of admin grants and outreach controls, and one audit record per effective change. Exact-head database evidence is tracked in Foundation CI. Windows frozen install encountered npm registry transport errors.
+
 ## Private review subjects · 2026-11-18
 
 The loopback probe passed on Windows Node 24.22.3 (1 test). The expanded PostgreSQL fixture checks role isolation, revoked sessions, absent subjects and payload-hash parity. Read its own exact-head Foundation result separately.

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private operations administration · 2026-11-18
+
+Migration 060 lets a verified internal admin delegate editor/operator roles and configure research/content pause and attempt limits. Actual changes log the session actor and reason. Admin provisioning remains maintenance-only. Next independent increment: bounded retention for tracking data before reviewed registration/client handoff.
+
 ## Private review subjects · 2026-11-18
 
 Migration 059 adds opt-in single-subject GET routes. Editors can read CMS revisions and admins can read completed agent drafts awaiting review. Responses bind the returned payload to its canonical hash and use no-store. Next, add audited internal role and control administration. The prior private-write head b4e592a passed Foundation CI 44296822890 and both probes.
