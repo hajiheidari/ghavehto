@@ -2,6 +2,8 @@
 
 ## Persian participation receipts · 2026-11-18
 
+On e686463, Foundation 44309190915 passed the Next build and test:db but the separate web smoke step failed. The public job metadata did not expose the failing assertion. The follow-up smoke adds a default-off route assertion and per-dashboard diagnostics. Local JavaScript syntax check passed.
+
 Windows pnpm test passed 12 API tests and one loopback probe; test TypeScript compilation passed. The database fixture launches built Next against the restricted live Nest API and checks disabling, RTL, no-store, receipt states and foreign-member isolation. Previous f82cec4 completed Foundation 44308406108 successfully.
 
 ## Private campaign participation API · 2026-11-18

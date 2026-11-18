@@ -6,7 +6,7 @@ const apiPort = 44101;
 const webPort = 43002;
 const api = spawn(process.execPath, ['apps/api/dist/nest/main.js'], { env: { ...process.env, PORT:String(apiPort) }, stdio: 'pipe' });
 const web = spawn(process.execPath, ['apps/web/node_modules/next/dist/bin/next','start','apps/web','--hostname','127.0.0.1','--port',String(webPort)], {
-  env: { ...process.env, API_BASE_URL:`http://127.0.0.1:${apiPort}`, NEXT_TELEMETRY_DISABLED:'1' }, stdio:'pipe',
+  env: { ...process.env, API_BASE_URL:`http://127.0.0.1:${apiPort}`, NEXT_TELEMETRY_DISABLED:'1', PRIVATE_PARTICIPATION_VIEW:'0' }, stdio:'pipe',
 });
 let logs = '';
 for (const child of [api,web]) {
@@ -39,9 +39,10 @@ try {
   assert.match(await branch.text(), /اطلاعات شعبه فعلاً در دسترس نیست/);
   for (const kind of ['cafe','admin','agents']) {
     const page = await fetch(`${base}/dashboard/${kind}`);
-    assert.equal(page.status,200);
-    assert.ok((await page.text()).includes('هیچ داده مدیریتی'));
+    assert.equal(page.status,200,'/dashboard/' + kind + ' must return HTTP 200');
+    assert.ok((await page.text()).includes('هیچ داده مدیریتی'),'/dashboard/' + kind + ' must show the protected placeholder');
   }
+  assert.equal((await fetch(base+'/dashboard/participation')).status,404,'Participation view must be disabled by default');
   assert.equal((await fetch(base+'/missing')).status,404);
   assert.equal((await fetch(base+'/robots.txt')).status,200);
   console.log('Web smoke passed: real SSR → Nest connection, RTL, directory unavailable state, protected placeholders, 404 and robots');
