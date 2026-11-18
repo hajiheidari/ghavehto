@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private staff fulfillment page · 2026-11-18
+
+Migration 068 adds a minimal private staff preview by claim UUID and shares verified cafe and branch authorization with the fulfillment write. The Persian staff page reads the preview and can record delivery from the configured HTTPS panel origin. The member can share the receipt ID separately. No contact details, payment or public access are introduced. Next: consent/touch retention decision and remaining campaign policy work.
+
 ## Private reservation cancellation · 2026-11-18
 
 The opt-in Persian member receipt now supports cancellation for reserved receipts. The web POST checks the configured HTTPS origin, looks up the member-owned receipt server-side, sends a reason and operation UUID, and returns to receipt recovery. Fulfilled and cancelled receipts do not show the form. Next: private staff handoff for fulfillment and founder decision on consent/touch retention.

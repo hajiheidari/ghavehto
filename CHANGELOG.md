@@ -1,5 +1,9 @@
 # Changelog
 
+## Private staff fulfillment page · 2026-11-18
+
+Add private Persian staff fulfillment handoff with server-checked receipt scope and same-origin recording.
+
 ## Private reservation cancellation · 2026-11-18
 
 Add member cancellation to the private Persian receipt with same-origin submission and receipt recovery.

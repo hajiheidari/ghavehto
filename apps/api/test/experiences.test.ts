@@ -317,6 +317,35 @@ test('private experience policies enforce verified ownership, scope, dates and i
             assert.match(cancelledHtml,/لغو شده/);
             assert.doesNotMatch(cancelledHtml,/action="\/dashboard\/participation\/cancel"/);
             assert.equal((await pool.query('SELECT 1 FROM experience_cancellations WHERE operation_id=$1',[cancellationOperation])).rowCount,1);
+            const deliveryCampaign=await make({active:true});
+            const deliveryReservation={...input,experienceId:deliveryCampaign.id,operationId:randomUUID()};
+            const deliveryClaim=await (await request('reservations',memberSession.accessToken,deliveryReservation)).json() as {id:string};
+            assert.ok(deliveryClaim.id);
+            const deliveryPage=(token:string)=>fetch(web.url+'/dashboard/participation/fulfillment?claim='+deliveryClaim.id,
+              {headers:{Cookie:'__Host-ghahvehto-access='+token}});
+            assert.equal((await request('fulfillments/'+deliveryClaim.id,foreignSession.accessToken)).status,404);
+            assert.equal((await request('fulfillments/'+deliveryClaim.id,memberSession.accessToken)).status,404);
+            assert.match(await (await deliveryPage(foreignSession.accessToken)).text(),/رسید در دسترس نیست/);
+            const ownPreview=await deliveryPage(ownerSession.accessToken);
+            assert.match(ownPreview.headers.get('cache-control')??'',/no-store/);
+            const deliveryHtml=await ownPreview.text();
+            assert.match(deliveryHtml,/در انتظار تحویل/);
+            const deliveryOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(deliveryHtml)?.[1];
+            assert.ok(deliveryOperation);
+            const deliveryForm=new URLSearchParams({claimId:deliveryClaim.id,operationId:deliveryOperation,reason:'تحویل در شعبه'});
+            const record=(token:string,origin:string)=>fetch(web.url+'/dashboard/participation/fulfillment/record',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:origin},body:deliveryForm,
+            });
+            assert.equal((await record(ownerSession.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await record(foreignSession.accessToken,'https://panel.example.test')).headers.get('location')??'',/delivery=unconfirmed/);
+            for(const recorded of await Promise.all(Array.from({length:2},()=>record(ownerSession.accessToken,'https://panel.example.test')))){
+              assert.equal(recorded.status,303);
+              assert.equal(recorded.headers.get('location'),'/dashboard/participation/fulfillment?claim='+deliveryClaim.id);
+            }
+            const deliveredHtml=await (await deliveryPage(ownerSession.accessToken)).text();
+            assert.match(deliveredHtml,/تحویل ثبت شده/);
+            assert.ok(!deliveredHtml.includes('name="operationId"'));
+            assert.equal((await pool.query('SELECT 1 FROM experience_fulfillments WHERE operation_id=$1',[deliveryOperation])).rowCount,1);
             const response=await page(input.operationId,memberSession.accessToken);
             assert.equal(response.status,200);
             assert.match(response.headers.get('cache-control')??'',/no-store/);

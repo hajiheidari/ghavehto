@@ -129,3 +129,20 @@ export function cancelParticipation(input:{claimId:string;operationId:string;rea
     return receipt.id;
   },{method:'POST',body:input});
 }
+
+export function getFulfillmentClaim(claimId:string) {
+  return read('/v1/internal/participation/fulfillments/'+claimId,input=>{
+    if(!object(input)||input.claimId!==claimId||(input.title!==null&&typeof input.title!=='string')||
+      typeof input.branchName!=='string'||(input.state!=='reserved'&&input.state!=='cancelled'&&input.state!=='fulfilled')) {
+      throw new Error('Invalid fulfillment preview');
+    }
+    return {title:input.title,branchName:input.branchName,state:input.state} as const;
+  });
+}
+
+export function fulfillParticipation(input:{claimId:string;operationId:string;reason:string}) {
+  return read('/v1/internal/participation/fulfillments',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid fulfillment response');
+    return receipt.id;
+  },{method:'POST',body:input});
+}

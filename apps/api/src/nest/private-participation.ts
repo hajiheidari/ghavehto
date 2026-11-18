@@ -59,6 +59,14 @@ export class PrivateParticipationController {
       [input.claimId,input.operationId,input.reason]);
   }
 
+  @Get('fulfillments/:claimId') @Header('Cache-Control','no-store')
+  async fulfillment(@Headers('authorization') header: string | undefined, @Param('claimId',ParseUUIDPipe) claim: string) {
+    const {receipt}=await this.database.run<{receipt:Record<string,unknown> | null}>(header,
+      'SELECT public.read_private_fulfillment_claim($1,$2) AS receipt',[claim]);
+    if(!receipt) throw new NotFoundException();
+    return receipt;
+  }
+
   @Post('fulfillments') @Header('Cache-Control','no-store')
   fulfill(@Headers('authorization') header: string | undefined, @Body() input: ResolutionInput) {
     return this.database.run<{id:string}>(header,'SELECT public.fulfill_private_experience($1,$2,$3,$4) AS id',

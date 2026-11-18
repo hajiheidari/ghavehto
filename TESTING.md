@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private staff fulfillment page · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks private staff preview, member/foreign denial, origin enforcement, concurrent exact fulfillment and one immutable record.
+
 ## Private reservation cancellation · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. The Next/Nest/PostgreSQL fixture checks Origin denial, foreign-member refusal, concurrent cancellation replay, updated receipt and one cancellation row.
