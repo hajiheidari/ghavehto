@@ -1,5 +1,9 @@
 # Changelog
 
+## Tracking quota retention · 2026-11-18
+
+Add maintenance-only bounded pruning of expired tracking quota buckets with counts-only audit.
+
 ## Private operations administration · 2026-11-18
 
 Add session-derived, audited internal role delegation and research/content control updates.

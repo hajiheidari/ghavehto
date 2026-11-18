@@ -225,6 +225,25 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         await host.query(`DROP ROLE ${login}`);
       }
     });
+    await t.test('maintenance prunes old quota buckets in bounded batches and preserves active windows and consent',async()=>{
+      const prune='SELECT public.prune_expired_tracking_buckets() AS removed';
+      const consentCount=(await pool.query('SELECT count(*) FROM public.cafe_tracking_consents')).rows[0].count;
+      await pool.query(`INSERT INTO public.cafe_tracking_rate_limits(visitor_hash,window_started_at,attempts)
+        SELECT sha256(convert_to('retention-test-'||n,'UTF8')),clock_timestamp()-interval '2 hours',30
+        FROM generate_series(1,1001) AS n`);
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL ROLE ghahvehto_tracking');
+        await assert.rejects(client.query(prune),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+      const active=(await pool.query("SELECT count(*) FROM public.cafe_tracking_rate_limits WHERE window_started_at>clock_timestamp()-interval '1 hour'")).rows[0].count;
+      assert.equal((await pool.query(prune)).rows[0].removed,1000);
+      assert.equal((await pool.query(prune)).rows[0].removed,1);
+      assert.equal((await pool.query(prune)).rows[0].removed,0);
+      assert.equal((await pool.query('SELECT count(*) FROM public.cafe_tracking_rate_limits')).rows[0].count,active);
+      assert.equal((await pool.query('SELECT count(*) FROM public.cafe_tracking_consents')).rows[0].count,consentCount);
+    });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
       const l=await link();

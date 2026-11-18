@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Tracking quota retention · 2026-11-18
+
+Migration 061 adds maintenance-only cleanup for expired tracking quota fingerprints. Run SELECT public.prune_expired_tracking_buckets() with the migration owner to remove up to 1000 expired rows per call. Consent/touch retention, reviewed registration/client handoff and campaign-specific fulfillment remain open. No scheduler or public tracking activation is registered.
+
 ## Private operations administration · 2026-11-18
 
 Migration 060 lets a verified internal admin delegate editor/operator roles and configure research/content pause and attempt limits. Actual changes log the session actor and reason. Admin provisioning remains maintenance-only. Next independent increment: bounded retention for tracking data before reviewed registration/client handoff.

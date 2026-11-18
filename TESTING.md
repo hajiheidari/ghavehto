@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Tracking quota retention · 2026-11-18
+
+The loopback probe passed on Windows Node 24.22.3 (1 test). The disposable PostgreSQL fixture checks the 1000-row bound, repeat cleanup, current-window and consent preservation, and runtime denial. Foundation 44299926023 for e124bca was cancelled after the administration push. Its two probe runs succeeded.
+
 ## Private operations administration · 2026-11-18
 
 The loopback probe passed on Windows Node 24.22.3 (1 test). The disposable PostgreSQL fixture checks administrator-only changes, immediate role revocation, refusal of admin grants and outreach controls, and one audit record per effective change. Exact-head database evidence is tracked in Foundation CI. Windows frozen install encountered npm registry transport errors.
