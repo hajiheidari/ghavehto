@@ -1,5 +1,9 @@
 # Changelog
 
+## Private participation history · 2026-11-18
+
+List private participation receipts for the authenticated member with bounded pagination.
+
 ## Tracking retention inventory · 2026-11-18
 
 Add a maintenance-only aggregate inventory for tracking retention decisions.

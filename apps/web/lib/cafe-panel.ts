@@ -146,3 +146,17 @@ export function fulfillParticipation(input:{claimId:string;operationId:string;re
     return receipt.id;
   },{method:'POST',body:input});
 }
+
+type ParticipationHistoryItem={operationId:string;title:string|null;claimedAt:string;state:'reserved'|'cancelled'|'fulfilled'};
+
+export function getParticipationHistory(after?:string) {
+  return read('/v1/internal/participation/reservations'+(after?'?after='+encodeURIComponent(after):''),input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))) throw new Error('Invalid participation history');
+    const items=input.items;
+    if(!items.every((item):item is ParticipationHistoryItem=>object(item)&&panelId(item.operationId)&&
+      (typeof item.title==='string'||item.title===null)&&typeof item.claimedAt==='string'&&Number.isFinite(Date.parse(item.claimedAt))&&
+      (item.state==='reserved'||item.state==='cancelled'||item.state==='fulfilled'))) throw new Error('Invalid participation history item');
+    return {items,nextCursor:input.nextCursor};
+  });
+}

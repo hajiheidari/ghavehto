@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
+import Link from 'next/link';
 import {notFound} from 'next/navigation';
-import {getParticipationOffer,getParticipationReceipt,panelId,participationEligibility,participationVersion,staffPanelOrigin} from '../../../lib/cafe-panel';
+import {getParticipationHistory,getParticipationOffer,getParticipationReceipt,panelId,participationEligibility,participationVersion,staffPanelOrigin} from '../../../lib/cafe-panel';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'رسید مشارکت',robots:{index:false,follow:false},referrer:'no-referrer' as const};
@@ -8,16 +9,19 @@ export const metadata={title:'رسید مشارکت',robots:{index:false,follow:
 const dates=new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Tehran'});
 const labels={reserved:'رزرو شده',cancelled:'لغو شده',fulfilled:'تحویل ثبت شده'};
 
-export default async function ParticipationPage({searchParams}:{searchParams:Promise<{operation?:string|string[];experience?:string|string[];branch?:string|string[];version?:string|string[];reservation?:string|string[];cancellation?:string|string[]}>}) {
+export default async function ParticipationPage({searchParams}:{searchParams:Promise<{operation?:string|string[];experience?:string|string[];branch?:string|string[];version?:string|string[];reservation?:string|string[];cancellation?:string|string[];after?:string|string[]}>}) {
   if(process.env.PRIVATE_PARTICIPATION_VIEW!=='1') notFound();
-  const {operation,experience,branch,version,reservation,cancellation}=await searchParams;
+  const {operation,experience,branch,version,reservation,cancellation,after}=await searchParams;
   const versionNumber=participationVersion(version);
-  const [result,offer]=await Promise.all([
+  const [result,offer,history]=await Promise.all([
     panelId(operation)?getParticipationReceipt(operation):null,
     panelId(experience)&&panelId(branch)&&versionNumber!==null?getParticipationOffer(experience,branch,versionNumber):null,
+    operation===undefined&&experience===undefined&&(after===undefined||panelId(after))?getParticipationHistory(after):null,
   ]);
   return <section className="section empty">
     <h1>رسید مشارکت</h1>
+    {(operation!==undefined||experience!==undefined)&&<Link href="/dashboard/participation">مشارکت‌های من</Link>}
+    {after!==undefined&&!panelId(after)&&<p role="status">شناسهٔ صفحه معتبر نیست.</p>}
     {offer?.state==='signed-out'&&<p role="status">برای مشاهدهٔ پیشنهاد به نشست معتبر نیاز دارید.</p>}
     {offer?.state==='unavailable'&&<p role="status">پیشنهاد در دسترس نیست.</p>}
     {offer?.state==='ready'&&<article>
@@ -37,6 +41,18 @@ export default async function ParticipationPage({searchParams}:{searchParams:Pro
         </form>}
     </article>}
     {reservation==='unconfirmed'&&result?.state==='unavailable'&&<p role="status">رزرو تأیید نشد. برای بررسی دوباره همین شناسه را وارد کنید.</p>}
+    {history?.state==='signed-out'&&<p role="status">برای مشاهدهٔ مشارکت‌ها به نشست معتبر نیاز دارید.</p>}
+    {history?.state==='unavailable'&&<p role="status">فهرست مشارکت‌ها در دسترس نیست.</p>}
+    {history?.state==='ready'&&<section>
+      <h2>مشارکت‌های من</h2>
+      {history.data.items.length===0?<p>هنوز رسید مشارکتی ندارید.</p>:<ul>
+        {history.data.items.map(item=><li key={item.operationId}>
+          <Link href={{pathname:'/dashboard/participation',query:{operation:item.operationId}}}>{item.title??'تجربهٔ کافه'}</Link>
+          {' · '}{labels[item.state]}{' · '}{dates.format(new Date(item.claimedAt))}
+        </li>)}
+      </ul>}
+      {history.data.nextCursor&&<Link href={{pathname:'/dashboard/participation',query:{after:history.data.nextCursor}}}>رسیدهای قدیمی‌تر</Link>}
+    </section>}
     <form method="get">
       <label htmlFor="operation">شناسهٔ درخواست رزرو</label>{' '}
       <input id="operation" name="operation" dir="ltr" required maxLength={36} defaultValue={panelId(operation)?operation:undefined}/>{' '}

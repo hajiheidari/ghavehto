@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private participation history · 2026-11-18
+
+Migration 071 adds member-scoped private receipt history with a stable, indexed 20-item page and an owner-validated cursor. The Persian participation page links each receipt and exposes older pages without requiring operation IDs. Consent/touch deletion still awaits a retention decision.
+
 ## Tracking retention inventory · 2026-11-18
 
 Migration 070 adds a maintenance-only read-only retention inventory. Run SELECT public.inspect_tracking_retention($1::timestamptz) with a bound historical cutoff for counts of older touches, consent and legacy receipts, attribution windows and dependent identity/interaction facts. The inventory is global and intended for a reviewed maintenance window. The cutoff is a planning input. Choose retention periods and treatment of linked facts before implementing deletion.

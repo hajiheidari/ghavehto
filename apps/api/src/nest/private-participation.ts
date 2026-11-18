@@ -1,6 +1,6 @@
 import {BadRequestException, Body, Controller, Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Query} from '@nestjs/common';
 import {ApiExcludeController} from '@nestjs/swagger';
-import {IsInt, IsString, IsUUID, Max, MaxLength, Min, Matches} from 'class-validator';
+import {IsInt, IsString, IsUUID, Max, MaxLength, Min, Matches, IsOptional} from 'class-validator';
 import {PrivateSessionDatabase} from './private-session-database.js';
 
 export const PARTICIPATION_DB=Symbol('PARTICIPATION_DB');
@@ -16,6 +16,10 @@ class OfferInput {
   @IsUUID() experienceId!: string;
   @IsUUID() branchId!: string;
   @Matches(/^[1-9][0-9]{0,9}$/) version!: string;
+}
+
+class HistoryInput {
+  @IsOptional() @IsUUID() after?: string;
 }
 
 class ResolutionInput {
@@ -43,6 +47,13 @@ export class PrivateParticipationController {
   reserve(@Headers('authorization') header: string | undefined, @Body() input: ReservationInput) {
     return this.database.run<{id:string}>(header,'SELECT public.reserve_private_experience($1,$2,$3,$4,$5) AS id',
       [input.experienceId,input.version,input.branchId,input.operationId]);
+  }
+
+  @Get('reservations') @Header('Cache-Control','no-store')
+  async history(@Headers('authorization') header: string | undefined, @Query() input: HistoryInput) {
+    const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
+      'SELECT public.list_private_experience_reservations($1,$2) AS page',[input.after??null]);
+    return page;
   }
 
   @Get('reservations/:operationId') @Header('Cache-Control','no-store')

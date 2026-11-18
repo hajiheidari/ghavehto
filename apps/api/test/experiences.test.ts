@@ -346,6 +346,13 @@ test('private experience policies enforce verified ownership, scope, dates and i
             assert.match(deliveredHtml,/تحویل ثبت شده/);
             assert.ok(!deliveredHtml.includes('name="operationId"'));
             assert.equal((await pool.query('SELECT 1 FROM experience_fulfillments WHERE operation_id=$1',[deliveryOperation])).rowCount,1);
+            const history=(token:string)=>fetch(web.url+'/dashboard/participation',{headers:{Cookie:'__Host-ghahvehto-access='+token}});
+            const historyHtml=await (await history(memberSession.accessToken)).text();
+            assert.match(historyHtml,/مشارکت‌های من/);
+            assert.ok(historyHtml.includes('operation='+input.operationId));
+            const foreignHistory=await (await history(foreignSession.accessToken)).text();
+            assert.match(foreignHistory,/هنوز رسید مشارکتی ندارید/);
+            assert.ok(!foreignHistory.includes(input.operationId));
             const response=await page(input.operationId,memberSession.accessToken);
             assert.equal(response.status,200);
             assert.match(response.headers.get('cache-control')??'',/no-store/);
@@ -360,6 +367,25 @@ test('private experience policies enforce verified ownership, scope, dates and i
             assert.ok(!foreignHtml.includes(id));
             assert.match(await (await page(input.operationId)).text(),/به نشست معتبر نیاز دارید/);
           } finally {await web.close();}
+          for(let i=0;i<21;i++){
+            const campaign=await make({active:true});
+            const response=await request('reservations',memberSession.accessToken,{...input,experienceId:campaign.id,operationId:randomUUID()});
+            assert.equal(response.status,201);
+          }
+          const firstHistory=await request('reservations',memberSession.accessToken);
+          assert.equal(firstHistory.status,200);
+          assert.equal(firstHistory.headers.get('cache-control'),'no-store');
+          const firstPage=await firstHistory.json() as {items:{operationId:string}[];nextCursor:string};
+          assert.equal(firstPage.items.length,20);
+          assert.equal(firstPage.nextCursor,firstPage.items[19].operationId);
+          const nextHistory=await request('reservations?after='+firstPage.nextCursor,memberSession.accessToken);
+          const nextPage=await nextHistory.json() as {items:{operationId:string;state:string}[];nextCursor:null};
+          assert.equal(nextPage.items.length,5);
+          assert.equal(nextPage.nextCursor,null);
+          assert.equal(new Set([...firstPage.items,...nextPage.items].map(item=>item.operationId)).size,25);
+          assert.ok(nextPage.items.some(item=>item.operationId===input.operationId&&item.state==='fulfilled'));
+          assert.equal((await request('reservations?after='+firstPage.nextCursor,foreignSession.accessToken)).status,400);
+          assert.deepEqual(await (await request('reservations',foreignSession.accessToken)).json(),{items:[],nextCursor:null});
           await sessions.revoke(memberSession.accessToken);
           assert.equal((await request(path,memberSession.accessToken)).status,401);
         } finally {await app.close();}

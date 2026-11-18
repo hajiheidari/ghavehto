@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private participation history · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks member history, ownership of the pagination cursor, two pages without duplicates, receipt state and isolation in rendered HTML.
+
 ## Tracking retention inventory · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture checks inventory totals against independent counts, live attribution windows, invalid cutoff rejection, restricted-role denial and unchanged results after repeated inspection.
