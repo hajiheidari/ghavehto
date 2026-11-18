@@ -1,5 +1,9 @@
 # Changelog
 
+## Private draft submissions · 2026-11-18
+
+Connect authorized private research/content requests to the internal draft queue with actor-bound retry and audit.
+
 ## Private CMS document creation · 2026-11-18
 
 Allow verified internal editors to create private CMS documents with exact retry and a single audited creation.

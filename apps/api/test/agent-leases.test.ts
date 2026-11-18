@@ -195,6 +195,23 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           assert.deepEqual(await (await put('controls',control,adminSession.accessToken)).json(),{changed:false});
           const changes=await db.query("SELECT action FROM audit_events WHERE actor_id=$1 AND action IN ('operations.role_changed','agent.control_changed') ORDER BY action",[admin]);
           assert.deepEqual(changes.rows.map(row=>row.action),['agent.control_changed','operations.role_changed','operations.role_changed']);
+          const request={kind:'research',operationId:randomUUID(),title:'Test research',body:'Test source text',sources:[{rights:'original'}]};
+          assert.equal((await post('jobs',request,author.accessToken)).status,403);
+          assert.equal((await post('jobs',{...request,kind:'outreach'},adminSession.accessToken)).status,400);
+          assert.equal((await post('jobs',{...request,sources:[{rights:'unknown'}]},adminSession.accessToken)).status,400);
+          const submissions=await Promise.all([post('jobs',request,adminSession.accessToken),post('jobs',request,adminSession.accessToken)]);
+          assert.deepEqual(submissions.map(response=>response.status),[201,201]);
+          const [submitted,replayed]=await Promise.all(submissions.map(response=>response.json())) as {id:string}[];
+          assert.deepEqual(submitted,replayed);
+          assert.equal((await post('jobs',{...request,body:'Changed text'},adminSession.accessToken)).status,409);
+          await put('roles',{...assignment,role:'operator'},adminSession.accessToken);
+          assert.equal((await post('jobs',request,consumer.accessToken)).status,409);
+          const submittedAudit=await db.query("SELECT 1 FROM audit_events WHERE action='agent.draft_submitted' AND actor_id=$1 AND metadata->>'jobId'=$2",[admin,submitted.id]);
+          assert.equal(submittedAudit.rowCount,1);
+          const leased=await take('research');
+          assert.equal(leased?.jobId,submitted.id);
+          assert.ok(leased);
+          assert.equal(await move(leased,'complete',{draft:'Test private result'}),true);
           const {rows:[audit]}=await db.query("SELECT actor_id FROM audit_events WHERE action='content.revised' AND metadata->>'revisionId'=$1",[receipt.id]);
           assert.equal(audit.actor_id,editor);
         } finally {await app.close();}

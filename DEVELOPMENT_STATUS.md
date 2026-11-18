@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private draft submissions · 2026-11-18
+
+Migration 063 connects explicit private HTTP submission to the existing research/content queue. A live operator or admin can submit supplied text and source-rights evidence. Identical retries are bound to the submitting identity; changed payloads, other actors and pre-existing maintenance operations cannot reuse the same operation ID. The worker still stops at human review. Next: reviewed tracking handoff to the registration client, with its activation gates closed.
+
 ## Private CMS document creation · 2026-11-18
 
 Migration 062 adds audited document creation through explicitly composed private editorial HTTP. An editor supplies a document UUID and slug. Concurrent exact retries by that editor return the same ID. The private workflow can now create a document and submit its first revision without direct database provisioning. Next: bounded private research/content submission, then reviewed client handoff. Consent/touch retention policy and production activation approvals remain open.

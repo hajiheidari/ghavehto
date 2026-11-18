@@ -6,6 +6,7 @@ import {
 import { ApiExcludeController } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 import type { Pool } from 'pg';
+import { prepareInternalDraft } from './internal-draft-worker.js';
 
 class DocumentInput {
   @IsUUID() documentId!: string;
@@ -42,6 +43,14 @@ class ControlInput {
   @IsBoolean() paused!: boolean;
   @IsInt() @Min(1) @Max(10) attemptLimit!: number;
   @IsString() @MaxLength(240) reason!: string;
+}
+
+class DraftInput {
+  @IsIn(['research','content']) kind!: 'research' | 'content';
+  @IsUUID() operationId!: string;
+  @IsString() @MaxLength(160) title!: string;
+  @IsString() @MaxLength(50000) body!: string;
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(50) sources!: unknown[];
 }
 
 export class PrivateEditorial {
@@ -81,6 +90,17 @@ export class PrivateEditorial {
   control(header: string | undefined, input: ControlInput) {
     return this.run<{changed:boolean}>(header,'SELECT public.set_private_draft_control($1,$2,$3,$4,$5) AS changed',
       [input.kind,input.paused,input.attemptLimit,input.reason]);
+  }
+
+  submitDraft(header: string | undefined, {kind,operationId,title,body,sources}: DraftInput) {
+    const request={title,body,sources};
+    try {prepareInternalDraft(kind,request);}
+    catch(error) {
+      if(error instanceof TypeError) throw new BadRequestException();
+      throw error;
+    }
+    return this.run<{id:string}>(header,'SELECT public.submit_private_draft($1,$2,$3,$4) AS id',
+      [kind,operationId,request]);
   }
 
   async subject(header: string | undefined, kind: 'revision' | 'job', id: string) {
@@ -130,6 +150,11 @@ export class PrivateEditorialController {
   @Get('revisions/:id') @Header('Cache-Control','no-store')
   revisionSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
     return this.editorial.subject(header,'revision',id);
+  }
+
+  @Post('jobs') @Header('Cache-Control','no-store')
+  submitDraft(@Headers('authorization') header: string | undefined, @Body() input: DraftInput) {
+    return this.editorial.submitDraft(header,input);
   }
 
   @Get('jobs/:id') @Header('Cache-Control','no-store')

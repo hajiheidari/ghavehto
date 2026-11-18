@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private draft submissions · 2026-11-18
+
+Windows pnpm test passed 12 API tests and one loopback probe, and API typecheck passed on Node 24.22.3. The existing database suite now also checks submission authorization, rejected source rights and outreach, concurrent replay, cross-actor conflict, one audit event and transition to review. Exact-head PostgreSQL evidence is tracked in Foundation CI.
+
 ## Private CMS document creation · 2026-11-18
 
 On Windows Node 24.22.3, the frozen API/contracts filtered install, pnpm test (12 API tests and one loopback probe), API typecheck and git diff --check passed. The database fixture exercises concurrent exact document replay, conflicting slug, cross-editor replay and consumer denial. It requires exact-head PostgreSQL CI. Prior fd2b439 CI 44300472278 had four successful jobs, with iOS still queued at read-back.
