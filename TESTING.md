@@ -2,6 +2,8 @@
 
 ## Private staff fulfillment page · 2026-11-18
 
+Foundation 44337933196 for d96bfe3 passed the web build and PostgreSQL/Next integration, then failed the separate loopback smoke. Its bounded logs omit the failure detail. The follow-up smoke starts Nest and Next sequentially on assigned loopback ports and reports which service fails readiness without dumping process output. Local node --check passed.
+
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks private staff preview, member/foreign denial, origin enforcement, concurrent exact fulfillment and one immutable record.
 
 ## Private reservation cancellation · 2026-11-18
