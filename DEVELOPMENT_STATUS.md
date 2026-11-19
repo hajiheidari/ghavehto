@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## توقف پیوند با نشست مالک · 2026-11-19
+
+Migration 073 مسیر خصوصی توقف پیوند را با نقش پایگاه دادهٔ مستقل و هویت استخراج‌شده از نشست فراهم می‌کند. مسیر در اجرای پیش‌فرض ثبت نمی‌شود. بررسی مالکیت تأییدشده و ثبت ممیزی از routine موجود استفاده می‌کنند. نتیجهٔ آزمون PostgreSQL باید از CI همین کامیت خوانده شود.
+
 ## Tracking link stop · 2026-11-18
 
 Migration 072 adds maintenance-only link stopping for a verified cafe owner. It locks the link, records one reasoned audit event and prevents new touches after the stop. Exact touch retries and existing history are preserved. Link activation remains outside this routine. Tracking retention decisions remain open.

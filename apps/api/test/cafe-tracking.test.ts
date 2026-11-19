@@ -319,6 +319,43 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
       const audit=await pool.query("SELECT actor_id FROM audit_events WHERE action='tracking.link_stopped' AND metadata->>'linkId'=$1",[l.id]);
       assert.deepEqual(audit.rows,[{actor_id:owner}]);
     });
+    await t.test('private owner transport authenticates stop requests using a dedicated restricted login',async()=>{
+      const login='gh_tracking_owner_'+randomBytes(8).toString('hex'),password=randomBytes(24).toString('hex');
+      await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      const address=new URL(base);address.username=login;address.password=password;
+      const runtime=new pg.Pool({connectionString:address.toString()});
+      try {
+        await host.query(`GRANT ghahvehto_tracking_owner TO ${login}`);
+        await assert.rejects(createApp({trackingOwnerPool:pool}),/Dedicated restricted/);
+        const standard=await createApp();
+        try {
+          await standard.app.listen(0,'127.0.0.1');
+          assert.equal((await fetch((await standard.app.getUrl())+'/v1/internal/tracking-owner/stop',{method:'POST'})).status,404);
+        } finally {await standard.app.close();}
+        const {app}=await createApp({trackingOwnerPool:runtime});
+        try {
+          await app.listen(0,'127.0.0.1');
+          const sessions=new SessionService(pool);
+          const [ownerSession,foreignSession]=await Promise.all([sessions.issue(owner),sessions.issue(await user())]);
+          const l=await link();
+          const send=async(token?:string,extra:object={})=>fetch((await app.getUrl())+'/v1/internal/tracking-owner/stop',{
+            method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},
+            body:JSON.stringify({linkId:l.id,reason:'TEST owner stop',...extra}),
+          });
+          assert.equal((await send()).status,401);
+          assert.equal((await send(foreignSession.accessToken)).status,403);
+          assert.equal((await send(ownerSession.accessToken,{actorId:owner})).status,400);
+          const stopped=await send(ownerSession.accessToken);
+          assert.equal(stopped.status,201);
+          assert.equal(stopped.headers.get('cache-control'),'no-store');
+          assert.deepEqual(await stopped.json(),{changed:true});
+          assert.deepEqual(await (await send(ownerSession.accessToken)).json(),{changed:false});
+          await sessions.revoke(ownerSession.accessToken);
+          assert.equal((await send(ownerSession.accessToken)).status,401);
+          await assert.rejects(runtime.query('SELECT * FROM users'),{code:'42501'});
+        } finally {await app.close();}
+      } finally {await runtime.end();await host.query(`DROP ROLE ${login}`);}
+    });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
       const l=await link();

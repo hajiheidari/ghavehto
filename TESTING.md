@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## توقف خصوصی پیوند · 2026-11-19
+
+مسیر توقف پیوند به نشست مالک و نقش مستقل متصل شد. آزمون یکپارچه، غیرفعال بودن پیش‌فرض، رد کاربر بی‌مجوز، رد هویت ارسالی و نشست لغوشده را بررسی می‌کند. اجرای PostgreSQL محلی انجام نشده است.
+
 ## Tracking link stop · 2026-11-18
 
 Windows pnpm test passed 12 API tests and one loopback probe. The PostgreSQL fixture checks concurrent stop, owner and runtime authorization, one audit event, blocked new touches and preserved exact replay.
@@ -378,3 +382,5 @@ Code commit `8ffa53c279fc011fd5138bdf70ff781eacbb6ad7` passed Foundation validat
 This final documentation update changes no executable code. The exact tested code commit is recorded above; later CI outcomes must be checked independently. Main remains at the reviewed M0 baseline and PR #1 stays draft.
 
 Next bounded increment: persistent OTP challenges with expiry, attempts, send cooldown and per-identity/IP limits; atomic single-use consumption and verified-user/session issuance; least-privilege identity DB role; then authenticated server-side tenant/branch API integration. Keep delivery disabled and HTTP login closed until these gates pass. Checked-in native platform projects and browser visual QA also remain M1 work. M1 is NOT complete.
+
+اجرای 2026-11-19 روی Node 24.22.3 ویندوز برای مسیر توقف خصوصی پیوند، ۱۲ آزمون API و یک probe را با موفقیت گذراند. بررسی نوع API و git diff --check نیز موفق شدند.
