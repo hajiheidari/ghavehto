@@ -354,3 +354,5 @@ Cloud Browser could not reach the development host's localhost preview (net::ERR
 M2 directory/provenance/claims/search, M3 independent immutable stamps/stars/tier journals, M4 experiences/referrals/founders, M5 agents/content and M6 release hardening remain milestone work. The three loyalty journals stay separate and disabled until implemented and tested. Core consumer/café features remain permanently free.
 
 No public hosting, store submission, purchase, outreach, campaign or bulk third-party import has been performed.
+
+نقطهٔ ادامهٔ 2026-11-19: شکست هم‌زمانی رزرو ستاره در CI 44546681504 را از apps/api/test/star-spending.test.ts:262 بررسی کنید. مسیر جدید توقف پیوند در همان اجرا موفق شد. اجرای مجدد تا پایان workflow پذیرفته نشد.
