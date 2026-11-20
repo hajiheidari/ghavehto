@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Star reservation concurrency · 2026-11-20
+
+Migration 074 fixes star reservation after concurrent cancellation. The reward row is locked by ID before testing active/stock, allowing a reservation waiting on cancellation to observe restored stock. The prior stock predicate could omit the zero-stock row before waiting. Existing replay and balance checks remain in the routine. PostgreSQL execution is tracked separately in CI.
+
 ## توقف پیوند با نشست مالک · 2026-11-19
 
 Migration 073 مسیر خصوصی توقف پیوند را با نقش پایگاه دادهٔ مستقل و هویت استخراج‌شده از نشست فراهم می‌کند. مسیر در اجرای پیش‌فرض ثبت نمی‌شود. بررسی مالکیت تأییدشده و ثبت ممیزی از routine موجود استفاده می‌کنند. نتیجهٔ آزمون PostgreSQL باید از CI همین کامیت خوانده شود.

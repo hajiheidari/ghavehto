@@ -1,5 +1,9 @@
 # Changelog
 
+## Star reservation concurrency · 2026-11-20
+
+Fix stock rechecking after a concurrent star reservation cancellation.
+
 ## توقف خصوصی پیوند · 2026-11-19
 
 مسیر توقف پیوند به نشست مالک و نقش مستقل متصل شد. آزمون یکپارچه، غیرفعال بودن پیش‌فرض، رد کاربر بی‌مجوز، رد هویت ارسالی و نشست لغوشده را بررسی می‌کند. اجرای PostgreSQL محلی انجام نشده است.

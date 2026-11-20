@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Star reservation concurrency · 2026-11-20
+
+The existing cancellation/new-reservation regression now exposes the original database error directly. Migration 074 locks the reward before validating stock. Full PostgreSQL execution must be read from this head in CI.
+
 ## توقف خصوصی پیوند · 2026-11-19
 
 مسیر توقف پیوند به نشست مالک و نقش مستقل متصل شد. آزمون یکپارچه، غیرفعال بودن پیش‌فرض، رد کاربر بی‌مجوز، رد هویت ارسالی و نشست لغوشده را بررسی می‌کند. اجرای PostgreSQL محلی انجام نشده است.

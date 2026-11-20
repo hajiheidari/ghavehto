@@ -274,7 +274,7 @@ test('funded stars serialize spending, allocate valid lots and preserve independ
         const outcome=next.then(value=>({value}),error=>({error}));
         await client.query('COMMIT');
         const result=await outcome;
-        assert.ok('value' in result);
+        if('error' in result) throw result.error;
         assert.notEqual(result.value.rows[0].id,receipt.id);
         assert.equal(await balance(who),'0');
         assert.equal((await pool.query('SELECT stock FROM star_rewards WHERE id=$1',[reward.id])).rows[0].stock,0);
