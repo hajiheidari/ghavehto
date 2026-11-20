@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Cafe-bound tracking stop · 2026-11-21
+
+The existing Next/Nest/PostgreSQL fixture now submits a link through a mismatched cafe route and checks that it remains active. The authorized matching request still stops it. Exact-head CI is required for this database behavior.
+
 ## Private owner tracking panel · 2026-11-21
 
 The Next/Nest/PostgreSQL fixture now checks Persian owner link rendering, foreign/signed-out isolation, same-origin stop and resulting inactive link. A separate built-page case checks default-off routing. Local test execution is recorded below.
@@ -400,3 +404,5 @@ Next bounded increment: persistent OTP challenges with expiry, attempts, send co
 CI 44546681504 برای 8f9d398 آزمون جدید توقف پیوند را گذراند، ولی آزمون قدیمی cancellation and a new reservation serialize on the same stock شکست خورد. درخواست اجرای مجدد با پیام workflow run is already running رد شد. این شکست نیازمند بررسی مستقل هم‌زمانی ستاره است و موفقیت کل مجموعه گزارش نمی‌شود.
 
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز شامل ۱۲ آزمون API و یک probe موفق بود. آزمون رابط با پایگاه داده در CI همین کامیت اجرا می‌شود.
+
+اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API را با موفقیت گذراند.

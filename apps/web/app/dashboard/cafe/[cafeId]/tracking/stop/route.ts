@@ -8,7 +8,7 @@ export async function POST(request:Request,{params}:{params:Promise<{cafeId:stri
   if(form instanceof Response) return form;
   const linkId=form.get('linkId'),reason=form.get('reason')?.trim();
   if(form.size!==2||!panelId(linkId)||!reason||reason.length>240) return rejectPanelForm(400);
-  const result=await stopOwnerTrackingLink(linkId,reason);
+  const result=await stopOwnerTrackingLink(cafeId,linkId,reason);
   if(result.state==='signed-out') return rejectPanelForm(401);
   return new Response(null,{status:303,headers:{Location:'/dashboard/cafe/'+cafeId+'/tracking?stop='+
     (result.state==='ready'?'saved':'unconfirmed'),'Cache-Control':'no-store'}});

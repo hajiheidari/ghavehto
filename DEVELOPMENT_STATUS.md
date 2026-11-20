@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Cafe-bound tracking stop · 2026-11-21
+
+Migration 076 adds a cafe-bound private stop routine. The web panel passes the cafe ID from its route and PostgreSQL checks link membership before calling the existing owner stop routine. Previous private API callers retain the original stop endpoint. Next: remaining milestone acceptance and founder tracking retention decision.
+
 ## Private owner tracking panel · 2026-11-21
 
 The private cafe tracking page lists owner-authorized links and submits a reasoned stop through the existing session API. PRIVATE_TRACKING_OWNER_VIEW=1 and the dedicated tracking owner API pool are required. Forms require PANEL_WRITE_ORIGIN. Page access remains verified by the API. Next: remaining milestone acceptance and founder tracking retention decision.

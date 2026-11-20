@@ -1,5 +1,9 @@
 # Changelog
 
+## Cafe-bound tracking stop · 2026-11-21
+
+Bind owner panel tracking stops to the cafe in the current route.
+
 ## Private owner tracking panel · 2026-11-21
 
 Add private Persian owner tracking inventory and stop forms.

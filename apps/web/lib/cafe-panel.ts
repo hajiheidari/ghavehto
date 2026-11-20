@@ -174,9 +174,9 @@ export function getOwnerTrackingLinks(cafeId:string,after?:string) {
     return {items:input.items,nextCursor:input.nextCursor};
   });
 }
-export function stopOwnerTrackingLink(linkId:string,reason:string) {
-  return read('/v1/internal/tracking-owner/stop',input=>{
+export function stopOwnerTrackingLink(cafeId:string,linkId:string,reason:string) {
+  return read('/v1/internal/tracking-owner/stop-in-cafe',input=>{
     if(!object(input)||typeof input.changed!=='boolean') throw new Error('Invalid stop receipt');
     return input.changed;
-  },{method:'POST',body:{linkId,reason}});
+  },{method:'POST',body:{cafeId,linkId,reason}});
 }

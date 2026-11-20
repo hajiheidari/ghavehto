@@ -8,6 +8,9 @@ class StopInput {
   @IsUUID() linkId!:string;
   @IsString() @MaxLength(240) reason!:string;
 }
+class CafeStopInput extends StopInput {
+  @IsUUID() cafeId!:string;
+}
 class ListInput {
   @IsUUID() cafeId!:string;
   @IsOptional() @IsUUID() after?:string;
@@ -22,6 +25,12 @@ export class PrivateTrackingOwnerController {
     const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
       'SELECT public.list_private_tracking_links($1,$2,$3) AS page',[input.cafeId,input.after??null]);
     return page;
+  }
+
+  @Post('stop-in-cafe') @Header('Cache-Control','no-store')
+  stopInCafe(@Headers('authorization') header:string|undefined,@Body() input:CafeStopInput) {
+    return this.database.run<{changed:boolean}>(header,
+      'SELECT public.stop_private_cafe_tracking_link($1,$2,$3,$4) AS changed',[input.cafeId,input.linkId,input.reason]);
   }
 
   @Post('stop') @Header('Cache-Control','no-store')

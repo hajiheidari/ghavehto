@@ -374,6 +374,12 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
               method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},
               body:new URLSearchParams({linkId:webLink.id,reason:'TEST stop from panel'}),
             });
+            const mismatch=await fetch(web.url+'/dashboard/cafe/'+randomUUID()+'/tracking/stop',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+ownerSession.accessToken,Origin:'https://panel.example.test'},
+              body:new URLSearchParams({linkId:webLink.id,reason:'TEST mismatched cafe'}),
+            });
+            assert.match(mismatch.headers.get('location')??'',/stop=unconfirmed/);
+            assert.equal((await pool.query('SELECT active FROM cafe_tracking_links WHERE id=$1',[webLink.id])).rows[0].active,true);
             assert.equal((await submit(ownerSession.accessToken)).status,403);
             assert.equal((await submit(ownerSession.accessToken,'https://foreign.invalid')).status,403);
             assert.match((await submit(foreignSession.accessToken,'https://panel.example.test')).headers.get('location')??'',/stop=unconfirmed/);
