@@ -1,5 +1,9 @@
 # Changelog
 
+## Private tracking link inventory · 2026-11-20
+
+List private cafe tracking links through verified owner sessions with bounded pagination.
+
 ## Star reservation concurrency · 2026-11-20
 
 Fix stock rechecking after a concurrent star reservation cancellation.

@@ -345,6 +345,22 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
           assert.equal((await send()).status,401);
           assert.equal((await send(foreignSession.accessToken)).status,403);
           assert.equal((await send(ownerSession.accessToken,{actorId:owner})).status,400);
+          const listing=async(token:string,query:string)=>fetch((await app.getUrl())+'/v1/internal/tracking-owner/links?'+query,
+            {headers:{authorization:'Bearer '+token}});
+          assert.equal((await listing(foreignSession.accessToken,'cafeId='+cafe.id)).status,403);
+          const first=await listing(ownerSession.accessToken,'cafeId='+cafe.id);
+          assert.equal(first.status,200);
+          const page=await first.json() as {items:Record<string,unknown>[];nextCursor:string|null};
+          assert.ok(page.items.length>0);
+          for(const item of page.items) assert.deepEqual(Object.keys(item).sort(),['active','branchId','expiresAt','linkId']);
+          assert.equal((await listing(ownerSession.accessToken,'cafeId='+cafe.id+'&after='+randomUUID())).status,400);
+          for(let i=0;i<21;i++) await link();
+          const firstPage=await (await listing(ownerSession.accessToken,'cafeId='+cafe.id)).json() as typeof page;
+          assert.equal(firstPage.items.length,20);
+          assert.ok(firstPage.nextCursor);
+          const secondPage=await (await listing(ownerSession.accessToken,'cafeId='+cafe.id+'&after='+firstPage.nextCursor)).json() as typeof page;
+          const ids=[...firstPage.items,...secondPage.items].map(item=>item.linkId);
+          assert.equal(new Set(ids).size,ids.length);
           const stopped=await send(ownerSession.accessToken);
           assert.equal(stopped.status,201);
           assert.equal(stopped.headers.get('cache-control'),'no-store');

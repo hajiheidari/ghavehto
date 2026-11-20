@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private tracking link inventory · 2026-11-20
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck and whitespace checks passed. The PostgreSQL HTTP fixture checks owner isolation, minimal projection, unknown cursor rejection and pagination without duplicate IDs.
+
 ## Star reservation concurrency · 2026-11-20
 
 The existing cancellation/new-reservation regression now exposes the original database error directly. Migration 074 locks the reward before validating stock. Full PostgreSQL execution must be read from this head in CI.

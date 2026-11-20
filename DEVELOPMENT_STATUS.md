@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private tracking link inventory · 2026-11-20
+
+Migration 075 adds a private owner-only tracking link inventory with 20-item keyset pages. It returns link/branch IDs, activation state and expiry after checking current verified ownership. The API exposes it only with the dedicated tracking-owner pool. Next: private owner link controls in the web panel. The prior star fix 65ebd53 passed all five Foundation jobs in 44809815833.
+
 ## Star reservation concurrency · 2026-11-20
 
 Migration 074 fixes star reservation after concurrent cancellation. The reward row is locked by ID before testing active/stock, allowing a reservation waiting on cancellation to observe restored stock. The prior stock predicate could omit the zero-stock row before waiting. Existing replay and balance checks remain in the routine. PostgreSQL execution is tracked separately in CI.
