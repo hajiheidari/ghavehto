@@ -1,12 +1,16 @@
 import { PrivateSessionDatabase } from './private-session-database.js';
 import {
   BadRequestException, Body, Controller,
-  Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put,
+  Get, Header, Headers, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Put, Query,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 import type { Pool } from 'pg';
 import { prepareInternalDraft } from './internal-draft-worker.js';
+
+class DocumentListInput {
+  @IsOptional() @IsUUID() after?: string;
+}
 
 class DocumentInput {
   @IsUUID() documentId!: string;
@@ -57,6 +61,12 @@ export class PrivateEditorial {
   private readonly database: PrivateSessionDatabase;
   constructor(pool: Pool) {this.database=new PrivateSessionDatabase(pool,'ghahvehto_editorial');}
   validateRuntime() {return this.database.validateRuntime();}
+
+  async documents(header: string | undefined, after?: string) {
+    const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
+      'SELECT public.list_private_content_documents($1,$2) AS page',[after??null]);
+    return page;
+  }
 
   document(header: string | undefined, input: DocumentInput) {
     return this.database.run<{id:string}>(header,'SELECT public.create_private_content_document($1,$2,$3) AS id',
@@ -132,6 +142,11 @@ export class PrivateEditorialController {
   @Get('jobs/:id') @Header('Cache-Control','no-store')
   jobSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
     return this.editorial.subject(header,'job',id);
+  }
+
+  @Get('documents') @Header('Cache-Control','no-store')
+  documents(@Headers('authorization') header: string | undefined, @Query() input: DocumentListInput) {
+    return this.editorial.documents(header,input.after);
   }
 
   @Post('documents') @Header('Cache-Control','no-store')

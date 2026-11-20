@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private CMS inventory · 2026-11-21
+
+Migration 077 adds an editor/admin private document inventory with 20-item keyset pages. Each row includes the slug and latest revision reference/title, including documents without a revision. Source text and evidence remain behind the existing subject read. Next: private editorial web workflow and remaining milestone acceptance.
+
 ## Cafe-bound tracking stop · 2026-11-21
 
 Migration 076 adds a cafe-bound private stop routine. The web panel passes the cafe ID from its route and PostgreSQL checks link membership before calling the existing owner stop routine. Previous private API callers retain the original stop endpoint. Next: remaining milestone acceptance and founder tracking retention decision.

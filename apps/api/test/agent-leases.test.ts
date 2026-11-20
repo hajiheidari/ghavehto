@@ -153,6 +153,26 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           const get=(path:string,token?:string)=>fetch(origin+'/v1/internal/editorial/'+path,{
             headers:token?{authorization:'Bearer '+token}:{},
           });
+          assert.equal((await get('documents')).status,401);
+          assert.equal((await get('documents',consumer.accessToken)).status,403);
+          assert.equal((await get('documents?after='+randomUUID(),author.accessToken)).status,400);
+          const inventory=await get('documents',author.accessToken);
+          assert.equal(inventory.status,200);
+          assert.equal(inventory.headers.get('cache-control'),'no-store');
+          const initialInventory=await inventory.json() as {items:Record<string,unknown>[]};
+          assert.deepEqual(initialInventory.items,[{documentId:documentInput.documentId,slug:documentInput.slug,
+            revisionId:receipt.id,revision:1,title:revision.title}]);
+          for(let i=0;i<21;i++){
+            assert.equal((await post('documents',{documentId:randomUUID(),slug:'test-list-'+randomBytes(8).toString('hex')},author.accessToken)).status,201);
+          }
+          const firstPage=await (await get('documents',author.accessToken)).json() as {items:{documentId:string;revision:number;revisionId:string|null}[];nextCursor:string};
+          assert.equal(firstPage.items.length,20);
+          const secondPage=await (await get('documents?after='+firstPage.nextCursor,author.accessToken)).json() as typeof firstPage;
+          assert.equal(secondPage.items.length,2);
+          assert.equal(secondPage.nextCursor,null);
+          const all=[...firstPage.items,...secondPage.items];
+          assert.equal(new Set(all.map(item=>item.documentId)).size,22);
+          assert.equal(all.filter(item=>item.revision===0&&item.revisionId===null).length,21);
           const revisionPath='revisions/'+receipt.id;
           assert.equal((await get(revisionPath)).status,401);
           assert.equal((await get(revisionPath,consumer.accessToken)).status,403);

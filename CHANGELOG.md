@@ -1,5 +1,9 @@
 # Changelog
 
+## Private CMS inventory · 2026-11-21
+
+Add private CMS document inventory for editors with latest revision references and bounded pagination.
+
 ## Cafe-bound tracking stop · 2026-11-21
 
 Bind owner panel tracking stops to the cafe in the current route.
