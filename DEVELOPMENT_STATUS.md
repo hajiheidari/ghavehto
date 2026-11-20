@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private owner tracking panel · 2026-11-21
+
+The private cafe tracking page lists owner-authorized links and submits a reasoned stop through the existing session API. PRIVATE_TRACKING_OWNER_VIEW=1 and the dedicated tracking owner API pool are required. Forms require PANEL_WRITE_ORIGIN. Page access remains verified by the API. Next: remaining milestone acceptance and founder tracking retention decision.
+
 ## Private tracking link inventory · 2026-11-20
 
 Migration 075 adds a private owner-only tracking link inventory with 20-item keyset pages. It returns link/branch IDs, activation state and expiry after checking current verified ownership. The API exposes it only with the dedicated tracking-owner pool. Next: private owner link controls in the web panel. The prior star fix 65ebd53 passed all five Foundation jobs in 44809815833.

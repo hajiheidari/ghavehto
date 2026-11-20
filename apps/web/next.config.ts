@@ -8,6 +8,6 @@ const config: NextConfig = {
   ] }, { source: '/dashboard/participation/:path*', headers: [
     { key: 'Cache-Control', value: 'private, no-store' },
     { key: 'Referrer-Policy', value: 'no-referrer' },
-  ] }]; },
+  ] }, { source: '/dashboard/cafe/:cafeId/tracking/:path*', headers: [{key:'Cache-Control',value:'private, no-store'},{key:'Referrer-Policy',value:'no-referrer'}] }]; },
 };
 export default config;

@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private owner tracking panel · 2026-11-21
+
+The Next/Nest/PostgreSQL fixture now checks Persian owner link rendering, foreign/signed-out isolation, same-origin stop and resulting inactive link. A separate built-page case checks default-off routing. Local test execution is recorded below.
+
 ## Private tracking link inventory · 2026-11-20
 
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck and whitespace checks passed. The PostgreSQL HTTP fixture checks owner isolation, minimal projection, unknown cursor rejection and pagination without duplicate IDs.
@@ -394,3 +398,5 @@ Next bounded increment: persistent OTP challenges with expiry, attempts, send co
 اجرای 2026-11-19 روی Node 24.22.3 ویندوز برای مسیر توقف خصوصی پیوند، ۱۲ آزمون API و یک probe را با موفقیت گذراند. بررسی نوع API و git diff --check نیز موفق شدند.
 
 CI 44546681504 برای 8f9d398 آزمون جدید توقف پیوند را گذراند، ولی آزمون قدیمی cancellation and a new reservation serialize on the same stock شکست خورد. درخواست اجرای مجدد با پیام workflow run is already running رد شد. این شکست نیازمند بررسی مستقل هم‌زمانی ستاره است و موفقیت کل مجموعه گزارش نمی‌شود.
+
+اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز شامل ۱۲ آزمون API و یک probe موفق بود. آزمون رابط با پایگاه داده در CI همین کامیت اجرا می‌شود.

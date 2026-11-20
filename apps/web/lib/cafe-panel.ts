@@ -160,3 +160,23 @@ export function getParticipationHistory(after?:string) {
     return {items,nextCursor:input.nextCursor};
   });
 }
+
+type TrackingLink={linkId:string;branchId:string;active:boolean;expiresAt:string};
+export function getOwnerTrackingLinks(cafeId:string,after?:string) {
+  const query=new URLSearchParams({cafeId,...(after?{after}:{})});
+  return read('/v1/internal/tracking-owner/links?'+query,input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))||
+      !input.items.every((item):item is TrackingLink=>object(item)&&panelId(item.linkId)&&panelId(item.branchId)&&
+        typeof item.active==='boolean'&&typeof item.expiresAt==='string'&&Number.isFinite(Date.parse(item.expiresAt)))) {
+      throw new Error('Invalid tracking link page');
+    }
+    return {items:input.items,nextCursor:input.nextCursor};
+  });
+}
+export function stopOwnerTrackingLink(linkId:string,reason:string) {
+  return read('/v1/internal/tracking-owner/stop',input=>{
+    if(!object(input)||typeof input.changed!=='boolean') throw new Error('Invalid stop receipt');
+    return input.changed;
+  },{method:'POST',body:{linkId,reason}});
+}

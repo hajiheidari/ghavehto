@@ -12,6 +12,7 @@ import {OtpCrypto} from '../src/nest/otp.js';
 import {PhoneVault} from '../src/nest/phone-vault.js';
 import {SessionService} from '../src/nest/sessions.js';
 import {createHash} from 'node:crypto';
+import {startWebPanel} from './web-panel.js';
 
 test('cafe attribution counts touches, verified identity and confirmed interactions separately',async t=>{
   assert.ok(process.env.DATABASE_URL);
@@ -354,6 +355,31 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
           assert.ok(page.items.length>0);
           for(const item of page.items) assert.deepEqual(Object.keys(item).sort(),['active','branchId','expiresAt','linkId']);
           assert.equal((await listing(ownerSession.accessToken,'cafeId='+cafe.id+'&after='+randomUUID())).status,400);
+          const web=await startWebPanel(await app.getUrl(),false,true);
+          try {
+            const path='/dashboard/cafe/'+cafe.id+'/tracking';
+            const get=(token?:string)=>fetch(web.url+path,{headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{}});
+            const ownerPage=await get(ownerSession.accessToken);
+            assert.match(ownerPage.headers.get('cache-control')??'',/no-store/);
+            const html=await ownerPage.text();
+            assert.match(html,/dir="rtl"/);
+            assert.match(html,/توقف پیوند/);
+            assert.ok(!html.includes(ownerSession.accessToken));
+            const denied=await (await get(foreignSession.accessToken)).text();
+            assert.match(denied,/مجوز مالک ندارید/);
+            assert.ok(!denied.includes(l.id));
+            assert.match(await (await get()).text(),/به نشست معتبر نیاز دارید/);
+            const webLink=await link();
+            const submit=(token:string,origin?:string)=>fetch(web.url+path+'/stop',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},
+              body:new URLSearchParams({linkId:webLink.id,reason:'TEST stop from panel'}),
+            });
+            assert.equal((await submit(ownerSession.accessToken)).status,403);
+            assert.equal((await submit(ownerSession.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await submit(foreignSession.accessToken,'https://panel.example.test')).headers.get('location')??'',/stop=unconfirmed/);
+            assert.match((await submit(ownerSession.accessToken,'https://panel.example.test')).headers.get('location')??'',/stop=saved/);
+            assert.equal((await pool.query('SELECT active FROM cafe_tracking_links WHERE id=$1',[webLink.id])).rows[0].active,false);
+          } finally {await web.close();}
           for(let i=0;i<21;i++) await link();
           const firstPage=await (await listing(ownerSession.accessToken,'cafeId='+cafe.id)).json() as typeof page;
           assert.equal(firstPage.items.length,20);

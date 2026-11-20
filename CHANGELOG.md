@@ -1,5 +1,9 @@
 # Changelog
 
+## Private owner tracking panel · 2026-11-21
+
+Add private Persian owner tracking inventory and stop forms.
+
 ## Private tracking link inventory · 2026-11-20
 
 List private cafe tracking links through verified owner sessions with bounded pagination.
