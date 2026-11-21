@@ -1,5 +1,9 @@
 # Changelog
 
+## Private agent review queue · 2026-11-21
+
+Add a private agent draft review queue and Persian request/result reader for internal admins.
+
 ## Private review receipt · 2026-11-21
 
 Show stored editorial review decisions and server-checked approval validity in the private panel.

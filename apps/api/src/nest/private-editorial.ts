@@ -67,6 +67,12 @@ export class PrivateEditorial {
       'SELECT public.read_private_content_review($1,$2) AS receipt',[revisionId]);
   }
 
+  async pendingJobs(header: string | undefined, after?: string) {
+    const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
+      'SELECT public.list_private_agent_reviews($1,$2) AS page',[after??null]);
+    return page;
+  }
+
   async documents(header: string | undefined, after?: string) {
     const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
       'SELECT public.list_private_content_documents($1,$2) AS page',[after??null]);
@@ -137,6 +143,11 @@ export class PrivateEditorialController {
   @Get('revisions/:id') @Header('Cache-Control','no-store')
   revisionSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
     return this.editorial.subject(header,'revision',id);
+  }
+
+  @Get('jobs') @Header('Cache-Control','no-store')
+  pendingJobs(@Headers('authorization') header: string | undefined, @Query() input: DocumentListInput) {
+    return this.editorial.pendingJobs(header,input.after);
   }
 
   @Post('jobs') @Header('Cache-Control','no-store')

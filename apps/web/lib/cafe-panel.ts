@@ -235,3 +235,20 @@ export function getEditorialReview(revisionId:string) {
     return row as EditorialReview;
   });
 }
+
+type PendingAgentReview={jobId:string;kind:string;createdAt:string;paused:boolean};
+export function getPendingAgentReviews(after?:string) {
+  return read('/v1/internal/editorial/jobs'+(after?'?after='+encodeURIComponent(after):''),input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))||
+      !input.items.every((item):item is PendingAgentReview=>object(item)&&panelId(item.jobId)&&typeof item.kind==='string'&&
+        typeof item.paused==='boolean'&&typeof item.createdAt==='string'&&Number.isFinite(Date.parse(item.createdAt)))) throw new Error('Invalid review queue');
+    return {items:input.items,nextCursor:input.nextCursor};
+  });
+}
+export function getAgentReviewSubject(jobId:string) {
+  return read('/v1/internal/editorial/jobs/'+jobId,input=>{
+    if(!object(input)||input.jobId!==jobId||typeof input.kind!=='string'||!object(input.payload)||!object(input.result)) throw new Error('Invalid agent review subject');
+    return {kind:input.kind,payload:input.payload,result:input.result};
+  });
+}

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private agent review queue · 2026-11-21
+
+Migration 079 adds a private admin-only queue of awaiting-review agent drafts with no stored decision, bounded to 20 items per page. The Persian panel links to the existing protected request/result reader and shows paused controls. Source payloads render as text. Next: agent decision receipts/forms and remaining M5 acceptance.
+
 ## Private review receipt · 2026-11-21
 
 Migration 078 exposes a private content-review receipt to verified editors/admins. The Persian revision view shows the immutable decision, reason, creation/expiry and current approval usability, recalculated through the existing hash/role/version checks. The review form is hidden once a decision exists. Next: M5 draft review queue and remaining milestone acceptance.

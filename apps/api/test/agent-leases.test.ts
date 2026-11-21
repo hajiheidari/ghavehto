@@ -213,6 +213,12 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             await db.query('UPDATE operations_access SET revoked_at=NULL WHERE user_id=$1',[reviewer]);
             const stored=await db.query('SELECT reviewer_id,lifetime_seconds FROM operation_reviews WHERE revision_id=$1',[reviewRevision]);
             assert.deepEqual(stored.rows,[{reviewer_id:reviewer,lifetime_seconds:60}]);
+            const queueAdmin=await sessions.issue(admin);
+            const queuePage=(token:string)=>fetch(web.url+'/dashboard/editorial/jobs',{headers:{Cookie:'__Host-ghahvehto-access='+token}});
+            assert.match(await (await queuePage(author.accessToken)).text(),/مجوز مدیر ندارید/);
+            const queueHtml=await (await queuePage(queueAdmin.accessToken)).text();
+            assert.match(queueHtml,/پیش‌نویس‌های در انتظار بازبینی/);
+            assert.match(queueHtml,/job=/);
             const inventoryHtml=await (await page('',author.accessToken)).text();
             const newDocument=/<input(?=[^>]*name="documentId")[^>]*value="([^"]+)"/.exec(inventoryHtml)?.[1];
             assert.ok(newDocument);
@@ -271,6 +277,28 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           assert.equal(draft.body,revision.body);
           assert.equal(draft.payloadHash,expected.hash);
           const adminSession=await sessions.issue(admin);
+          assert.equal((await get('jobs')).status,401);
+          assert.equal((await get('jobs',author.accessToken)).status,403);
+          assert.equal((await get('jobs?after='+randomUUID(),adminSession.accessToken)).status,400);
+          for(let i=0;i<21;i++){
+            await queue('research');
+            const leased=await take('research');
+            assert.ok(leased);
+            assert.equal(await move(leased,'complete',{draft:'TEST queue listing'}),true);
+          }
+          const pending=await get('jobs',adminSession.accessToken);
+          assert.equal(pending.headers.get('cache-control'),'no-store');
+          const firstJobs=await pending.json() as {items:{jobId:string}[];nextCursor:string};
+          assert.equal(firstJobs.items.length,20);
+          const remainingJobs=await (await get('jobs?after='+firstJobs.nextCursor,adminSession.accessToken)).json() as typeof firstJobs;
+          assert.ok(remainingJobs.items.length>0);
+          const allJobs=[...firstJobs.items,...remainingJobs.items];
+          assert.equal(new Set(allJobs.map(item=>item.jobId)).size,allJobs.length);
+          const reviewedJob=firstJobs.items[0].jobId;
+          assert.equal((await post('reviews',{jobId:reviewedJob,operationId:randomUUID(),decision:'rejected',
+            lifetimeSeconds:60,reason:'TEST removed from pending queue'},adminSession.accessToken)).status,201);
+          const refreshed=await (await get('jobs',adminSession.accessToken)).json() as typeof firstJobs;
+          assert.ok(!refreshed.items.some(item=>item.jobId===reviewedJob));
           const {rows:[job]}=await db.query("SELECT id FROM agent_jobs WHERE state='awaiting_review' LIMIT 1");
           assert.ok(job);
           assert.equal((await get('jobs/'+job.id,author.accessToken)).status,403);

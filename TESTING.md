@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private agent review queue · 2026-11-21
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck and test compilation passed. The database fixture checks admin-only queue access, pagination without duplicates and removal after a review. The built web case checks editor denial and admin queue rendering.
+
 ## Private review receipt · 2026-11-21
 
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks receipt rendering, hidden repeat-decision form, session/role denial and approval usability after reviewer-role revocation.

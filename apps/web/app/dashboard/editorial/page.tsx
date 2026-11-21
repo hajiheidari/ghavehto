@@ -57,6 +57,7 @@ export default async function EditorialPage({searchParams}:{searchParams:Promise
   </section>;
   const result=await getEditorialDocuments(after);
   return <section className="section empty"><h1>اسناد خصوصی محتوا</h1>
+    <Link href="/dashboard/editorial/jobs">صف بازبینی عامل‌ها (ویژهٔ مدیر)</Link>
     {staffPanelOrigin()&&result.state==='ready'&&<form method="post" action="/dashboard/editorial/document">
       <h2>ایجاد سند</h2>
       <input type="hidden" name="documentId" value={randomUUID()}/>
