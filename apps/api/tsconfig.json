@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "NodeNext", "moduleResolution": "NodeNext",
+    "strict": true, "experimentalDecorators": true, "emitDecoratorMetadata": true,
+    "esModuleInterop": true, "skipLibCheck": true, "outDir": "dist/nest", "rootDir": "src/nest",
+    "types": ["node"]
+  },
+  "include": ["src/nest/**/*.ts"]
+}

@@ -1,0 +1,9 @@
+.directory-search { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.75rem; align-items:end; }
+.directory-search label { grid-column:1/-1; }
+.directory-search input { min-width:0; padding:.65rem .8rem; border:1px solid #7b8e82; border-radius:8px; font:inherit; }
+.directory-search input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.directory-search button { border:0; font:inherit; cursor:pointer; }
+.directory-results { list-style:none; padding:0; display:grid; gap:.75rem; }
+.directory-results li { border:1px solid var(--line); border-radius:8px; padding:.75rem 1rem; overflow-wrap:anywhere; }
+.directory-results h2 { margin:0; font-size:1.2rem; }
+.directory-results p { margin:0; }

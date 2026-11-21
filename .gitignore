@@ -6,3 +6,8 @@ build/
 .env.*
 !.env.example
 *.log
+dist/
+*.tsbuildinfo
+.pnpm-store/
+.tools/
+.test-build/
