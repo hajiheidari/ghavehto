@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private editorial review form · 2026-11-21
+
+The opt-in Persian editorial reader now submits approved/rejected decisions with a reason and bounded lifetime through the existing private API. Same-origin form handling and server-derived reviewer authority protect writes. Independent-review, immutable decision and replay rules remain enforced in PostgreSQL. Next: private document creation and revision editing forms.
+
 ## Private editorial reader · 2026-11-21
 
 An opt-in Persian editorial page lists private documents and reads selected revisions through the existing session-scoped API. PRIVATE_EDITORIAL_VIEW=1 enables the route. Bodies and source evidence render as escaped text. Next: reasoned private review forms and document editing. Public publication remains gated.

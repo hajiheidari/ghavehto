@@ -1,13 +1,14 @@
+import {randomUUID} from 'node:crypto';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
-import {getEditorialDocuments,getEditorialRevision,panelId} from '../../../lib/cafe-panel';
+import {getEditorialDocuments,getEditorialRevision,panelId,staffPanelOrigin} from '../../../lib/cafe-panel';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'اسناد خصوصی محتوا',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 const digits=new Intl.NumberFormat('fa-IR');
-export default async function EditorialPage({searchParams}:{searchParams:Promise<{after?:string|string[];revision?:string|string[]}>}) {
+export default async function EditorialPage({searchParams}:{searchParams:Promise<{after?:string|string[];revision?:string|string[];review?:string|string[]}>}) {
   if(process.env.PRIVATE_EDITORIAL_VIEW!=='1') notFound();
-  const {after,revision}=await searchParams;
+  const {after,revision,review}=await searchParams;
   if(after!==undefined&&!panelId(after)||revision!==undefined&&!panelId(revision)) notFound();
   if(revision){
     const result=await getEditorialRevision(revision);
@@ -19,6 +20,20 @@ export default async function EditorialPage({searchParams}:{searchParams:Promise
           <div style={{whiteSpace:'pre-wrap'}}>{result.data.body}</div>
           <h2>مستندات منابع</h2>
           <pre dir="ltr" style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(result.data.sources,null,2)}</pre>
+          {review==='saved'&&<p role="status">تصمیم بازبینی ثبت شد.</p>}
+          {review==='unconfirmed'&&<p role="status">ثبت تصمیم تأیید نشد. دسترسی یا تصمیم قبلی را بررسی کنید.</p>}
+          {staffPanelOrigin()&&<form method="post" action="/dashboard/editorial/review">
+            <input type="hidden" name="revisionId" value={revision}/>
+            <input type="hidden" name="operationId" value={randomUUID()}/>
+            <label htmlFor="decision">تصمیم بازبینی</label>{' '}
+            <select id="decision" name="decision"><option value="approved">تأیید</option><option value="rejected">رد</option></select>{' '}
+            <label htmlFor="reviewReason">دلیل تصمیم</label>{' '}
+            <input id="reviewReason" name="reason" required maxLength={240}/>{' '}
+            <label htmlFor="lifetime">اعتبار تصمیم به ثانیه</label>{' '}
+            <input id="lifetime" name="lifetimeSeconds" type="number" min={1} max={604800} defaultValue={86400} required/>{' '}
+            <button type="submit">ثبت تصمیم</button>
+            <p>بازبینی باید توسط فردی مستقل از نویسنده انجام شود. مدت اعتبار حداکثر هفت روز است.</p>
+          </form>}
         </article>}
     </section>;
   }

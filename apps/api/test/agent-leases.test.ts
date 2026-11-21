@@ -179,6 +179,27 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             const subjectHtml=await subjectPage.text();
             assert.match(subjectHtml,/Test body &lt;b&gt;untrusted&lt;\/b&gt;/);
             assert.ok(!subjectHtml.includes('<b>untrusted</b>'));
+            const nextRevision=await post('revisions',{...revision,operationId:randomUUID(),expectedRevision:1},author.accessToken);
+            assert.equal(nextRevision.status,201);
+            const {id:reviewRevision}=await nextRevision.json() as {id:string};
+            const reviewHtml=await (await page('?revision='+reviewRevision,reviewerSession.accessToken)).text();
+            const reviewOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(reviewHtml)?.[1];
+            assert.ok(reviewOperation);
+            const form=new URLSearchParams({revisionId:reviewRevision,operationId:reviewOperation,
+              decision:'approved',lifetimeSeconds:'60',reason:'TEST independent panel review'});
+            const submit=(token:string,origin?:string)=>fetch(web.url+'/dashboard/editorial/review',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},body:form,
+            });
+            assert.equal((await submit(reviewerSession.accessToken)).status,403);
+            assert.equal((await submit(reviewerSession.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await submit(author.accessToken,'https://panel.example.test')).headers.get('location')??'',/review=unconfirmed/);
+            const decisions=await Promise.all(Array.from({length:2},()=>submit(reviewerSession.accessToken,'https://panel.example.test')));
+            for(const response of decisions) {
+              assert.equal(response.status,303);
+              assert.match(response.headers.get('location')??'',/review=saved/);
+            }
+            const stored=await db.query('SELECT reviewer_id,lifetime_seconds FROM operation_reviews WHERE revision_id=$1',[reviewRevision]);
+            assert.deepEqual(stored.rows,[{reviewer_id:reviewer,lifetime_seconds:60}]);
             const denied=await (await page('',consumer.accessToken)).text();
             assert.match(denied,/مجوز ویرایشگر ندارید/);
             assert.ok(!denied.includes(revision.title));

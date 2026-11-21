@@ -200,3 +200,10 @@ export function getEditorialRevision(id:string) {
     return {title:input.title,body:input.body,sources:input.sources,revision:Number(input.revision)};
   });
 }
+
+export function reviewEditorialRevision(input:{revisionId:string;operationId:string;decision:'approved'|'rejected';lifetimeSeconds:number;reason:string}) {
+  return read('/v1/internal/editorial/reviews',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid review receipt');
+    return receipt.id;
+  },{method:'POST',body:input});
+}

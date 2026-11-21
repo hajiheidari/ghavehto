@@ -1,5 +1,9 @@
 # Changelog
 
+## Private editorial review form · 2026-11-21
+
+Add reasoned private editorial review forms with explicit decision lifetime.
+
 ## Private editorial reader · 2026-11-21
 
 Add a Persian private CMS inventory and revision reader.

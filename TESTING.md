@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private editorial review form · 2026-11-21
+
+The built Next/Nest/PostgreSQL fixture checks missing/foreign Origin denial, author self-review denial, independent reviewer submission and concurrent exact replay with one stored decision. Local execution results are recorded below.
+
 ## Private editorial reader · 2026-11-21
 
 Windows pnpm test passed 12 API tests and one loopback probe. The built Next/Nest/PostgreSQL fixture checks private inventory rendering, reviewer access, signed-out and unassigned denial, escaped source content and no-store. A separate web fixture checks default-off routing.
@@ -416,3 +420,5 @@ CI 44546681504 برای 8f9d398 آزمون جدید توقف پیوند را گ�
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API را با موفقیت گذراند.
 
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API را با موفقیت گذراند.
+
+اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe را با موفقیت گذراند.
