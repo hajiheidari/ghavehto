@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private review receipt · 2026-11-21
+
+Windows pnpm test passed 12 API tests and one loopback probe; API typecheck passed. The Next/Nest/PostgreSQL fixture checks receipt rendering, hidden repeat-decision form, session/role denial and approval usability after reviewer-role revocation.
+
 ## Private editorial authoring · 2026-11-21
 
 The Next/Nest/PostgreSQL fixture exercises document creation from the panel, same-origin checks, denied consumer writes, concurrent exact creation/save, one revision and stale-parent rejection. Local execution results are recorded below.

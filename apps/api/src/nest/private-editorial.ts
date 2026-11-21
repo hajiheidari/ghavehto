@@ -62,6 +62,11 @@ export class PrivateEditorial {
   constructor(pool: Pool) {this.database=new PrivateSessionDatabase(pool,'ghahvehto_editorial');}
   validateRuntime() {return this.database.validateRuntime();}
 
+  reviewReceipt(header: string | undefined, revisionId: string) {
+    return this.database.run<{receipt:Record<string,unknown>|null}>(header,
+      'SELECT public.read_private_content_review($1,$2) AS receipt',[revisionId]);
+  }
+
   async documents(header: string | undefined, after?: string) {
     const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
       'SELECT public.list_private_content_documents($1,$2) AS page',[after??null]);
@@ -142,6 +147,11 @@ export class PrivateEditorialController {
   @Get('jobs/:id') @Header('Cache-Control','no-store')
   jobSubject(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
     return this.editorial.subject(header,'job',id);
+  }
+
+  @Get('revisions/:id/review') @Header('Cache-Control','no-store')
+  reviewReceipt(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
+    return this.editorial.reviewReceipt(header,id);
   }
 
   @Get('documents') @Header('Cache-Control','no-store')

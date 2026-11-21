@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private review receipt · 2026-11-21
+
+Migration 078 exposes a private content-review receipt to verified editors/admins. The Persian revision view shows the immutable decision, reason, creation/expiry and current approval usability, recalculated through the existing hash/role/version checks. The review form is hidden once a decision exists. Next: M5 draft review queue and remaining milestone acceptance.
+
 ## Private editorial authoring · 2026-11-21
 
 The opt-in Persian editorial panel can create an empty document and submit its first or subsequent revision with source-rights evidence. Same-origin forms preserve operation UUIDs and expected revision checks through the existing session API. Conflicting/stale saves return 409 with a Persian recovery instruction. Next: remaining M5 queue/review usability and milestone acceptance.

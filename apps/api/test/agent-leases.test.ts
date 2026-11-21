@@ -198,6 +198,19 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
               assert.equal(response.status,303);
               assert.match(response.headers.get('location')??'',/review=saved/);
             }
+            const decisionHtml=await (await page('?revision='+reviewRevision,reviewerSession.accessToken)).text();
+            assert.match(decisionHtml,/تصمیم ثبت‌شده/);
+            assert.match(decisionHtml,/TEST independent panel review/);
+            assert.ok(!decisionHtml.includes('action="/dashboard/editorial/review"'));
+            const statusPath='revisions/'+reviewRevision+'/review';
+            assert.equal((await get(statusPath,consumer.accessToken)).status,403);
+            assert.equal((await get(statusPath)).status,401);
+            const status=await (await get(statusPath,author.accessToken)).json() as {receipt:{usable:boolean}};
+            assert.equal(status.receipt.usable,true);
+            await db.query('UPDATE operations_access SET revoked_at=clock_timestamp() WHERE user_id=$1',[reviewer]);
+            const revoked=await (await get(statusPath,author.accessToken)).json() as typeof status;
+            assert.equal(revoked.receipt.usable,false);
+            await db.query('UPDATE operations_access SET revoked_at=NULL WHERE user_id=$1',[reviewer]);
             const stored=await db.query('SELECT reviewer_id,lifetime_seconds FROM operation_reviews WHERE revision_id=$1',[reviewRevision]);
             assert.deepEqual(stored.rows,[{reviewer_id:reviewer,lifetime_seconds:60}]);
             const inventoryHtml=await (await page('',author.accessToken)).text();

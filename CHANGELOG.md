@@ -1,5 +1,9 @@
 # Changelog
 
+## Private review receipt · 2026-11-21
+
+Show stored editorial review decisions and server-checked approval validity in the private panel.
+
 ## Private editorial authoring · 2026-11-21
 
 Add private CMS document creation and immutable revision editing forms.

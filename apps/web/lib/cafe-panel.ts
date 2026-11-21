@@ -221,3 +221,17 @@ export function saveEditorialRevision(input:{documentId:string;operationId:strin
     return receipt.id;
   },{method:'POST',body:input});
 }
+
+type EditorialReview={reviewId:string;decision:'approved'|'rejected';reason:string;createdAt:string;expiresAt:string;usable:boolean};
+export function getEditorialReview(revisionId:string) {
+  return read('/v1/internal/editorial/revisions/'+revisionId+'/review',input=>{
+    if(!object(input)) throw new Error('Invalid review response');
+    const row=input.receipt;
+    if(row===null) return null;
+    if(!object(row)||!panelId(row.reviewId)||(row.decision!=='approved'&&row.decision!=='rejected')||
+      typeof row.reason!=='string'||typeof row.usable!=='boolean'||
+      typeof row.createdAt!=='string'||!Number.isFinite(Date.parse(row.createdAt))||
+      typeof row.expiresAt!=='string'||!Number.isFinite(Date.parse(row.expiresAt))) throw new Error('Invalid review receipt');
+    return row as EditorialReview;
+  });
+}

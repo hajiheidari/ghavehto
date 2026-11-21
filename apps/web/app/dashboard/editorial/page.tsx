@@ -2,18 +2,19 @@ import {randomUUID} from 'node:crypto';
 import RevisionForm from './revision-form';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
-import {getEditorialDocuments,getEditorialRevision,panelId,staffPanelOrigin} from '../../../lib/cafe-panel';
+import {getEditorialDocuments,getEditorialReview,getEditorialRevision,panelId,staffPanelOrigin} from '../../../lib/cafe-panel';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'اسناد خصوصی محتوا',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 const digits=new Intl.NumberFormat('fa-IR');
+const dates=new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Tehran'});
 export default async function EditorialPage({searchParams}:{searchParams:Promise<{after?:string|string[];revision?:string|string[];review?:string|string[];created?:string|string[];document?:string|string[]}>}) {
   if(process.env.PRIVATE_EDITORIAL_VIEW!=='1') notFound();
   const {after,revision,review,created,document}=await searchParams;
   if(document!==undefined&&!panelId(document)) notFound();
   if(after!==undefined&&!panelId(after)||revision!==undefined&&!panelId(revision)) notFound();
   if(revision){
-    const result=await getEditorialRevision(revision);
+    const [result,decision]=await Promise.all([getEditorialRevision(revision),getEditorialReview(revision)]);
     return <section className="section empty">
       <Link href="/dashboard/editorial">بازگشت به اسناد</Link>
       {result.state==='signed-out'?<p>برای مشاهدهٔ سند به نشست معتبر نیاز دارید.</p>:
@@ -24,7 +25,17 @@ export default async function EditorialPage({searchParams}:{searchParams:Promise
           <pre dir="ltr" style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(result.data.sources,null,2)}</pre>
           {review==='saved'&&<p role="status">تصمیم بازبینی ثبت شد.</p>}
           {review==='unconfirmed'&&<p role="status">ثبت تصمیم تأیید نشد. دسترسی یا تصمیم قبلی را بررسی کنید.</p>}
-          {staffPanelOrigin()&&<form method="post" action="/dashboard/editorial/review">
+          {decision.state==='unavailable'&&<p role="status">وضعیت بازبینی در دسترس نیست.</p>}
+          {decision.state==='ready'&&decision.data&&<section>
+            <h2>تصمیم ثبت‌شده</h2>
+            <dl><dt>تصمیم</dt><dd>{decision.data.decision==='approved'?'تأیید':'رد'}</dd>
+              <dt>دلیل</dt><dd>{decision.data.reason}</dd>
+              <dt>ثبت</dt><dd>{dates.format(new Date(decision.data.createdAt))}</dd>
+              <dt>انقضا</dt><dd>{dates.format(new Date(decision.data.expiresAt))}</dd>
+              <dt>اعتبار فعلی تأیید</dt><dd>{decision.data.usable?'معتبر':'فاقد اعتبار فعلی'}</dd>
+            </dl>
+          </section>}
+          {staffPanelOrigin()&&decision.state==='ready'&&decision.data===null&&<form method="post" action="/dashboard/editorial/review">
             <input type="hidden" name="revisionId" value={revision}/>
             <input type="hidden" name="operationId" value={randomUUID()}/>
             <label htmlFor="decision">تصمیم بازبینی</label>{' '}
