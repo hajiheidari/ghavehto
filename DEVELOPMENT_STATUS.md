@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private editorial authoring · 2026-11-21
+
+The opt-in Persian editorial panel can create an empty document and submit its first or subsequent revision with source-rights evidence. Same-origin forms preserve operation UUIDs and expected revision checks through the existing session API. Conflicting/stale saves return 409 with a Persian recovery instruction. Next: remaining M5 queue/review usability and milestone acceptance.
+
 ## Private editorial review form · 2026-11-21
 
 The opt-in Persian editorial reader now submits approved/rejected decisions with a reason and bounded lifetime through the existing private API. Same-origin form handling and server-derived reviewer authority protect writes. Independent-review, immutable decision and replay rules remain enforced in PostgreSQL. Next: private document creation and revision editing forms.

@@ -200,6 +200,36 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             }
             const stored=await db.query('SELECT reviewer_id,lifetime_seconds FROM operation_reviews WHERE revision_id=$1',[reviewRevision]);
             assert.deepEqual(stored.rows,[{reviewer_id:reviewer,lifetime_seconds:60}]);
+            const inventoryHtml=await (await page('',author.accessToken)).text();
+            const newDocument=/<input(?=[^>]*name="documentId")[^>]*value="([^"]+)"/.exec(inventoryHtml)?.[1];
+            assert.ok(newDocument);
+            const documentForm=new URLSearchParams({documentId:newDocument,slug:'test-panel-'+randomBytes(8).toString('hex')});
+            const createFromPanel=(token:string,origin?:string)=>fetch(web.url+'/dashboard/editorial/document',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},body:documentForm,
+            });
+            assert.equal((await createFromPanel(author.accessToken)).status,403);
+            assert.equal((await createFromPanel(author.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await createFromPanel(consumer.accessToken,'https://panel.example.test')).headers.get('location')??'',/created=unconfirmed/);
+            for(const response of await Promise.all(Array.from({length:2},()=>createFromPanel(author.accessToken,'https://panel.example.test')))){
+              assert.equal(response.status,303);
+              assert.match(response.headers.get('location')??'',/created=saved/);
+            }
+            assert.equal((await db.query("SELECT 1 FROM audit_events WHERE action='content.document_created' AND metadata->>'documentId'=$1",[newDocument])).rowCount,1);
+            const editorHtml=await (await page('?document='+newDocument,author.accessToken)).text();
+            const editOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(editorHtml)?.[1];
+            assert.ok(editOperation);
+            const editForm=new URLSearchParams({documentId:newDocument,operationId:editOperation,expectedRevision:'0',
+              title:'Panel draft',body:'Test edited original text',sources:JSON.stringify([{rights:'original'}])});
+            const saveFromPanel=(token:string,operation=editOperation)=>fetch(web.url+'/dashboard/editorial/save',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:'https://panel.example.test'},
+              body:new URLSearchParams({...Object.fromEntries(editForm),operationId:operation}),
+            });
+            assert.equal((await saveFromPanel(consumer.accessToken)).status,409);
+            const edits=await Promise.all([saveFromPanel(author.accessToken),saveFromPanel(author.accessToken)]);
+            assert.deepEqual(edits.map(response=>response.status),[303,303]);
+            assert.equal(edits[0].headers.get('location'),edits[1].headers.get('location'));
+            assert.equal((await saveFromPanel(author.accessToken,randomUUID())).status,409);
+            assert.equal((await db.query('SELECT 1 FROM content_revisions WHERE document_id=$1',[newDocument])).rowCount,1);
             const denied=await (await page('',consumer.accessToken)).text();
             assert.match(denied,/مجوز ویرایشگر ندارید/);
             assert.ok(!denied.includes(revision.title));
@@ -211,10 +241,10 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           const firstPage=await (await get('documents',author.accessToken)).json() as {items:{documentId:string;revision:number;revisionId:string|null}[];nextCursor:string};
           assert.equal(firstPage.items.length,20);
           const secondPage=await (await get('documents?after='+firstPage.nextCursor,author.accessToken)).json() as typeof firstPage;
-          assert.equal(secondPage.items.length,2);
+          assert.equal(secondPage.items.length,3);
           assert.equal(secondPage.nextCursor,null);
           const all=[...firstPage.items,...secondPage.items];
-          assert.equal(new Set(all.map(item=>item.documentId)).size,22);
+          assert.equal(new Set(all.map(item=>item.documentId)).size,23);
           assert.equal(all.filter(item=>item.revision===0&&item.revisionId===null).length,21);
           const revisionPath='revisions/'+receipt.id;
           assert.equal((await get(revisionPath)).status,401);

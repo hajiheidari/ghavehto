@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private editorial authoring · 2026-11-21
+
+The Next/Nest/PostgreSQL fixture exercises document creation from the panel, same-origin checks, denied consumer writes, concurrent exact creation/save, one revision and stale-parent rejection. Local execution results are recorded below.
+
 ## Private editorial review form · 2026-11-21
 
 The built Next/Nest/PostgreSQL fixture checks missing/foreign Origin denial, author self-review denial, independent reviewer submission and concurrent exact replay with one stored decision. Local execution results are recorded below.
@@ -420,5 +424,7 @@ CI 44546681504 برای 8f9d398 آزمون جدید توقف پیوند را گ�
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API را با موفقیت گذراند.
 
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API را با موفقیت گذراند.
+
+اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe را با موفقیت گذراند.
 
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe را با موفقیت گذراند.

@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import RevisionForm from './revision-form';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {getEditorialDocuments,getEditorialRevision,panelId,staffPanelOrigin} from '../../../lib/cafe-panel';
@@ -6,9 +7,10 @@ import {getEditorialDocuments,getEditorialRevision,panelId,staffPanelOrigin} fro
 export const dynamic='force-dynamic';
 export const metadata={title:'اسناد خصوصی محتوا',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 const digits=new Intl.NumberFormat('fa-IR');
-export default async function EditorialPage({searchParams}:{searchParams:Promise<{after?:string|string[];revision?:string|string[];review?:string|string[]}>}) {
+export default async function EditorialPage({searchParams}:{searchParams:Promise<{after?:string|string[];revision?:string|string[];review?:string|string[];created?:string|string[];document?:string|string[]}>}) {
   if(process.env.PRIVATE_EDITORIAL_VIEW!=='1') notFound();
-  const {after,revision,review}=await searchParams;
+  const {after,revision,review,created,document}=await searchParams;
+  if(document!==undefined&&!panelId(document)) notFound();
   if(after!==undefined&&!panelId(after)||revision!==undefined&&!panelId(revision)) notFound();
   if(revision){
     const result=await getEditorialRevision(revision);
@@ -34,16 +36,30 @@ export default async function EditorialPage({searchParams}:{searchParams:Promise
             <button type="submit">ثبت تصمیم</button>
             <p>بازبینی باید توسط فردی مستقل از نویسنده انجام شود. مدت اعتبار حداکثر هفت روز است.</p>
           </form>}
+          {staffPanelOrigin()&&<RevisionForm documentId={result.data.documentId} revision={result.data.revision} title={result.data.title} body={result.data.body} sources={result.data.sources}/>}
         </article>}
     </section>;
   }
+  if(document&&staffPanelOrigin()) return <section className="section empty">
+    <Link href="/dashboard/editorial">بازگشت به اسناد</Link><h1>نسخهٔ نخست سند</h1>
+    <RevisionForm documentId={document}/>
+  </section>;
   const result=await getEditorialDocuments(after);
   return <section className="section empty"><h1>اسناد خصوصی محتوا</h1>
+    {staffPanelOrigin()&&result.state==='ready'&&<form method="post" action="/dashboard/editorial/document">
+      <h2>ایجاد سند</h2>
+      <input type="hidden" name="documentId" value={randomUUID()}/>
+      <label htmlFor="slug">نام مسیر سند</label>{' '}
+      <input id="slug" name="slug" dir="ltr" pattern="[a-z0-9][a-z0-9-]{0,119}" required maxLength={120}/>{' '}
+      <button type="submit">ایجاد سند</button>
+    </form>}
+    {result.state==='ready'&&created==='saved'&&<p role="status">سند ایجاد شد.</p>}
+    {result.state==='ready'&&created==='unconfirmed'&&<p role="status">ایجاد سند تأیید نشد. فهرست را بررسی کنید.</p>}
     {result.state==='signed-out'?<p>برای مشاهدهٔ اسناد به نشست معتبر نیاز دارید.</p>:
       result.state==='unavailable'?<p role="status">اسناد در دسترس نیستند یا مجوز ویرایشگر ندارید.</p>:
       <>
         {result.data.items.length===0?<p>هنوز سندی ثبت نشده است.</p>:<ul>{result.data.items.map(item=><li key={item.documentId}>
-          {item.revisionId?<Link href={{pathname:'/dashboard/editorial',query:{revision:item.revisionId}}}>{item.title}</Link>:<span>{item.slug} — بدون نسخه</span>}
+          {item.revisionId?<Link href={{pathname:'/dashboard/editorial',query:{revision:item.revisionId}}}>{item.title}</Link>:<Link href={{pathname:'/dashboard/editorial',query:{document:item.documentId}}}>{item.slug} — بدون نسخه</Link>}
           {item.revisionId&&<span> · نسخهٔ {digits.format(item.revision)}</span>}
         </li>)}</ul>}
         {result.data.nextCursor&&<Link href={{pathname:'/dashboard/editorial',query:{after:result.data.nextCursor}}}>صفحهٔ بعد</Link>}

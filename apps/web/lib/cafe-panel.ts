@@ -197,13 +197,27 @@ export function getEditorialRevision(id:string) {
     if(!object(input)||input.revisionId!==id||!panelId(input.documentId)||typeof input.title!=='string'||
       typeof input.body!=='string'||!Array.isArray(input.sources)||input.sources.length>50||
       !Number.isSafeInteger(input.revision)||Number(input.revision)<1) throw new Error('Invalid editorial revision');
-    return {title:input.title,body:input.body,sources:input.sources,revision:Number(input.revision)};
+    return {documentId:input.documentId,title:input.title,body:input.body,sources:input.sources,revision:Number(input.revision)};
   });
 }
 
 export function reviewEditorialRevision(input:{revisionId:string;operationId:string;decision:'approved'|'rejected';lifetimeSeconds:number;reason:string}) {
   return read('/v1/internal/editorial/reviews',receipt=>{
     if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid review receipt');
+    return receipt.id;
+  },{method:'POST',body:input});
+}
+
+export function createEditorialDocument(documentId:string,slug:string) {
+  return read('/v1/internal/editorial/documents',input=>{
+    if(!object(input)||input.id!==documentId) throw new Error('Invalid document receipt');
+    return documentId;
+  },{method:'POST',body:{documentId,slug}});
+}
+
+export function saveEditorialRevision(input:{documentId:string;operationId:string;expectedRevision:number;title:string;body:string;sources:unknown[]}) {
+  return read('/v1/internal/editorial/revisions',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid revision receipt');
     return receipt.id;
   },{method:'POST',body:input});
 }

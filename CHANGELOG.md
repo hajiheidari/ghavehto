@@ -1,5 +1,9 @@
 # Changelog
 
+## Private editorial authoring · 2026-11-21
+
+Add private CMS document creation and immutable revision editing forms.
+
 ## Private editorial review form · 2026-11-21
 
 Add reasoned private editorial review forms with explicit decision lifetime.
