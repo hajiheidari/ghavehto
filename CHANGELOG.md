@@ -1,5 +1,9 @@
 # Changelog
 
+## Private editorial reader · 2026-11-21
+
+Add a Persian private CMS inventory and revision reader.
+
 ## Private CMS inventory · 2026-11-21
 
 Add private CMS document inventory for editors with latest revision references and bounded pagination.

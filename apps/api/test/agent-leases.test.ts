@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createApp} from '../src/nest/app.js';
+import {startWebPanel} from './web-panel.js';
 import {SessionService} from '../src/nest/sessions.js';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -141,7 +142,7 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           assert.equal((await post('documents',{...documentInput,slug:documentInput.slug+'-changed'},author.accessToken)).status,409);
           const auditCount=await db.query("SELECT 1 FROM audit_events WHERE action='content.document_created' AND actor_id=$1 AND metadata->>'documentId'=$2",[editor,documentInput.documentId]);
           assert.equal(auditCount.rowCount,1);
-          const revision={documentId:documentInput.documentId,operationId:randomUUID(),expectedRevision:0,title:'Test draft',body:'Test body',sources:[{rights:'original'}]};
+          const revision={documentId:documentInput.documentId,operationId:randomUUID(),expectedRevision:0,title:'Test draft',body:'Test body <b>untrusted</b>',sources:[{rights:'original'}]};
           assert.equal((await post('revisions',revision)).status,401);
           assert.equal((await post('revisions',revision,consumer.accessToken)).status,403);
           assert.equal((await post('revisions',{...revision,actorId:admin},author.accessToken)).status,400);
@@ -162,6 +163,27 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           const initialInventory=await inventory.json() as {items:Record<string,unknown>[]};
           assert.deepEqual(initialInventory.items,[{documentId:documentInput.documentId,slug:documentInput.slug,
             revisionId:receipt.id,revision:1,title:revision.title}]);
+          const web=await startWebPanel(await app.getUrl(),false,false,true);
+          try {
+            const page=(query:string,token?:string)=>fetch(web.url+'/dashboard/editorial'+query,{
+              headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{},
+            });
+            const index=await page('',author.accessToken);
+            assert.match(index.headers.get('cache-control')??'',/no-store/);
+            const html=await index.text();
+            assert.match(html,/dir="rtl"/);
+            assert.ok(html.includes(revision.title));
+            assert.ok(html.includes('revision='+receipt.id));
+            assert.ok(!html.includes(author.accessToken));
+            const subjectPage=await page('?revision='+receipt.id,reviewerSession.accessToken);
+            const subjectHtml=await subjectPage.text();
+            assert.match(subjectHtml,/Test body &lt;b&gt;untrusted&lt;\/b&gt;/);
+            assert.ok(!subjectHtml.includes('<b>untrusted</b>'));
+            const denied=await (await page('',consumer.accessToken)).text();
+            assert.match(denied,/مجوز ویرایشگر ندارید/);
+            assert.ok(!denied.includes(revision.title));
+            assert.match(await (await page('')).text(),/به نشست معتبر نیاز دارید/);
+          } finally {await web.close();}
           for(let i=0;i<21;i++){
             assert.equal((await post('documents',{documentId:randomUUID(),slug:'test-list-'+randomBytes(8).toString('hex')},author.accessToken)).status,201);
           }

@@ -1,5 +1,9 @@
 # Development status · 2026-11-18
 
+## Private editorial reader · 2026-11-21
+
+An opt-in Persian editorial page lists private documents and reads selected revisions through the existing session-scoped API. PRIVATE_EDITORIAL_VIEW=1 enables the route. Bodies and source evidence render as escaped text. Next: reasoned private review forms and document editing. Public publication remains gated.
+
 ## Private CMS inventory · 2026-11-21
 
 Migration 077 adds an editor/admin private document inventory with 20-item keyset pages. Each row includes the slug and latest revision reference/title, including documents without a revision. Source text and evidence remain behind the existing subject read. Next: private editorial web workflow and remaining milestone acceptance.

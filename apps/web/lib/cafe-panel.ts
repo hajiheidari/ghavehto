@@ -180,3 +180,23 @@ export function stopOwnerTrackingLink(cafeId:string,linkId:string,reason:string)
     return input.changed;
   },{method:'POST',body:{cafeId,linkId,reason}});
 }
+
+type EditorialDocument={documentId:string;slug:string;revisionId:string|null;revision:number;title:string|null};
+export function getEditorialDocuments(after?:string) {
+  return read('/v1/internal/editorial/documents'+(after?'?after='+encodeURIComponent(after):''),input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))||
+      !input.items.every((row):row is EditorialDocument=>object(row)&&panelId(row.documentId)&&typeof row.slug==='string'&&
+        (row.revisionId===null||panelId(row.revisionId))&&Number.isSafeInteger(row.revision)&&Number(row.revision)>=0&&
+        (row.title===null||typeof row.title==='string'))) throw new Error('Invalid editorial inventory');
+    return {items:input.items,nextCursor:input.nextCursor};
+  });
+}
+export function getEditorialRevision(id:string) {
+  return read('/v1/internal/editorial/revisions/'+id,input=>{
+    if(!object(input)||input.revisionId!==id||!panelId(input.documentId)||typeof input.title!=='string'||
+      typeof input.body!=='string'||!Array.isArray(input.sources)||input.sources.length>50||
+      !Number.isSafeInteger(input.revision)||Number(input.revision)<1) throw new Error('Invalid editorial revision');
+    return {title:input.title,body:input.body,sources:input.sources,revision:Number(input.revision)};
+  });
+}

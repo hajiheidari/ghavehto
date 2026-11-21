@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private editorial reader · 2026-11-21
+
+Windows pnpm test passed 12 API tests and one loopback probe. The built Next/Nest/PostgreSQL fixture checks private inventory rendering, reviewer access, signed-out and unassigned denial, escaped source content and no-store. A separate web fixture checks default-off routing.
+
 ## Private CMS inventory · 2026-11-21
 
 The PostgreSQL HTTP fixture checks document-list session and role denial, cursor validation, latest revision projection, empty documents and two pages without duplicates. Exact-head execution is tracked in CI.
