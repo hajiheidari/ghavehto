@@ -243,6 +243,44 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     await assert.rejects(changeAccess('grant'),{code:'40001'});
     assert.equal((await admin.query("SELECT id FROM audit_events WHERE cafe_id=$1 AND action IN ('ownership.access_grant','ownership.access_revoke')",[cafeA])).rowCount,2);
     await admin.query("INSERT INTO cafe_memberships(user_id,cafe_id,role) VALUES($1,$2,'owner')",[owner.userId,cafeA]);
+    const claimant=(await admin.query('INSERT INTO users(phone_hash,phone_ciphertext,phone_verified_at) VALUES($1,$2,clock_timestamp()) RETURNING id',
+      [randomBytes(32),randomBytes(48)])).rows[0].id as string;
+    identities.push(claimant);
+    const claimantSessions=new SessionService(runtime),claimantTokens=await claimantSessions.issue(claimant);
+    const claimsWeb=await startWebPanel(base,false,false,false,false,false,true);
+    try {
+      const cookie='__Host-ghahvehto-access='+claimantTokens.accessToken;
+      const get=()=>fetch(claimsWeb.url+'/dashboard/ownership',{headers:{Cookie:cookie}});
+      assert.match(await (await fetch(claimsWeb.url+'/dashboard/ownership')).text(),/نشست معتبر/);
+      assert.match(await (await get()).text(),/هنوز درخواستی ثبت نکرده‌اید/);
+      const listing=await (await fetch(claimsWeb.url+'/cafes/'+branchA)).text();
+      assert.match(listing,/درخواست بررسی مالکیت این شعبه/);
+      const submit=(body:URLSearchParams,origin='https://panel.example.test',token=claimantTokens.accessToken)=>fetch(claimsWeb.url+'/dashboard/ownership/change',{
+        method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:origin},body});
+      const form=new URLSearchParams({operation:'submit',branchId:branchA});
+      assert.equal((await submit(form,'https://foreign.invalid')).status,403);
+      assert.equal((await submit(new URLSearchParams({operation:'submit',branchId:branchA,userId:owner.userId}))).status,400);
+      for(const response of await Promise.all([submit(form),submit(form)])) {
+        assert.equal(response.status,303);assert.match(response.headers.get('location')??'',/result=submitted/);
+      }
+      const receipts=(await request('/v1/ownership-claims',claimantTokens.accessToken));
+      const rows=await receipts.json() as {claimId:string;branchId:string;status:string}[];
+      assert.equal(rows.length,1);const pending=rows[0];
+      assert.equal(pending.status,'pending');assert.equal(pending.branchId,branchA);
+      assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='ownership.claim_submitted'",[claimant])).rowCount,1);
+      const html=await (await get()).text();
+      assert.ok(html.includes(pending.claimId));assert.ok(!html.includes(claimantTokens.accessToken));
+      assert.match(html,/در انتظار بررسی/);assert.match(html,/دسترسی مدیریتی جداست/);
+      assert.equal((await request(path,claimantTokens.accessToken)).status,404,'A claim never grants cafe access');
+      const withdraw=new URLSearchParams({operation:'withdraw',claimId:pending.claimId});
+      assert.match((await submit(withdraw,'https://panel.example.test',staff.tokens.accessToken)).headers.get('location')??'',/result=unconfirmed/);
+      assert.match((await submit(withdraw)).headers.get('location')??'',/result=withdrawn/);
+      assert.match((await submit(withdraw)).headers.get('location')??'',/result=unconfirmed/);
+      const history=await (await get()).text();assert.match(history,/پس‌گرفته‌شده/);
+      assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='ownership.claim_withdrawn'",[claimant])).rowCount,1);
+      await claimantSessions.revoke(claimantTokens.accessToken);
+      assert.equal((await submit(form)).status,401);
+    } finally {await claimsWeb.close();}
     const ownSession = await request('/v1/session', owner.tokens.accessToken);
     assert.equal(ownSession.status, 200);
     assert.equal((await ownSession.json()).userId, owner.userId);

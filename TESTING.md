@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private ownership claimant workflow · 2026-11-28
+
+Windows full build, workspace typechecks, 12 API tests and one probe passed. Added real restricted API/Next fixtures for default-off access, signed-out display, reviewed branch handoff, foreign-origin/spoofed input refusal, concurrent duplicate request, own status, no access grant, foreign withdrawal refusal, withdrawal replay recovery and revoked sessions. These new PostgreSQL assertions await the pushed head's CI. Prior 2474604 web/database and mobile-source passed in 46071294160; the remaining jobs were still running at read-back.
+
 ## Private program-scoped stamp summary · 2026-11-28
 
 Windows full build, workspace typechecks, 12 API tests and one loopback probe passed. Added disposable API/Next checks for a known stamp lot, program-version separation, expired award exclusion, allocated spend, unknown legacy spend, corrupt cross-account allocation, foreign/invalid/spoofed scopes, private rendering and revocation. Database execution awaits exact-head CI. The prior c6de724 web/database and mobile-source jobs passed in 46070837308; their success does not cover migration 088.

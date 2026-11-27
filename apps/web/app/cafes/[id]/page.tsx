@@ -20,6 +20,7 @@ export default async function Branch({params}: {params:Promise<{id:string}>}) {
         {entry.neighborhood && <><dt>محله</dt><dd>{entry.neighborhood}</dd></>}
       </dl>
       <p>نمایش این شعبه به معنی عضویت در برنامه وفاداری نیست.</p>
+      {process.env.PRIVATE_OWNERSHIP_CLAIMS_VIEW==='1'&&<Link href={{pathname:'/dashboard/ownership',query:{branch:entry.id}}}>درخواست بررسی مالکیت این شعبه</Link>}
     </> : <><h1>اطلاعات شعبه</h1><p role="status">اطلاعات شعبه فعلاً در دسترس نیست.</p></>}
   </section>;
 }

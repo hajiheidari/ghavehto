@@ -9,7 +9,7 @@ const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 export const panelId = (input:unknown):input is string => typeof input === 'string' && uuid.test(input);
 const object = (value:unknown):value is Record<string,unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-async function read<T>(path:string,parse:(input:unknown)=>T,change?:{method:'PUT'|'PATCH'|'POST';body:object}):Promise<PanelResult<T>> {
+async function read<T>(path:string,parse:(input:unknown)=>T,change?:{method:'PUT'|'PATCH'|'POST'|'DELETE';body:object}):Promise<PanelResult<T>> {
   const token = (await cookies()).get(accessCookieName)?.value;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return {state:'signed-out'};
   try {
@@ -36,6 +36,25 @@ export function logoutPanelSession() {
     if(!object(input)||input.revoked!==true) throw new Error('Invalid logout receipt');
     return true;
   },{method:'POST',body:{}});
+}
+export function getOwnershipClaims() {
+  return read('/v1/ownership-claims',input=>{
+    if(!Array.isArray(input)||input.length>50||!input.every(row=>object(row)&&panelId(row.claimId)&&panelId(row.branchId)&&
+      ['pending','withdrawn','verified','rejected'].includes(String(row.status)))) throw new Error('Invalid ownership claims');
+    return input as {claimId:string;branchId:string;status:'pending'|'withdrawn'|'verified'|'rejected'}[];
+  });
+}
+export function submitOwnershipClaim(branchId:string) {
+  return read('/v1/ownership-claims',input=>{
+    if(!object(input)||!panelId(input.claimId)) throw new Error('Invalid claim receipt');
+    return input.claimId;
+  },{method:'POST',body:{branchId}});
+}
+export function withdrawOwnershipClaim(claimId:string) {
+  return read('/v1/ownership-claims/'+claimId,input=>{
+    if(!object(input)||input.withdrawn!==true) throw new Error('Invalid claim withdrawal');
+    return true;
+  },{method:'DELETE',body:{}});
 }
 export function changePanelStaff(cafeId:string,branchId:string,userId:string,enabled:boolean) {
   if(![cafeId,branchId,userId].every(panelId)) return Promise.resolve({state:'unavailable'} as const);

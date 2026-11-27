@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private ownership claimant workflow · 2026-11-28
+
+An opt-in private Persian claimant page now submits and withdraws requests through the existing verified-session API, with a reviewed-directory handoff, own-request status list and exact-origin form checks. Claims and reviewed evidence remain separate from operational ownership grants; no initial login is enabled. Windows full build, typechecks, 12 API tests and one probe passed. Prior 2474604 web/database and mobile-source passed in run 46071294160, covering stamp summaries. Next: exact-head claimant integration and remaining ownership recovery/roadmap acceptance. Evidence upload and operator provisioning remain separate.
+
 ## Private program-scoped stamp summary · 2026-11-28
 
 Migration 088 adds a member-only stamp summary for one cafe/program/version already present in that member's history. Valid non-expired lot movements are counted; unsupported, overdrawn or cross-account allocations return unknown. The private program page links from stamp history and separates program cost from reward availability. No redemption route is activated. Local full build, workspace typechecks, 12 API tests and one probe passed. Prior c6de724 web/database and mobile-source passed in run 46070837308, while remaining jobs were still running. Next: validate the pushed head, then bounded member history filtering/recovery and remaining roadmap acceptance; expired-star replacement remains forbidden.

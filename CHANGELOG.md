@@ -1,5 +1,9 @@
 # Changelog
 
+## Private ownership claimant workflow · 2026-11-28
+
+Add opt-in Persian claim submission, recovery/status and withdrawal forms, with same-origin protection and a reviewed branch handoff. Preserve separate evidence review and operational ownership grants.
+
 ## Private program-scoped stamp summary · 2026-11-28
 
 Add a read-only Persian stamp program view with reconciled, expiry-aware units and exact member/cafe/program/version scope. Preserve unknown balances for unsupported history.
