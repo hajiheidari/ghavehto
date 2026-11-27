@@ -22,6 +22,7 @@
     "test/experiences.test.ts",
     "test/agent-leases.test.ts",
     "test/notification-preferences.test.ts",
+    "test/loyalty-history.test.ts",
     "test/founders.test.ts",
     "test/cafe-tracking.test.ts",
     "test/cafe-tracking-qr.test.ts",

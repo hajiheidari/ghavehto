@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private member loyalty history · 2026-11-28
+
+Windows passed 12 API tests, one loopback probe, workspace typechecks and full build. Added isolated PostgreSQL/Nest/Next coverage for own-user scope, three separate journals, same-timestamp pagination, a concurrent new row between pages, expired history, foreign/cross-ledger cursors, private-field omission, default-off views, restricted SQL, immutable triggers, revocation and deleted identities. PostgreSQL execution awaits the pushed head's CI. Previous 9c00f89 passed all five Foundation jobs and the independent connectivity workflow; database suite: 75 passed/0 failed, restoration drill: 1 passed/0 failed.
+
 ## Dependency and Windows validation hardening · 2026-11-28
 
 Executed on Windows Node 24.22.3 / pnpm 11.25.0: frozen install, full build (Next 16.4.5), workspace typechecks, 12 API tests, one loopback probe, three contract tests, OpenAPI export with no tracked content drift, generated-client checks, real SSR/Nest smoke and whitespace checks passed. A repeated production audit returned zero known advisories. The first generated-client check failed only on CRLF/LF; it passed after newline normalization. PostgreSQL/logout and native execution require the pushed head's CI. No local Flutter execution or production deployment is claimed.

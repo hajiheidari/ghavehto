@@ -1,5 +1,9 @@
 # Changelog
 
+## Private member loyalty history · 2026-11-28
+
+Add session-scoped, read-only journal history for stamps, stars and membership points, with separate private Persian views and bounded chronological pagination. No public earning/spending or payout is enabled.
+
 ## Dependency and Windows validation hardening · 2026-11-28
 
 Patch Next to 16.4.5, enforce moderate production advisory failures and make generated-client drift checks work with Windows CRLF checkout.

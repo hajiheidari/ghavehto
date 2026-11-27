@@ -3,7 +3,7 @@ import {BadRequestException,ConflictException,ForbiddenException,UnauthorizedExc
 import type {Pool} from 'pg';
 
 export class PrivateSessionDatabase {
-  constructor(private readonly pool: Pool, private readonly role: 'ghahvehto_editorial' | 'ghahvehto_participation' | 'ghahvehto_tracking_owner' | 'ghahvehto_preferences') {}
+  constructor(private readonly pool: Pool, private readonly role: 'ghahvehto_editorial' | 'ghahvehto_participation' | 'ghahvehto_tracking_owner' | 'ghahvehto_preferences' | 'ghahvehto_loyalty_reader') {}
 
   async validateRuntime(): Promise<void> {
     const {rows:[row]}=await this.pool.query(`SELECT NOT(rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole OR rolreplication OR rolinherit)

@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private member loyalty history · 2026-11-28
+
+Migration 086 exposes separate stamp/star/tier journal pages only to the live session's member through a dedicated read-only capability. The private Persian panel has keyset pagination and omits internal reasons/operation IDs. Historical units are not presented as a spendable balance. Default startup and the private view remain disabled. Previous head 9c00f89 passed all five Foundation jobs in run 46068881387, including 75 database tests and the backup/restore drill. Next: execute this increment's PostgreSQL/Next fixture in exact-head CI, then remaining member balance/recovery and milestone acceptance work.
+
 ## Dependency and Windows validation hardening · 2026-11-28
 
 Pinned Next to 16.4.5 after a fresh audit found seven moderate advisories in 16.4.2; Foundation now rejects moderate-or-higher production findings. Frozen installation and full web/API build work on this Windows host. Client drift checks now tolerate Git's CRLF checkout while still comparing every source character. Next: verify the pushed head's complete CI, then continue remaining independent acceptance work; Flutter SDK download and real-device/provider/release gates remain external.

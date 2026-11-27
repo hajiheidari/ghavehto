@@ -325,6 +325,24 @@ export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
 }
 
 type NotificationPreferences={revision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number};
+export type LoyaltyLedger='stamp'|'star'|'tier';
+export type LoyaltyHistoryEntry={id:string;units:number;kind:string;recordedAt:string;effectiveAt:string;reversalOf:string|null;
+  expiresAt?:string|null;cafeId?:string;programId?:string;programVersion?:number;qualificationYear?:number};
+export function getLoyaltyHistory(ledger:LoyaltyLedger,after?:string) {
+  const date=(value:unknown):value is string=>typeof value==='string'&&Number.isFinite(Date.parse(value));
+  return read('/v1/internal/loyalty-history?'+new URLSearchParams({ledger,...(after?{after}:{})}),input=>{
+    if(!object(input)||input.ledger!==ledger||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))||!input.items.every(row=>object(row)&&panelId(row.id)&&
+        Number.isInteger(row.units)&&Number(row.units)!==0&&Math.abs(Number(row.units))<=1000000000&&
+        ['award','spend','expire','reversal'].includes(String(row.kind))&&date(row.recordedAt)&&date(row.effectiveAt)&&
+        (row.reversalOf===null||panelId(row.reversalOf))&&
+        (ledger==='tier'?(Number.isInteger(row.qualificationYear)&&Number(row.qualificationYear)>=2000&&Number(row.qualificationYear)<=9999&&['award','reversal'].includes(String(row.kind))):
+          ((row.expiresAt===null||date(row.expiresAt))&&(ledger!=='stamp'||(panelId(row.cafeId)&&panelId(row.programId)&&Number.isInteger(row.programVersion)&&Number(row.programVersion)>0)))))) {
+      throw new Error('Invalid loyalty history');
+    }
+    return {items:input.items as LoyaltyHistoryEntry[],nextCursor:input.nextCursor as string|null};
+  });
+}
 export function notificationPreferences(change?:{expectedRevision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number}) {
   return read('/v1/internal/preferences',input=>{
     if(!object(input)||!Number.isSafeInteger(input.revision)||Number(input.revision)<0||
