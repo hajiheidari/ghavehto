@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Bounded private database operations · 2026-11-28
+
+Windows executed 12 passing API tests, one passing probe and passing workspace typechecks. Added real PostgreSQL cases for a held session-family lock returning HTTP 503 without preference/audit writes, a canceled long statement, and reuse of a single-connection pool with original role/timeouts restored. These assertions await exact-head CI. Prior e5da5ed web/database and mobile-source jobs passed in 46071646821; native/cloud completion was not yet observed.
+
 ## Private ownership claimant workflow · 2026-11-28
 
 Windows full build, workspace typechecks, 12 API tests and one probe passed. Added real restricted API/Next fixtures for default-off access, signed-out display, reviewed branch handoff, foreign-origin/spoofed input refusal, concurrent duplicate request, own status, no access grant, foreign withdrawal refusal, withdrawal replay recovery and revoked sessions. These new PostgreSQL assertions await the pushed head's CI. Prior 2474604 web/database and mobile-source passed in 46071294160; the remaining jobs were still running at read-back.

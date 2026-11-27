@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Bounded private database operations · 2026-11-28
+
+PrivateSessionDatabase now applies transaction-local statement/lock deadlines and returns sanitized temporary unavailability after rollback. Runtime role and timeout settings must reset before pool reuse. This covers explicit private capability pools; ingress and connection-pool queue controls remain separate acceptance work. Windows 12 API tests, one probe and workspace typechecks passed. Prior e5da5ed web/database and mobile-source succeeded in 46071646821, including the claimant UI; remaining jobs were still running. Next: exact-head timeout/recovery CI, then remaining security/roadmap work.
+
 ## Private ownership claimant workflow · 2026-11-28
 
 An opt-in private Persian claimant page now submits and withdraws requests through the existing verified-session API, with a reviewed-directory handoff, own-request status list and exact-origin form checks. Claims and reviewed evidence remain separate from operational ownership grants; no initial login is enabled. Windows full build, typechecks, 12 API tests and one probe passed. Prior 2474604 web/database and mobile-source passed in run 46071294160, covering stamp summaries. Next: exact-head claimant integration and remaining ownership recovery/roadmap acceptance. Evidence upload and operator provisioning remain separate.

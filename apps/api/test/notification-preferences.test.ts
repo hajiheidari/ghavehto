@@ -6,6 +6,8 @@ import pg from 'pg';
 import {migrate} from '../src/nest/migrations.js';
 import {createApp} from '../src/nest/app.js';
 import {SessionService} from '../src/nest/sessions.js';
+import {PrivateSessionDatabase} from '../src/nest/private-session-database.js';
+import {ServiceUnavailableException} from '@nestjs/common';
 import {startWebPanel} from './web-panel.js';
 
 test('private in-app preferences use live user scope, exact state retry and audited optimistic updates',async()=>{
@@ -26,7 +28,7 @@ test('private in-app preferences use live user scope, exact state retry and audi
     await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);roleCreated=true;
     await host.query(`GRANT ghahvehto_preferences TO ${login}`);
     base.username=login;base.password=password;
-    runtime=new pg.Pool({connectionString:base.toString()});
+    runtime=new pg.Pool({connectionString:base.toString(),max:1,connectionTimeoutMillis:2000});
     await assert.rejects(createApp({preferencesPool:pool}),/Dedicated restricted/);
     const standard=await createApp();
     try {
@@ -42,6 +44,25 @@ test('private in-app preferences use live user scope, exact state retry and audi
     assert.deepEqual(await (await request(first.accessToken)).json(),initial);
     assert.equal((await pool.query('SELECT 1 FROM notification_preferences')).rowCount,0);
     const change={expectedRevision:0,loyalty:true,experiences:false,editorial:false,dailyLimit:3};
+    const blocker=await pool.connect();
+    try {
+      await blocker.query('BEGIN');
+      const family=(await blocker.query('SELECT family_id FROM sessions WHERE user_id=$1',[a])).rows[0].family_id;
+      await blocker.query("SELECT pg_advisory_xact_lock(hashtextextended('session:'||$1::text,0))",[family]);
+      const timedOut=await request(first.accessToken,change);
+      assert.equal(timedOut.status,503);
+      const error=await timedOut.json();
+      assert.equal(error.code,'unavailable');
+      assert.ok(!JSON.stringify(error).includes('ghahvehto_preferences'));
+      assert.equal((await pool.query('SELECT 1 FROM notification_preferences')).rowCount,0);
+      assert.equal((await pool.query("SELECT 1 FROM audit_events WHERE actor_id=$1 AND action='notifications.preferences_changed'",[a])).rowCount,0);
+    } finally {await blocker.query('ROLLBACK');blocker.release();}
+    const bounded=new PrivateSessionDatabase(runtime,'ghahvehto_preferences');
+    await assert.rejects(bounded.run('Bearer '+first.accessToken,
+      'SELECT pg_sleep(3) AS delayed WHERE $1::bytea IS NOT NULL',[]),ServiceUnavailableException);
+    const reset=(await runtime.query("SELECT current_user,current_setting('statement_timeout') AS statement_timeout,current_setting('lock_timeout') AS lock_timeout")).rows[0];
+    assert.deepEqual(reset,{current_user:login,statement_timeout:'0',lock_timeout:'0'});
+    assert.deepEqual(await (await request(first.accessToken)).json(),initial,'Pool and session remain reusable after canceled statements');
     assert.equal((await request(first.accessToken,{...change,userId:b})).status,400);
     assert.equal((await request(first.accessToken,{...change,dailyLimit:0})).status,400);
     const duplicates=await Promise.all([request(first.accessToken,change),request(first.accessToken,change)]);

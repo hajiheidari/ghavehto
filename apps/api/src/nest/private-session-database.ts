@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {BadRequestException,ConflictException,ForbiddenException,UnauthorizedException} from '@nestjs/common';
+import {BadRequestException,ConflictException,ForbiddenException,ServiceUnavailableException,UnauthorizedException} from '@nestjs/common';
 import type {Pool} from 'pg';
 
 export class PrivateSessionDatabase {
@@ -22,6 +22,8 @@ export class PrivateSessionDatabase {
     const client=await this.pool.connect();
     try {
       await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
+      await client.query("SET LOCAL statement_timeout = '2s'");
+      await client.query("SET LOCAL lock_timeout = '1s'");
       await client.query(`SET LOCAL ROLE ${this.role}`);
       const {rows:[receipt]}=await client.query<T>(sql,[createHash('sha256').update(token).digest(),...values]);
       await client.query('COMMIT');
@@ -33,6 +35,7 @@ export class PrivateSessionDatabase {
       if(code==='42501') throw new ForbiddenException();
       if(code==='22023') throw new BadRequestException();
       if(code==='23505'||code==='40001') throw new ConflictException();
+      if(code==='57014'||code==='55P03') throw new ServiceUnavailableException();
       throw error;
     } finally {client.release();}
   }

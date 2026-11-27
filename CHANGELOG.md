@@ -1,5 +1,9 @@
 # Changelog
 
+## Bounded private database operations · 2026-11-28
+
+Bound private capability statements and lock waits, roll back canceled operations and return generic temporary unavailability while preserving retry safety.
+
 ## Private ownership claimant workflow · 2026-11-28
 
 Add opt-in Persian claim submission, recovery/status and withdrawal forms, with same-origin protection and a reviewed branch handoff. Preserve separate evidence review and operational ownership grants.
