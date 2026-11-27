@@ -36,6 +36,12 @@ SELECT public.inspect_tracking_retention($1::timestamptz);
 
 A deletion implementation must define what exact retries return after expiry, whether historical analytics may change, and how backup expiry or restoration affects deletion. Acceptance should cover unexpired attribution, legacy replay policy, dependent facts and audited batch recovery. Stamp, star and membership-tier history remain immutable and outside the deletion scope.
 
+## Configurable unattributed tracking cleanup
+
+Migration 083 provides maintenance-only cleanup with an explicit past cutoff. It processes at most 1000 touches per call, requires a cutoff at least 24 hours old and preserves any touch still within its attribution window or linked to identity facts. Aggregate scan/click totals are retained per link. A retired operation ID prevents an old request from creating a fresh touch after cleanup. Consent fingerprints for removed touches are deleted in the same transaction.
+
+The deletion guard is limited to DELETE during the maintenance routine under table-owner authority. Ordinary UPDATE/DELETE/TRUNCATE and runtime execution remain denied. No schedule, default retention duration or production execution is registered. Identity-linked attribution remains retained pending its separate policy. The three loyalty journals retain their original immutable triggers.
+
 ## Activation and release gates
 
 An approved provider, secure key/credential provisioning and explicit real-send authorization are required for initial sign-in. Input IP must come from a trusted transport boundary and reviewed reverse-proxy policy. Secret rotation/recovery, real delivery reconciliation, transport/global abuse limits, HTTPS/TLS, request logging redaction/monitoring, web secure cookies/CSRF and mobile secure storage must be completed/reviewed before public authentication.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Configurable tracking retention · 2026-11-28
+
+Add bounded configurable cleanup for old unattributed tracking with aggregate and retry preservation.
+
 ## Flutter cafe discovery · 2026-11-28
 
 Add the Flutter reviewed cafe directory, search, pagination and branch detail flow.

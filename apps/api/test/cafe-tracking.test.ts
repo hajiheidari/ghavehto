@@ -404,6 +404,52 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
         } finally {await app.close();}
       } finally {await runtime.end();await host.query(`DROP ROLE ${login}`);}
     });
+    await t.test('configured retention prunes only expired unattributed touches and preserves counts and retry retirement',async()=>{
+      const l=await link(),oldOperation=randomUUID();
+      const oldTouch=(await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at)
+        VALUES($1,$2,'qr_scan',clock_timestamp()-interval '3 days') RETURNING id`,[l.id,oldOperation])).rows[0].id;
+      await pool.query('INSERT INTO cafe_tracking_consents(operation_id,visitor_hash) VALUES($1,$2)',[oldOperation,randomBytes(32)]);
+      await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at)
+        SELECT $1,gen_random_uuid(),'qr_scan',clock_timestamp()-interval '3 days' FROM generate_series(1,1002)`,[l.id]);
+      const linked=(await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at)
+        VALUES($1,gen_random_uuid(),'qr_scan',clock_timestamp()-interval '3 days') RETURNING id`,[l.id])).rows[0].id;
+      const who=await user();
+      await pool.query(`INSERT INTO cafe_tracking_identity_facts(user_id,touch_id,fact,fact_at)
+        VALUES($1,$2,'registration',clock_timestamp()),($1,$2,'phone_verified',clock_timestamp())`,[who,linked]);
+      const {rows:[longLink]}=await pool.query(`INSERT INTO cafe_tracking_links(cafe_id,branch_id,code_hash,active,expires_at,attribution_window_seconds)
+        VALUES($1,$2,$3,true,clock_timestamp()+interval '7 days',604800) RETURNING id`,[cafe.id,branch.id,randomBytes(32)]);
+      const withinWindow=(await pool.query(`INSERT INTO cafe_tracking_touches(link_id,operation_id,kind,recorded_at)
+        VALUES($1,gen_random_uuid(),'qr_scan',clock_timestamp()-interval '3 days') RETURNING id`,[longLink.id])).rows[0].id;
+      const before=(await pool.query(metrics,[l.id])).rows;
+      const prune="SELECT public.prune_unattributed_tracking(clock_timestamp()-interval '2 days') AS removed";
+      const transaction=await pool.connect();
+      try {
+        await transaction.query('BEGIN');
+        assert.equal((await transaction.query(prune)).rows[0].removed,1000);
+        assert.equal((await transaction.query("SELECT current_setting('ghahvehto.tracking_retention',true) AS flag")).rows[0].flag,'');
+        await transaction.query('ROLLBACK');
+      } finally {await transaction.query('ROLLBACK');transaction.release();}
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_touches WHERE id=$1',[oldTouch])).rowCount,1);
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_retired_operations WHERE operation_id=$1',[oldOperation])).rowCount,0);
+      assert.equal((await pool.query(prune)).rows[0].removed,1000);
+      assert.equal((await pool.query(prune)).rows[0].removed,3);
+      assert.equal((await pool.query(prune)).rows[0].removed,0);
+      assert.deepEqual((await pool.query(metrics,[l.id])).rows,before);
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_touches WHERE id=ANY($1::uuid[])',[[linked,withinWindow]])).rowCount,2);
+      assert.equal((await pool.query('SELECT 1 FROM cafe_tracking_consents WHERE operation_id=$1',[oldOperation])).rowCount,0);
+      await assert.rejects(pool.query(touch,[l.hash,'qr_scan',oldOperation]),{code:'22023'});
+      await assert.rejects(pool.query('DELETE FROM cafe_tracking_touches'),{code:'55000'});
+      await assert.rejects(pool.query('SELECT public.prune_unattributed_tracking(clock_timestamp())'),{code:'22023'});
+      const client=await pool.connect();
+      try {
+        await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_tracking');
+        await assert.rejects(client.query(prune),{code:'42501'});
+        await client.query('ROLLBACK');
+        await client.query('BEGIN');await client.query('SET LOCAL ROLE ghahvehto_tracking');
+        await client.query("SELECT set_config('ghahvehto.tracking_retention','active',true)");
+        await assert.rejects(client.query('DELETE FROM cafe_tracking_touches'),{code:'42501'});
+      } finally {await client.query('ROLLBACK');client.release();}
+    });
     await t.test('expired, inactive and ownership-revoked links reject new touches; runtime cannot forge facts',async()=>{
       for(const l of [await link(false),await link(true,true)]) await assert.rejects(pool.query(touch,[l.hash,'qr_scan',randomUUID()]),{code:'22023'});
       const l=await link();

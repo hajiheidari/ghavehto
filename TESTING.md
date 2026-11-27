@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Configurable tracking retention · 2026-11-28
+
+Windows 12 API tests, one probe, API typecheck and whitespace checks passed. The PostgreSQL fixture verifies 1000-row batching, rollback of deleted data/tombstones, aggregate preservation, exclusion of linked/within-window touches, expired-operation refusal, direct-delete denial and restricted-runtime denial.
+
 ## Flutter cafe discovery · 2026-11-28
 
 Added Flutter client/widget tests for UTF-8 query transport, validated directory responses, malformed/foreign branch rejection, RTL search/page navigation, unavailable/empty/no-match states, stale future handling and branch retry/404. The actual Dart-to-Nest test also verifies unavailable directory handling on the bootstrap-only server. This Windows host has no Flutter/Dart SDK; local whitespace checks passed and exact-head execution is required in CI.

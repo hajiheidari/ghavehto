@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Configurable tracking retention · 2026-11-28
+
+Migration 083 adds configurable maintenance cleanup for expired unattributed tracking touches and consent fingerprints. It preserves aggregate scan/click totals and retires operation IDs to prevent recreation. Linked identity facts, active attribution windows and all loyalty journals are retained. No default period, scheduler or production cleanup is activated. Next: verify this head, then remaining release/privacy acceptance and actual-device checks.
+
 ## Flutter cafe discovery · 2026-11-28
 
 Flutter now opens a Persian RTL directory screen backed by the existing reviewed-directory API. It supports query/pagination, distinct empty/no-match/unavailable states, retry and branch detail, with stale async response protection. BootstrapScreen remains available to existing injected probe callers. Mobile fixtures remain test-only. Pinned Flutter analysis/widget/integration and native results must be read from this head. The previous 1957732 passed all five Foundation jobs plus the real backup/restore step in 46065975023.
