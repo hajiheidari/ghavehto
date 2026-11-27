@@ -23,7 +23,7 @@ test('private loyalty history keeps all three immutable journals separate and sc
       VALUES($1,$2,clock_timestamp()) RETURNING id`,[randomBytes(32),randomBytes(48)])).rows[0].id as string;
     const a=await user(),b=await user(),sessions=new SessionService(pool);
     const [own,other]=await Promise.all([sessions.issue(a),sessions.issue(b)]);
-    const cafe=(await pool.query("INSERT INTO cafes(name) VALUES('TEST HISTORY') RETURNING id")).rows[0].id;
+    const cafe=(await pool.query("INSERT INTO cafes(name,normalized_name,slug) VALUES('TEST HISTORY','test history',$1) RETURNING id",[randomUUID()])).rows[0].id;
     const program=(await pool.query('INSERT INTO stamp_programs(cafe_id) VALUES($1) RETURNING id',[cafe])).rows[0].id;
     await pool.query('INSERT INTO stamp_program_versions(program_id,cafe_id,version,stamps_required) VALUES($1,$2,1,5)',[program,cafe]);
     const stamp=(await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
