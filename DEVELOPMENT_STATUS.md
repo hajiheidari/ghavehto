@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Disposable backup restoration · 2026-11-28
+
+A disposable backup/restore drill now runs in Foundation CI using pg_dump/pg_restore from the PostgreSQL service container. The fixture creates separate source/target databases and checks migration readiness, PostGIS, exact encrypted-identity bytes and independent stamp/star/tier history, immutable triggers and role denials after restore. It removes the temporary databases and archive. This is a local snapshot drill; production off-host encryption, retention and scheduled backups remain release work. Exact-head execution is pending.
+
 ## Private draft intake and recovery · 2026-11-28
 
 Migration 082 adds submitter-scoped draft status recovery by operation UUID. The private intake page accepts supplied research/content and source-rights attestations, then redirects to the persisted receipt. Controls and the one-shot worker govern processing. Revoked operators immediately lose access. Next: read the current milestone acceptance inventory and complete independent security/recovery work.

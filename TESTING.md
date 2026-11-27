@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Disposable backup restoration · 2026-11-28
+
+The new test:restore command compiles and runs a real PostgreSQL custom-format dump/restore against two disposable databases. It checks restored data equality, exclusion of a post-snapshot write, migration replay, PostGIS, immutable journals and denied runtime reads. Local TypeScript test compilation and whitespace checks passed. Docker/PostgreSQL are unavailable on this Windows host, so execution is pending Foundation CI.
+
 ## Private draft intake and recovery · 2026-11-28
 
 Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The disposable panel fixture covers operator intake, exact concurrent replay, paused queued status, foreign-submitter denial and access revocation. Prior c076886 web/database and cloud-development checks succeeded; native checks were still running at read-back.

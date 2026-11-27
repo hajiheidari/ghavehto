@@ -1,5 +1,9 @@
 # Changelog
 
+## Disposable backup restoration · 2026-11-28
+
+Add a disposable PostgreSQL snapshot/restore drill to Foundation CI.
+
 ## Private draft intake and recovery · 2026-11-28
 
 Add private operator draft intake and operation-based status recovery.

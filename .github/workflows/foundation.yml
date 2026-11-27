@@ -43,6 +43,10 @@ jobs:
       - run: node scripts/generate-clients.mjs --check
       - run: git diff --exit-code -- packages/contracts/openapi.json
       - run: pnpm --filter @ghahvehto/api test:db
+      - name: Verify disposable database backup and restore
+        env:
+          POSTGRES_TEST_CONTAINER: ${{ job.services.postgres.id }}
+        run: pnpm --filter @ghahvehto/api test:restore
       - run: node scripts/smoke-web.mjs
   mobile-source:
     runs-on: ubuntu-latest
