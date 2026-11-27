@@ -1,10 +1,14 @@
 # Test plan and execution
 
-### Private notification preferences · 2026-11-28
+## Private browser logout · 2026-11-28
+
+Windows passed 12 API tests, one loopback probe, workspace typechecks and whitespace checks. Frozen dependency installation succeeded. Next compilation completed but the build command exited nonzero on its security check; pnpm production audit confirmed seven moderate Next 16.4.2 advisories. Upgrade is the immediate next independent increment. Added real API/Next coverage for foreign-origin and spoofed-form denial, logout of a rotated family, secure cookie removal, independent-family survival, exact replay and unavailable-backend recovery. These PostgreSQL assertions await exact-head CI. On c0e91e6, all five Foundation jobs passed in run 46068003072, including web/database notification preferences, mobile-source, cloud-development, Android debug and iOS simulator builds. Flutter setup on this Windows host failed at the official Dart download with regional AccessDenied, so no local Flutter tests ran.
+
+## Private notification preferences · 2026-11-28
 
 Windows execution passed 12 API tests, one loopback probe, API typecheck and whitespace checks. Added disposable PostgreSQL/API/Next coverage for defaults without writes, own-user scope, malformed/spoofed input, concurrent retries/conflicts, same-origin forms, restricted SQL and session revocation. Database execution awaits this head's CI. Previous head 36ae6df passed Foundation validation and connectivity in runs 46067396296 and 46067396297, respectively.
 
-# Unicode editorial transport · 2026-11-28
+## Unicode editorial transport · 2026-11-28
 
 Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The PostgreSQL HTTP fixture saves a valid 49,000-character Persian revision with evidence exceeding the old 100 KiB parser ceiling, and checks that a 400,000-byte input returns 413.
 

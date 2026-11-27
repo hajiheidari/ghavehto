@@ -1,10 +1,14 @@
 # Changelog
 
-### Private notification preferences · 2026-11-28
+## Private browser logout · 2026-11-28
+
+Add same-origin browser logout with server family revocation, confirmed secure-cookie removal and retryable failures. Correct recent Markdown heading levels.
+
+## Private notification preferences · 2026-11-28
 
 Add opt-in private in-app notification preferences with session-derived identity, optimistic updates and audited consent changes. Delivery stays disabled.
 
-# Unicode editorial transport · 2026-11-28
+## Unicode editorial transport · 2026-11-28
 
 Fix editorial transport limits for large valid Persian content while preserving bounded parsing.
 

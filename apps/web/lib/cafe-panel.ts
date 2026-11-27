@@ -31,6 +31,12 @@ export function staffPanelOrigin():string|null {
     return origin.protocol==='https:'&&origin.origin===value?value:null;
   } catch {return null;}
 }
+export function logoutPanelSession() {
+  return read('/v1/session/logout',input=>{
+    if(!object(input)||input.revoked!==true) throw new Error('Invalid logout receipt');
+    return true;
+  },{method:'POST',body:{}});
+}
 export function changePanelStaff(cafeId:string,branchId:string,userId:string,enabled:boolean) {
   if(![cafeId,branchId,userId].every(panelId)) return Promise.resolve({state:'unavailable'} as const);
   return read(`/v1/cafes/${cafeId}/branches/${branchId}/staff/${userId}`,input=>{

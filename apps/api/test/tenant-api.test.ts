@@ -298,9 +298,50 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
     assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND cafe_id=$2 AND action='cafe.profile_updated'", [owner.userId, cafeA])).rowCount, 3);
     assert.equal((await request('/v1/dashboards/admin', owner.tokens.accessToken)).status, 401);
     assert.equal((await request('/v1/dashboards/agents', owner.tokens.accessToken)).status, 401);
+    // A private browser can end an existing family without enabling initial web login.
+    const browserSessions=new SessionService(runtime);
+    const browser=await browserSessions.issue(owner.userId);
+    const rotatedBrowser=await browserSessions.rotate(browser.refreshToken);
+    assert.ok(rotatedBrowser);
+    const independent=await browserSessions.issue(owner.userId);
+    const webLogout=await startWebPanel(base);
+    try {
+      const cookie='__Host-ghahvehto-access='+browser.accessToken;
+      const page=await fetch(webLogout.url+'/dashboard/session',{headers:{Cookie:cookie}});
+      const html=await page.text();
+      assert.match(html,/خروج از این نشست/);
+      assert.ok(!html.includes(browser.accessToken));
+      const submit=(origin:string,body=new URLSearchParams({confirm:'logout'}))=>fetch(webLogout.url+'/dashboard/session/logout',{
+        method:'POST',redirect:'manual',headers:{Cookie:cookie,Origin:origin},body});
+      assert.equal((await fetch(webLogout.url+'/dashboard/session/logout')).status,405);
+      assert.equal((await submit('https://foreign.invalid')).status,403);
+      assert.equal((await submit('https://panel.example.test',new URLSearchParams({confirm:'logout',userId:owner.userId}))).status,400);
+      assert.ok(await browserSessions.authenticate(rotatedBrowser.accessToken));
+      const completed=await submit('https://panel.example.test');
+      assert.equal(completed.status,303);
+      assert.match(completed.headers.get('location')??'',/result=signed-out/);
+      const cleared=completed.headers.get('set-cookie')??'';
+      assert.match(cleared,/__Host-ghahvehto-access=;/);
+      for(const attribute of [/Max-Age=0/i,/Path=\//i,/HttpOnly/i,/Secure/i,/SameSite=strict/i]) assert.match(cleared,attribute);
+      assert.equal(await browserSessions.authenticate(rotatedBrowser.accessToken),null);
+      assert.equal(await browserSessions.rotate(rotatedBrowser.refreshToken),null);
+      assert.ok(await browserSessions.authenticate(independent.accessToken));
+      assert.equal((await submit('https://panel.example.test')).status,303);
+      assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='session.revoked'",[owner.userId])).rowCount,1);
+    } finally {await webLogout.close();}
+    await browserSessions.revoke(independent.accessToken);
+    const unavailableWeb=await startWebPanel('http://127.0.0.1:1');
+    try {
+      const failed=await fetch(unavailableWeb.url+'/dashboard/session/logout',{method:'POST',redirect:'manual',
+        headers:{Cookie:'__Host-ghahvehto-access='+owner.tokens.accessToken,Origin:'https://panel.example.test'},
+        body:new URLSearchParams({confirm:'logout'})});
+      assert.match(failed.headers.get('location')??'',/result=unconfirmed/);
+      assert.equal(failed.headers.get('set-cookie'),null,'Unconfirmed server logout must remain retryable');
+      assert.ok(await browserSessions.authenticate(owner.tokens.accessToken));
+    } finally {await unavailableWeb.close();}
     assert.equal((await request('/v1/session/logout', owner.tokens.accessToken, 'POST')).status, 201);
     assert.equal((await request('/v1/session/logout', owner.tokens.accessToken, 'POST')).status, 201);
-    assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='session.revoked'", [owner.userId])).rowCount, 1);
+    assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='session.revoked'", [owner.userId])).rowCount, 3);
     assert.equal((await request(path, owner.tokens.accessToken)).status, 401);
     await admin.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1', [staff.userId]);
     assert.equal((await request(path, staff.tokens.accessToken)).status, 401);
