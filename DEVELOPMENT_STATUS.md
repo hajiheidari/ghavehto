@@ -1,6 +1,10 @@
 # Development status · 2026-11-28
 
-## Unicode editorial transport · 2026-11-28
+### Private notification preferences · 2026-11-28
+
+Migration 085 adds live-session, user-scoped notification categories and a bounded daily cap. Defaults opt out; optimistic revisions and exact-state retries preserve concurrent edits and audit effective changes. The Persian private form is disabled by default. No delivery worker, SMS or external notification is enabled. Continue with independent acceptance gaps and exact-head CI; public release remains gated.
+
+# Unicode editorial transport · 2026-11-28
 
 The explicitly composed editorial API now accepts bounded JSON up to 384 KiB, matching supported Unicode body/evidence sizes. Editorial form readers allow up to 1 MiB of URL-encoded transport. Domain title/body/source limits remain enforced. Next: notification preference consent and final acceptance checks.
 

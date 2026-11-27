@@ -317,3 +317,13 @@ export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
     return input as {linkId:string}&Record<typeof trackingMetricKeys[number],string>;
   });
 }
+
+type NotificationPreferences={revision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number};
+export function notificationPreferences(change?:{expectedRevision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number}) {
+  return read('/v1/internal/preferences',input=>{
+    if(!object(input)||!Number.isSafeInteger(input.revision)||Number(input.revision)<0||
+      typeof input.loyalty!=='boolean'||typeof input.experiences!=='boolean'||typeof input.editorial!=='boolean'||
+      !Number.isInteger(input.dailyLimit)||Number(input.dailyLimit)<0||Number(input.dailyLimit)>10) throw new Error('Invalid notification preferences');
+    return input as NotificationPreferences;
+  },change?{method:'PUT',body:change}:undefined);
+}

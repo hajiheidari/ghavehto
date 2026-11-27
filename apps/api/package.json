@@ -16,7 +16,7 @@
     "ownership:review": "tsx src/nest/review-ownership.ts",
     "ownership:access": "tsx src/nest/manage-ownership-access.ts",
     "test:restore": "tsc -p tsconfig.test.json && node --test .test-build/test/backup-restore.test.js",
-    "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js .test-build/test/identity.test.js .test-build/test/tenant-api.test.js .test-build/test/auth-operations.test.js .test-build/test/stamp-qr-http.test.js .test-build/test/star-spending.test.js .test-build/test/referral-rewards.test.js .test-build/test/experiences.test.js .test-build/test/agent-leases.test.js .test-build/test/founders.test.js .test-build/test/cafe-tracking.test.js .test-build/test/experience-preview-http.test.js",
+    "test:db": "tsc -p tsconfig.test.json && node --test .test-build/test/database.test.js .test-build/test/sessions.test.js .test-build/test/otp-challenges.test.js .test-build/test/identity.test.js .test-build/test/tenant-api.test.js .test-build/test/auth-operations.test.js .test-build/test/stamp-qr-http.test.js .test-build/test/star-spending.test.js .test-build/test/referral-rewards.test.js .test-build/test/experiences.test.js .test-build/test/agent-leases.test.js .test-build/test/notification-preferences.test.js .test-build/test/founders.test.js .test-build/test/cafe-tracking.test.js .test-build/test/experience-preview-http.test.js",
     "contracts:export": "tsc -p tsconfig.json && node dist/nest/export-openapi.js"
   },
   "dependencies": {

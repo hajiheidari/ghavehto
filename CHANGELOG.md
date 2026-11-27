@@ -1,6 +1,10 @@
 # Changelog
 
-## Unicode editorial transport · 2026-11-28
+### Private notification preferences · 2026-11-28
+
+Add opt-in private in-app notification preferences with session-derived identity, optimistic updates and audited consent changes. Delivery stays disabled.
+
+# Unicode editorial transport · 2026-11-28
 
 Fix editorial transport limits for large valid Persian content while preserving bounded parsing.
 

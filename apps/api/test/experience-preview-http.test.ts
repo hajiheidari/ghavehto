@@ -52,6 +52,7 @@ test('private experience preview uses actual verified sessions and restricted ow
     try {
       assert.equal((await fetch(web.url+'/dashboard/cafe/'+cafe.id+'/tracking')).status,404);
       assert.equal((await fetch(web.url+'/dashboard/editorial')).status,404);
+      assert.equal((await fetch(web.url+'/dashboard/preferences')).status,404);
       const branches=(token:string)=>fetch(web.url+'/dashboard/cafe/'+cafe.id,{headers:{Cookie:'__Host-ghahvehto-access='+token}});
       for(const token of [ownerSession.accessToken,staffSession.accessToken]) {
         assert.match(await (await branches(token)).text(),/href="\/dashboard\/participation\/fulfillment"/);

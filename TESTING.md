@@ -1,6 +1,10 @@
 # Test plan and execution
 
-## Unicode editorial transport · 2026-11-28
+### Private notification preferences · 2026-11-28
+
+Windows execution passed 12 API tests, one loopback probe, API typecheck and whitespace checks. Added disposable PostgreSQL/API/Next coverage for defaults without writes, own-user scope, malformed/spoofed input, concurrent retries/conflicts, same-origin forms, restricted SQL and session revocation. Database execution awaits this head's CI. Previous head 36ae6df passed Foundation validation and connectivity in runs 46067396296 and 46067396297, respectively.
+
+# Unicode editorial transport · 2026-11-28
 
 Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The PostgreSQL HTTP fixture saves a valid 49,000-character Persian revision with evidence exceeding the old 100 KiB parser ceiling, and checks that a 400,000-byte input returns 413.
 
