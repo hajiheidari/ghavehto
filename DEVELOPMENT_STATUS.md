@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private cafe tracking analytics · 2026-11-28
+
+Migration 084 exposes owner-scoped link metrics through the dedicated tracking owner capability. The Persian panel shows scans, clicks, new registrations, phone verifications and confirmed interactions as separate string-backed integer counts. New indexes support the scoped aggregates. Next: verify final head and address remaining acceptance gaps.
+
 ## Configurable tracking retention · 2026-11-28
 
 Migration 083 adds configurable maintenance cleanup for expired unattributed tracking touches and consent fingerprints. It preserves aggregate scan/click totals and retires operation IDs to prevent recreation. Linked identity facts, active attribution windows and all loyalty journals are retained. No default period, scheduler or production cleanup is activated. Next: verify this head, then remaining release/privacy acceptance and actual-device checks.

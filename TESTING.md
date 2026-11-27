@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private cafe tracking analytics · 2026-11-28
+
+Windows 12 API tests, one probe, API typecheck and whitespace checks passed. The real owner HTTP/panel fixture checks separate counters, missing/foreign session denial, cafe/link mismatch and Persian rendering. Previous e3446e0 web/database, iOS and mobile-source jobs passed at read-back.
+
 ## Configurable tracking retention · 2026-11-28
 
 Windows 12 API tests, one probe, API typecheck and whitespace checks passed. The PostgreSQL fixture verifies 1000-row batching, rollback of deleted data/tombstones, aggregate preservation, exclusion of linked/within-window touches, expired-operation refusal, direct-delete denial and restricted-runtime denial.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Private cafe tracking analytics · 2026-11-28
+
+Add free private cafe tracking metrics with separate event facts and server owner scope.
+
 ## Configurable tracking retention · 2026-11-28
 
 Add bounded configurable cleanup for old unattributed tracking with aggregate and retry preservation.

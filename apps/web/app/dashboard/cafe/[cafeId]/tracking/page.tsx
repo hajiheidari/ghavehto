@@ -21,6 +21,7 @@ export default async function TrackingPage({params,searchParams}:{params:Promise
         {stop==='unconfirmed'&&<p role="status">توقف پیوند تأیید نشد. وضعیت پیوند را بررسی کنید.</p>}
         {result.data.items.length===0?<p>پیوندی ثبت نشده است.</p>:result.data.items.map(item=><article key={item.linkId}>
           <h2>پیوند <bdi dir="ltr">{item.linkId}</bdi></h2>
+          <Link href={{pathname:"/dashboard/cafe/"+cafeId+"/tracking/metrics",query:{link:item.linkId}}}>آمار این پیوند</Link>
           <dl><dt>شعبه</dt><dd><bdi dir="ltr">{item.branchId}</bdi></dd>
             <dt>وضعیت</dt><dd>{item.active?'فعال':'متوقف یا غیرفعال'}</dd>
             <dt>انقضا</dt><dd>{dates.format(new Date(item.expiresAt))}</dd></dl>

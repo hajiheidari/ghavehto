@@ -306,3 +306,14 @@ export function getDraftSubmission(operation:string) {
       attempts:Number(input.attempts),attemptLimit:Number(input.attemptLimit),paused:input.paused};
   });
 }
+
+const trackingMetricKeys=['qrScans','storeClicks','registrations','phoneVerifications','confirmedInteractions'] as const;
+export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
+  return read('/v1/internal/tracking-owner/metrics?'+new URLSearchParams({cafeId,linkId}),input=>{
+    if(!object(input)||input.linkId!==linkId.toLowerCase()||
+      !trackingMetricKeys.every(key=>typeof input[key]==='string'&&/^(0|[1-9][0-9]*)$/.test(input[key]))) {
+      throw new Error('Invalid tracking metrics');
+    }
+    return input as {linkId:string}&Record<typeof trackingMetricKeys[number],string>;
+  });
+}

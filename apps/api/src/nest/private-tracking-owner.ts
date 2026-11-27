@@ -15,10 +15,21 @@ class ListInput {
   @IsUUID() cafeId!:string;
   @IsOptional() @IsUUID() after?:string;
 }
+class MetricsInput {
+  @IsUUID() cafeId!:string;
+  @IsUUID() linkId!:string;
+}
 @ApiExcludeController()
 @Controller('v1/internal/tracking-owner')
 export class PrivateTrackingOwnerController {
   constructor(@Inject(TRACKING_OWNER_DB) private readonly database:PrivateSessionDatabase) {}
+
+  @Get('metrics') @Header('Cache-Control','no-store')
+  async metrics(@Headers('authorization') header:string|undefined,@Query() input:MetricsInput) {
+    const {metrics}=await this.database.run<{metrics:Record<string,unknown>}>(header,
+      'SELECT public.read_private_tracking_metrics($1,$2,$3) AS metrics',[input.cafeId,input.linkId]);
+    return metrics;
+  }
 
   @Get('links') @Header('Cache-Control','no-store')
   async list(@Headers('authorization') header:string|undefined,@Query() input:ListInput) {

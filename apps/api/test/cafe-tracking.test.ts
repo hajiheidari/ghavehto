@@ -369,6 +369,23 @@ test('cafe attribution counts touches, verified identity and confirmed interacti
             assert.match(denied,/مجوز مالک ندارید/);
             assert.ok(!denied.includes(l.id));
             assert.match(await (await get()).text(),/به نشست معتبر نیاز دارید/);
+            await pool.query(touch,[l.hash,'qr_scan',randomUUID()]);
+            await pool.query(touch,[l.hash,'store_click',randomUUID()]);
+            const metricsPath='/v1/internal/tracking-owner/metrics?'+new URLSearchParams({cafeId:cafe.id,linkId:l.id});
+            const readMetrics=async(token?:string,path=metricsPath)=>fetch((await app.getUrl())+path,{headers:token?{authorization:'Bearer '+token}:{}});
+            assert.equal((await readMetrics()).status,401);
+            assert.equal((await readMetrics(foreignSession.accessToken)).status,403);
+            assert.equal((await readMetrics(ownerSession.accessToken,'/v1/internal/tracking-owner/metrics?'+
+              new URLSearchParams({cafeId:randomUUID(),linkId:l.id}))).status,403);
+            const measured=await readMetrics(ownerSession.accessToken);
+            assert.equal(measured.headers.get('cache-control'),'no-store');
+            assert.deepEqual(await measured.json(),{linkId:l.id,qrScans:'1',storeClicks:'1',registrations:'0',phoneVerifications:'0',confirmedInteractions:'0'});
+            const metricPage=await fetch(web.url+path+'/metrics?link='+l.id,{headers:{Cookie:'__Host-ghahvehto-access='+ownerSession.accessToken}});
+            const metricHtml=await metricPage.text();
+            assert.match(metricHtml,/اسکن ثبت‌شده/);assert.match(metricHtml,/تعامل تأییدشده/);
+            assert.ok(metricHtml.includes(new Intl.NumberFormat('fa-IR').format(1)));
+            const foreignMetrics=await (await fetch(web.url+path+'/metrics?link='+l.id,{headers:{Cookie:'__Host-ghahvehto-access='+foreignSession.accessToken}})).text();
+            assert.match(foreignMetrics,/مجوز مالک ندارید/);
             const webLink=await link();
             const submit=(token:string,origin?:string)=>fetch(web.url+path+'/stop',{
               method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},
