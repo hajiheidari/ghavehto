@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Flutter cafe discovery · 2026-11-28
+
+Added Flutter client/widget tests for UTF-8 query transport, validated directory responses, malformed/foreign branch rejection, RTL search/page navigation, unavailable/empty/no-match states, stale future handling and branch retry/404. The actual Dart-to-Nest test also verifies unavailable directory handling on the bootstrap-only server. This Windows host has no Flutter/Dart SDK; local whitespace checks passed and exact-head execution is required in CI.
+
 ## Disposable backup restoration · 2026-11-28
 
 The new test:restore command compiles and runs a real PostgreSQL custom-format dump/restore against two disposable databases. It checks restored data equality, exclusion of a post-snapshot write, migration replay, PostGIS, immutable journals and denied runtime reads. Local TypeScript test compilation and whitespace checks passed. Docker/PostgreSQL are unavailable on this Windows host, so execution is pending Foundation CI.

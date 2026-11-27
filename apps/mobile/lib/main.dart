@@ -2,19 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import 'directory_screen.dart';
 
 void main() => runApp(const GhahvehtoApp());
 
 class GhahvehtoApp extends StatelessWidget {
-  const GhahvehtoApp({super.key, this.loader});
+  const GhahvehtoApp({super.key, this.loader, this.directoryLoader, this.branchLoader});
   final Future<String> Function()? loader;
+  final DirectoryLoader? directoryLoader;
+  final BranchLoader? branchLoader;
   @override
   Widget build(BuildContext context) => MaterialApp(
     locale: const Locale('fa'),
     supportedLocales: const [Locale('fa'), Locale('en')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     theme: ThemeData(colorSchemeSeed: const Color(0xff173c38)),
-    home: BootstrapScreen(loader: loader),
+    home: loader != null ? BootstrapScreen(loader: loader)
+      : DirectoryScreen(loader: directoryLoader, branchLoader: branchLoader),
   );
 }
 

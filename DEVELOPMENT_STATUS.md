@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Flutter cafe discovery · 2026-11-28
+
+Flutter now opens a Persian RTL directory screen backed by the existing reviewed-directory API. It supports query/pagination, distinct empty/no-match/unavailable states, retry and branch detail, with stale async response protection. BootstrapScreen remains available to existing injected probe callers. Mobile fixtures remain test-only. Pinned Flutter analysis/widget/integration and native results must be read from this head. The previous 1957732 passed all five Foundation jobs plus the real backup/restore step in 46065975023.
+
 ## Disposable backup restoration · 2026-11-28
 
 A disposable backup/restore drill now runs in Foundation CI using pg_dump/pg_restore from the PostgreSQL service container. The fixture creates separate source/target databases and checks migration readiness, PostGIS, exact encrypted-identity bytes and independent stamp/star/tier history, immutable triggers and role denials after restore. It removes the temporary databases and archive. This is a local snapshot drill; production off-host encryption, retention and scheduled backups remain release work. Exact-head execution is pending.

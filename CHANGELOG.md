@@ -1,5 +1,9 @@
 # Changelog
 
+## Flutter cafe discovery · 2026-11-28
+
+Add the Flutter reviewed cafe directory, search, pagination and branch detail flow.
+
 ## Disposable backup restoration · 2026-11-28
 
 Add a disposable PostgreSQL snapshot/restore drill to Foundation CI.

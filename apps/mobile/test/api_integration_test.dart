@@ -11,6 +11,8 @@ void main() {
       expect(result.brand,'قهوه‌تو');
       expect(result.locale,'fa-IR');
       expect(result.loyaltyEnabled,false);
+      // The CI bootstrap server deliberately has no directory runtime pool.
+      await expectLater(GhahvehtoApi(base,client).directory(), throwsStateError);
     } finally { client.close(); }
   }, skip: !const bool.fromEnvironment('RUN_API_INTEGRATION'));
 }

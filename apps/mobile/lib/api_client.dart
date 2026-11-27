@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'generated/bootstrap.dart';
 import 'generated/access.dart';
+import 'directory_models.dart';
 
 class GhahvehtoApi {
   GhahvehtoApi(String baseUrl, this.client) : baseUri = Uri.parse(baseUrl) {
@@ -16,6 +17,35 @@ class GhahvehtoApi {
     final response = await client.get(baseUri.resolve('/v1/bootstrap')).timeout(const Duration(seconds: 10));
     if (response.statusCode != 200) throw StateError('API unavailable');
     return BootstrapResponse.fromJson(jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>);
+  }
+  Future<DirectoryPage> directory({String query = '', int page = 1}) async {
+    if (query.length > 80 || page < 1 || page > 100 ||
+        RegExp(r'[\u0000-\u001f\u007f]').hasMatch(query)) {
+      throw ArgumentError('Invalid directory query');
+    }
+    final uri = baseUri.resolve('/v1/directory').replace(
+      queryParameters: {'q': query, 'page': '$page'},
+    );
+    final request = http.Request('GET', uri)..followRedirects = false;
+    final response = await _send(request);
+    if (response.statusCode != 200) throw StateError('Directory unavailable');
+    return DirectoryPage.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+  }
+
+  Future<DirectoryEntry?> directoryBranch(String id) async {
+    if (!RegExp(r'^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$').hasMatch(id)) {
+      throw ArgumentError('Invalid branch identifier');
+    }
+    final request = http.Request('GET', baseUri.resolve('/v1/directory/branches/$id'))
+      ..followRedirects = false;
+    final response = await _send(request);
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) throw StateError('Branch unavailable');
+    final entry = DirectoryEntry.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+    if (entry.id.toLowerCase() != id.toLowerCase()) {
+      throw const FormatException('Mismatched branch identifier');
+    }
+    return entry;
   }
   Future<CafeAccessResponse> cafeAccess(String cafeId, String accessToken) async {
     final response = await client.get(baseUri.resolve('/v1/cafes/${Uri.encodeComponent(cafeId)}/access'), headers: {'Authorization':'Bearer $accessToken'}).timeout(const Duration(seconds:10));
