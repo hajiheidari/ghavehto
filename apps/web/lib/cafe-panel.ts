@@ -288,3 +288,21 @@ export function changeInternalRole(input:{userId:string;role:'editor'|'operator'
     return result.changed;
   },{method:'PUT',body:input});
 }
+
+export function submitAgentDraft(input:{kind:'research'|'content';operationId:string;title:string;body:string;sources:unknown[]}) {
+  return read('/v1/internal/editorial/jobs',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid draft submission receipt');
+    return receipt.id;
+  },{method:'POST',body:input});
+}
+export function getDraftSubmission(operation:string) {
+  return read('/v1/internal/editorial/submissions/'+operation,input=>{
+    if(!object(input)||!panelId(input.jobId)||!['research','content'].includes(String(input.kind))||
+      !['queued','leased','retry_wait','awaiting_review','dead'].includes(String(input.state))||
+      !Number.isInteger(input.attempts)||!Number.isInteger(input.attemptLimit)||Number(input.attempts)<0||
+      Number(input.attemptLimit)<1||Number(input.attemptLimit)>10||Number(input.attempts)>Number(input.attemptLimit)||
+      typeof input.paused!=='boolean') throw new Error('Invalid draft submission status');
+    return {kind:input.kind as 'research'|'content',state:input.state as 'queued'|'leased'|'retry_wait'|'awaiting_review'|'dead',
+      attempts:Number(input.attempts),attemptLimit:Number(input.attemptLimit),paused:input.paused};
+  });
+}

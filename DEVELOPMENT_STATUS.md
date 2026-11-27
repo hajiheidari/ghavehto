@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private draft intake and recovery · 2026-11-28
+
+Migration 082 adds submitter-scoped draft status recovery by operation UUID. The private intake page accepts supplied research/content and source-rights attestations, then redirects to the persisted receipt. Controls and the one-shot worker govern processing. Revoked operators immediately lose access. Next: read the current milestone acceptance inventory and complete independent security/recovery work.
+
 ## Private internal administration · 2026-11-28
 
 Migration 081 adds admin-only readback of all four internal controls. The private operations page configures research/content pause and retry limits and delegates editor/operator access through existing audited routines. Discovery/outreach remain read-only in this page. Next independent work: private draft intake/status workflow, then remaining M3/M4/M6 acceptance and retention decision.

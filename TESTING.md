@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private draft intake and recovery · 2026-11-28
+
+Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The disposable panel fixture covers operator intake, exact concurrent replay, paused queued status, foreign-submitter denial and access revocation. Prior c076886 web/database and cloud-development checks succeeded; native checks were still running at read-back.
+
 ## Private internal administration · 2026-11-28
 
 Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The disposable HTTP/web fixture checks admin/editor isolation, same-origin control changes, concurrent no-op audit behavior, role grant/revoke and refusal of admin grants or outreach activation.

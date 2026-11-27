@@ -542,6 +542,38 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             assert.equal((await submit('role',roleForm)).status,400);
             body.set('kind','outreach');
             assert.equal((await submit('control',body)).status,400);
+            roleForm.set('role','operator');roleForm.set('enabled','true');
+            await submit('role',roleForm);
+            const operatorSession=await sessions.issue(target);
+            const intakePage=await fetch(web.url+'/dashboard/editorial/submit',{headers:{Cookie:'__Host-ghahvehto-access='+operatorSession.accessToken}});
+            const intakeHtml=await intakePage.text();
+            assert.match(intakeHtml,/ثبت پیش‌نویس برای پردازش داخلی/);
+            const submissionOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(intakeHtml)?.[1];
+            assert.ok(submissionOperation);
+            const intake=new URLSearchParams({kind:'research',operationId:submissionOperation,title:'TEST intake',
+              body:'TEST supplied text',sources:JSON.stringify([{rights:'original'}])});
+            const sendDraft=(token=operatorSession.accessToken,origin='https://panel.example.test')=>fetch(web.url+'/dashboard/editorial/submit/send',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:origin},body:intake,
+            });
+            assert.equal((await sendDraft(operatorSession.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await sendDraft(editorSession.accessToken)).headers.get('location')??'',/result=unconfirmed/);
+            for(const sent of await Promise.all([sendDraft(),sendDraft()])) {
+              assert.equal(sent.status,303);
+              assert.match(sent.headers.get('location')??'',/result=saved/);
+            }
+            const getSubmission=(token:string)=>fetch(url+'/v1/internal/editorial/submissions/'+submissionOperation,
+              {headers:{authorization:'Bearer '+token}});
+            const initial=await (await getSubmission(operatorSession.accessToken)).json() as {jobId:string;state:string;paused:boolean};
+            assert.equal(initial.state,'queued');assert.equal(initial.paused,true);
+            assert.equal((await getSubmission(adminSession.accessToken)).status,404);
+            assert.equal((await getSubmission(editorSession.accessToken)).status,403);
+            assert.equal((await db.query('SELECT 1 FROM agent_jobs WHERE operation_id=$1',[submissionOperation])).rowCount,1);
+            const statusHtml=await (await fetch(web.url+'/dashboard/editorial/submit?operation='+submissionOperation,
+              {headers:{Cookie:'__Host-ghahvehto-access='+operatorSession.accessToken}})).text();
+            assert.match(statusHtml,/در صف/);assert.match(statusHtml,/متوقف/);
+            roleForm.set('enabled','false');
+            await submit('role',roleForm);
+            assert.equal((await getSubmission(operatorSession.accessToken)).status,403);
           } finally {await web.close();}
         } finally {await app.close();}
       } finally {await runtime.end();await host.query(`DROP ROLE ${login}`);}

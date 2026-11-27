@@ -115,6 +115,13 @@ export class PrivateEditorial {
       [input.kind,input.paused,input.attemptLimit,input.reason]);
   }
 
+  async submission(header: string | undefined, operation: string) {
+    const {receipt}=await this.database.run<{receipt:Record<string,unknown>|null}>(header,
+      'SELECT public.read_private_draft_submission($1,$2) AS receipt',[operation]);
+    if(!receipt) throw new NotFoundException();
+    return receipt;
+  }
+
   submitDraft(header: string | undefined, {kind,operationId,title,body,sources}: DraftInput) {
     const request={title,body,sources};
     try {prepareInternalDraft(kind,request);}
@@ -164,6 +171,11 @@ export class PrivateEditorialController {
   @Get('jobs') @Header('Cache-Control','no-store')
   pendingJobs(@Headers('authorization') header: string | undefined, @Query() input: DocumentListInput) {
     return this.editorial.pendingJobs(header,input.after);
+  }
+
+  @Get('submissions/:operation') @Header('Cache-Control','no-store')
+  submission(@Headers('authorization') header: string | undefined, @Param('operation',ParseUUIDPipe) operation: string) {
+    return this.editorial.submission(header,operation);
   }
 
   @Post('jobs') @Header('Cache-Control','no-store')

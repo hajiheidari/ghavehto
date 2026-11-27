@@ -1,5 +1,9 @@
 # Changelog
 
+## Private draft intake and recovery · 2026-11-28
+
+Add private operator draft intake and operation-based status recovery.
+
 ## Private internal administration · 2026-11-28
 
 Add private admin control readback, reasoned control forms and internal role delegation.
