@@ -5,6 +5,7 @@ import { PrivateSessionDatabase } from './private-session-database.js';
 import { PrivateEditorial, PrivateEditorialController } from './private-editorial.js';
 import { Controller, Get, Module, Injectable, CanActivate, UnauthorizedException, UseGuards, ServiceUnavailableException, ValidationPipe, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ApiProperty, ApiTags, ApiResponse, SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import {CafeTrackingService} from './cafe-tracking.js';
@@ -102,7 +103,7 @@ export async function createApp(options: {
     const otp = new OtpChallengeService(runtimePool, config.crypto, config.provider);
     initialLogin = { otp, identity: new IdentityService(runtimePool, otp, config.vault) };
   }
-  const app = await NestFactory.create({ module: AppModule,
+  const app = await NestFactory.create<NestExpressApplication>({ module: AppModule,
     controllers: [...(trackingOwner ? [PrivateTrackingOwnerController] : []), ...(participation ? [PrivateParticipationController] : []), ...(editorial ? [PrivateEditorialController] : []), ...(tracking ? [CafeTrackingController] : []), ...(initialLogin ? [InitialLoginController] : []), ...(options.enableStampQr ? [StampQrController] : [])],
     providers: [
     ...(trackingOwner ? [{provide:TRACKING_OWNER_DB,useValue:trackingOwner}] : []),
@@ -114,6 +115,7 @@ export async function createApp(options: {
     { provide: SessionService, useValue: options.runtimePool ? new SessionService(options.runtimePool) : null },
     { provide: TenantAccessService, useValue: options.runtimePool ? new TenantAccessService(options.runtimePool) : null },
   ] }, { logger: false });
+  if (editorial) app.useBodyParser('json', { limit: 384 * 1024 });
   app.use(helmet());
   app.use((request: {ghRequestId?:string}, response: {setHeader:(name:string,value:string)=>void}, next:()=>void) => {
     request.ghRequestId = randomUUID();

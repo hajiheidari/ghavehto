@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Unicode editorial transport · 2026-11-28
+
+The explicitly composed editorial API now accepts bounded JSON up to 384 KiB, matching supported Unicode body/evidence sizes. Editorial form readers allow up to 1 MiB of URL-encoded transport. Domain title/body/source limits remain enforced. Next: notification preference consent and final acceptance checks.
+
 ## Private cafe tracking analytics · 2026-11-28
 
 Migration 084 exposes owner-scoped link metrics through the dedicated tracking owner capability. The Persian panel shows scans, clicks, new registrations, phone verifications and confirmed interactions as separate string-backed integer counts. New indexes support the scoped aggregates. Next: verify final head and address remaining acceptance gaps.

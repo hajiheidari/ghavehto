@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Unicode editorial transport · 2026-11-28
+
+Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The PostgreSQL HTTP fixture saves a valid 49,000-character Persian revision with evidence exceeding the old 100 KiB parser ceiling, and checks that a 400,000-byte input returns 413.
+
 ## Private cafe tracking analytics · 2026-11-28
 
 Windows 12 API tests, one probe, API typecheck and whitespace checks passed. The real owner HTTP/panel fixture checks separate counters, missing/foreign session denial, cafe/link mismatch and Persian rendering. Previous e3446e0 web/database, iOS and mobile-source jobs passed at read-back.

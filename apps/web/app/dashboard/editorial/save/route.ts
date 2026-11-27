@@ -3,7 +3,7 @@ import {readPanelForm,rejectPanelForm} from '../../../../lib/panel-form';
 
 export async function POST(request:Request) {
   if(process.env.PRIVATE_EDITORIAL_VIEW!=='1') return rejectPanelForm(404);
-  const form=await readPanelForm(request,500000);
+  const form=await readPanelForm(request,1024*1024);
   if(form instanceof Response) return form;
   const documentId=form.get('documentId'),operationId=form.get('operationId'),expected=form.get('expectedRevision');
   const title=form.get('title'),body=form.get('body'),evidence=form.get('sources');

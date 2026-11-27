@@ -375,6 +375,14 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
           assert.equal(leased?.jobId,submitted.id);
           assert.ok(leased);
           assert.equal(await move(leased,'complete',{draft:'Test private result'}),true);
+          const largeRevision={...revision,operationId:randomUUID(),expectedRevision:2,body:'ق'.repeat(49000),
+            sources:[{rights:'original',note:'م'.repeat(12000)}]};
+          assert.ok(Buffer.byteLength(JSON.stringify(largeRevision))>100*1024);
+          const largeSaved=await post('revisions',largeRevision,author.accessToken);
+          assert.equal(largeSaved.status,201);
+          const largeReceipt=await largeSaved.json() as {id:string};
+          assert.equal((await db.query('SELECT length(body) AS length FROM content_revisions WHERE id=$1',[largeReceipt.id])).rows[0].length,49000);
+          assert.equal((await post('revisions',{...revision,body:'a'.repeat(400000)},author.accessToken)).status,413);
           const {rows:[audit]}=await db.query("SELECT actor_id FROM audit_events WHERE action='content.revised' AND metadata->>'revisionId'=$1",[receipt.id]);
           assert.equal(audit.actor_id,editor);
         } finally {await app.close();}

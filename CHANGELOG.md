@@ -1,5 +1,9 @@
 # Changelog
 
+## Unicode editorial transport · 2026-11-28
+
+Fix editorial transport limits for large valid Persian content while preserving bounded parsing.
+
 ## Private cafe tracking analytics · 2026-11-28
 
 Add free private cafe tracking metrics with separate event facts and server owner scope.
