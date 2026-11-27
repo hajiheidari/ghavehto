@@ -326,6 +326,15 @@ export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
 
 type NotificationPreferences={revision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number};
 export type LoyaltyLedger='stamp'|'star'|'tier';
+export function getLoyaltySummary() {
+  return read('/v1/internal/loyalty-history/summary',input=>{
+    const count=(value:unknown)=>value===null||typeof value==='string'&&/^(0|[1-9][0-9]*)$/.test(value);
+    if(!object(input)||typeof input.asOf!=='string'||!Number.isFinite(Date.parse(input.asOf))||
+      !object(input.stars)||!count(input.stars.availableUnits)||!object(input.tier)||!count(input.tier.points)||
+      !Number.isInteger(input.tier.year)||Number(input.tier.year)<2000||Number(input.tier.year)>9999) throw new Error('Invalid loyalty summary');
+    return input as {asOf:string;stars:{availableUnits:string|null};tier:{year:number;points:string|null}};
+  });
+}
 export type LoyaltyHistoryEntry={id:string;units:number;kind:string;recordedAt:string;effectiveAt:string;reversalOf:string|null;
   expiresAt?:string|null;cafeId?:string;programId?:string;programVersion?:number;qualificationYear?:number};
 export function getLoyaltyHistory(ledger:LoyaltyLedger,after?:string) {

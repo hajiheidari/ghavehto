@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private star and tier summaries · 2026-11-28
+
+Migration 087 adds read-only live-member summaries through the existing restricted loyalty reader. Funded-star lot accounting returns decimal strings or unknown for unsupported history; annual non-spendable tier points remain separate and use the UTC qualification year. The private views show server evaluation time. No award/spend, replacement credit or expiry extension is enabled. Head 46ba889 recovered the database/history/preferences tests and backup restoration in run 46070409726; native/cloud jobs were still running at read-back. Next: verify this head, then program-scoped stamp reconciliation and other independent milestone acceptance. Founder expiry decision remains binding.
+
 ## Disposable database cleanup recovery · 2026-11-28
 
 Head 4d7a1d1 failed its PostgreSQL job: 74 of 76 database tests passed; two fixtures reported connection termination during forced teardown. New isolated fixtures now use bounded non-forced database removal after ending pools. Local test compilation passed; rerun CI before claiming recovery. Founder confirmed that expired stars are final and must not regain spendability or a new expiry through cancellation. Keep the existing refusal closed until atomic stock/accounting recovery follows that rule.

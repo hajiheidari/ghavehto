@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private star and tier summaries · 2026-11-28
+
+Windows executed 12 passing API tests, one passing loopback probe, passing workspace typechecks and a passing full build. Added PostgreSQL/API/Next summary assertions for funded spend-aware star balance, unknown legacy history, genuine zero, separate annual tier counts, server time, invalid/spoofed year or identity/time input, private rendering and revocation. Exact-head database execution is pending. On prior 46ba889, web/database, backup restoration and mobile-source passed in 46070409726; the new fixture now supplies normalized cafe identity and uses non-forced teardown.
+
 ## Disposable database cleanup recovery · 2026-11-28
 
 Observed run 46069927549 on 4d7a1d1: database 74 passed, 2 failed with administrator connection termination; restore step did not run after that failure. Replaced forced teardown in history, preference and restoration fixtures with bounded retry of ordinary DROP after pool shutdown. Windows TypeScript test compilation and whitespace checks passed. Successful database execution is not yet claimed.

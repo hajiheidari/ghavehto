@@ -1,5 +1,9 @@
 # Changelog
 
+## Private star and tier summaries · 2026-11-28
+
+Expose separate session-scoped funded-star and annual membership summaries using existing accounting. Preserve unknown historical balances and the founder's final-expiry policy.
+
 ## Disposable database cleanup recovery · 2026-11-28
 
 Wait for disposable PostgreSQL disconnects rather than forcibly terminating sockets during cleanup. Record the founder's final-expiry rule for stars.

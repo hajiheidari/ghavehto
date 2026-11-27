@@ -21,8 +21,12 @@ test('private loyalty history keeps all three immutable journals separate and sc
     const pool=db;
     const user=async()=>(await pool.query(`INSERT INTO users(phone_hash,phone_ciphertext,phone_verified_at)
       VALUES($1,$2,clock_timestamp()) RETURNING id`,[randomBytes(32),randomBytes(48)])).rows[0].id as string;
-    const a=await user(),b=await user(),sessions=new SessionService(pool);
-    const [own,other]=await Promise.all([sessions.issue(a),sessions.issue(b)]);
+    const a=await user(),b=await user(),c=await user(),empty=await user(),sessions=new SessionService(pool);
+    const [own,other,funded,unused]=await Promise.all([sessions.issue(a),sessions.issue(b),sessions.issue(c),sessions.issue(empty)]);
+    const budget=(await pool.query('INSERT INTO star_award_budgets(funded_units,remaining_units,active) VALUES(5,5,true) RETURNING id')).rows[0].id;
+    await pool.query('SELECT public.award_funded_stars($1,$2,$3,5,NULL)',[c,budget,randomUUID()]);
+    await pool.query("SELECT public.spend_funded_stars($1,$2,2,'TEST summary debit')",[c,randomUUID()]);
+    await pool.query('SELECT public.award_tier_points($1,$2,5,clock_timestamp())',[c,randomUUID()]);
     const cafe=(await pool.query("INSERT INTO cafes(name,normalized_name,slug) VALUES('TEST HISTORY','test history',$1) RETURNING id",[randomUUID()])).rows[0].id;
     const program=(await pool.query('INSERT INTO stamp_programs(cafe_id) VALUES($1) RETURNING id',[cafe])).rows[0].id;
     await pool.query('INSERT INTO stamp_program_versions(program_id,cafe_id,version,stamps_required) VALUES($1,$2,1,5)',[program,cafe]);
@@ -49,6 +53,22 @@ test('private loyalty history keeps all three immutable journals separate and sc
     const api=await server.app.getUrl(),path=api+'/v1/internal/loyalty-history';
     const request=(query:string,token:string|undefined=own.accessToken)=>fetch(path+'?'+query,{headers:token?{authorization:'Bearer '+token}:{}});
     assert.equal((await fetch(path+'?ledger=star')).status,401);
+    const summary=(token:string,query='')=>fetch(path+'/summary'+query,{headers:{authorization:'Bearer '+token}});
+    assert.equal((await fetch(path+'/summary')).status,401);
+    assert.equal((await summary(own.accessToken,'?year=1999')).status,400);
+    assert.equal((await summary(own.accessToken,'?year=2026&userId='+b)).status,400);
+    assert.equal((await summary(own.accessToken,'?asOf=2020-01-01')).status,400);
+    const knownResponse=await summary(funded.accessToken);
+    assert.equal(knownResponse.headers.get('cache-control'),'no-store');
+    const known=await knownResponse.json();
+    assert.equal(known.stars.availableUnits,'3');assert.equal(known.tier.points,'5');
+    assert.equal(known.tier.year,new Date(known.asOf).getUTCFullYear());
+    const unknown=await (await summary(own.accessToken)).json();
+    assert.equal(unknown.stars.availableUnits,null,'Legacy journal totals must not become an available balance');
+    assert.equal(unknown.tier.points,unknown.tier.year===2026?'7':'0');
+    assert.equal((await (await summary(own.accessToken,'?year=2000')).json()).tier.points,'0');
+    const zero=await (await summary(unused.accessToken)).json();
+    assert.deepEqual(zero.stars,{availableUnits:'0'});assert.equal(zero.tier.points,'0');
     assert.equal((await request('ledger=unknown')).status,400);
     assert.equal((await request('ledger=star&userId='+b)).status,400);
     assert.equal((await request('ledger=star&after=bad')).status,400);
@@ -86,11 +106,13 @@ test('private loyalty history keeps all three immutable journals separate and sc
         assert.ok(!html.includes('تاریخچه فعلاً در دسترس نیست'));
         if(ledger==='stamp') assert.ok(html.includes(cafe));
         if(ledger==='star') assert.ok(html.includes('سوابق قدیمی‌تر'));
+        if(ledger==='star') assert.ok(html.includes('ماندهٔ ستاره فعلاً قابل‌نمایش نیست'));
         if(ledger==='tier') assert.ok(html.includes('سال احراز میلادی'));
       }
       assert.equal((await get('ledger=__proto__',own.accessToken)).status,404);
       assert.equal((await get('ledger=star&after=bad',own.accessToken)).status,404);
       assert.match(await (await get('ledger=stamp',other.accessToken)).text(),/هنوز سابقه‌ای/);
+      assert.match(await (await get('ledger=star',funded.accessToken)).text(),/ستارهٔ معتبر در زمان بررسی/);
     } finally {await web.close();}
     for(const table of ['stamp_entries','star_entries','tier_entries']) {
       await assert.rejects(pool.query('DELETE FROM '+table),{code:'55000'});
@@ -102,6 +124,7 @@ test('private loyalty history keeps all three immutable journals separate and sc
     }
     await sessions.revoke(own.accessToken);
     assert.equal((await request('ledger=star')).status,401);
+    assert.equal((await summary(own.accessToken)).status,401);
     await pool.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1',[b]);
     assert.equal((await request('ledger=star',other.accessToken)).status,401);
   } finally {

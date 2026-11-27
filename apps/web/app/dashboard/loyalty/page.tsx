@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
-import {getLoyaltyHistory,panelId,type LoyaltyLedger} from '../../../lib/cafe-panel';
+import {getLoyaltyHistory,getLoyaltySummary,panelId,type LoyaltyLedger} from '../../../lib/cafe-panel';
 
 export const dynamic='force-dynamic';
 export const metadata={title:'تاریخچهٔ وفاداری',robots:{index:false,follow:false},referrer:'no-referrer' as const};
@@ -15,11 +15,19 @@ export default async function Loyalty({searchParams}:{searchParams:Promise<{ledg
   if(typeof ledger!=='string'||!(ledger in names)||!['stamp','star','tier'].includes(ledger)||
     (query.after!==undefined&&!panelId(query.after))) notFound();
   const kind=ledger as LoyaltyLedger;
-  const result=await getLoyaltyHistory(kind,query.after as string|undefined);
+  const [result,summary]=await Promise.all([getLoyaltyHistory(kind,query.after as string|undefined),
+    kind==='stamp'?Promise.resolve(null):getLoyaltySummary()]);
   return <section className="section empty"><h1>تاریخچهٔ وفاداری</h1>
     <nav aria-label="دفترهای مستقل وفاداری"><ul>{Object.entries(names).map(([key,title])=>
       <li key={key}><Link href={{pathname:'/dashboard/loyalty',query:{ledger:key}}} aria-current={key===kind?'page':undefined}>{title}</Link></li>)}</ul></nav>
     <h2>{names[kind]}</h2>
+    {summary?.state==='ready'&&<aside aria-label="خلاصهٔ دفتر">
+      {kind==='star'?(summary.data.stars.availableUnits===null?<p>ماندهٔ ستاره فعلاً قابل‌نمایش نیست.</p>:
+        <p>ستارهٔ معتبر در زمان بررسی: <bdi>{numbers.format(BigInt(summary.data.stars.availableUnits))}</bdi></p>):
+        (summary.data.tier.points===null?<p>امتیاز عضویت فعلاً قابل‌نمایش نیست.</p>:
+          <p>امتیاز غیرقابل‌خرج سال میلادی <bdi>{numbers.format(summary.data.tier.year)}</bdi>: <bdi>{numbers.format(BigInt(summary.data.tier.points))}</bdi></p>)}
+      <p>زمان بررسی: <time dateTime={summary.data.asOf}>{dates.format(new Date(summary.data.asOf))}</time></p>
+    </aside>}
     <p>هر دفتر تاریخچهٔ مستقل خود را دارد. این صفحه سوابق ثبت‌شده را نشان می‌دهد؛ ماندهٔ قابل‌مصرف نیاز به بررسی اعتبار و انقضای هر برنامه دارد.</p>
     {result.state==='signed-out'?<p>برای مشاهدهٔ تاریخچه به نشست معتبر نیاز دارید.</p>:
       result.state==='unavailable'?<p role="status">تاریخچه فعلاً در دسترس نیست. صفحه را دوباره باز کنید.</p>:
