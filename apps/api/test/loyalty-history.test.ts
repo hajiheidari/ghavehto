@@ -82,6 +82,10 @@ test('private loyalty history keeps all three immutable journals separate and sc
         const page=await get('ledger='+ledger,own.accessToken),html=await page.text();
         assert.equal(page.status,200);assert.match(html,/noindex/);assert.ok(html.includes(label));
         assert.ok(!html.includes(own.accessToken));assert.ok(!html.includes('TEST PRIVATE STAFF REASON'));
+        assert.ok(!html.includes('تاریخچه فعلاً در دسترس نیست'));
+        if(ledger==='stamp') assert.ok(html.includes(cafe));
+        if(ledger==='star') assert.ok(html.includes('سوابق قدیمی‌تر'));
+        if(ledger==='tier') assert.ok(html.includes('سال احراز میلادی'));
       }
       assert.equal((await get('ledger=__proto__',own.accessToken)).status,404);
       assert.equal((await get('ledger=star&after=bad',own.accessToken)).status,404);
