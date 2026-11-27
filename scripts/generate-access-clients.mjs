@@ -47,6 +47,6 @@ export async function logoutSession(base: string, accessToken: string, request: 
 `;
 for (const [path, content] of [['packages/contracts/access-generated.ts', ts], ['apps/mobile/lib/generated/access.dart', dart]]) {
   const target = new URL(path, root);
-  if (process.argv.includes('--check')) { if (await readFile(target, 'utf8') !== content) throw new Error(`Generated client drift: ${path}`); }
+  if (process.argv.includes('--check')) { if ((await readFile(target, 'utf8')).replace(/\r\n/g,'\n') !== content) throw new Error(`Generated client drift: ${path}`); }
   else { await mkdir(new URL('./', target), {recursive:true}); await writeFile(target, content); }
 }

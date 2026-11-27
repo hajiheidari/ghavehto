@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Dependency and Windows validation hardening · 2026-11-28
+
+Executed on Windows Node 24.22.3 / pnpm 11.25.0: frozen install, full build (Next 16.4.5), workspace typechecks, 12 API tests, one loopback probe, three contract tests, OpenAPI export with no tracked content drift, generated-client checks, real SSR/Nest smoke and whitespace checks passed. A repeated production audit returned zero known advisories. The first generated-client check failed only on CRLF/LF; it passed after newline normalization. PostgreSQL/logout and native execution require the pushed head's CI. No local Flutter execution or production deployment is claimed.
+
 ## Private browser logout · 2026-11-28
 
 Windows passed 12 API tests, one loopback probe, workspace typechecks and whitespace checks. Frozen dependency installation succeeded. Next compilation completed but the build command exited nonzero on its security check; pnpm production audit confirmed seven moderate Next 16.4.2 advisories. Upgrade is the immediate next independent increment. Added real API/Next coverage for foreign-origin and spoofed-form denial, logout of a rotated family, secure cookie removal, independent-family survival, exact replay and unavailable-backend recovery. These PostgreSQL assertions await exact-head CI. On c0e91e6, all five Foundation jobs passed in run 46068003072, including web/database notification preferences, mobile-source, cloud-development, Android debug and iOS simulator builds. Flutter setup on this Windows host failed at the official Dart download with regional AccessDenied, so no local Flutter tests ran.

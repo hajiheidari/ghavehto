@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Dependency and Windows validation hardening · 2026-11-28
+
+Pinned Next to 16.4.5 after a fresh audit found seven moderate advisories in 16.4.2; Foundation now rejects moderate-or-higher production findings. Frozen installation and full web/API build work on this Windows host. Client drift checks now tolerate Git's CRLF checkout while still comparing every source character. Next: verify the pushed head's complete CI, then continue remaining independent acceptance work; Flutter SDK download and real-device/provider/release gates remain external.
+
 ## Private browser logout · 2026-11-28
 
 Private dashboards now link to a same-origin logout form that revokes the existing server session family. Confirmed logout clears the scoped secure HttpOnly cookie; API failure preserves a retry and shows no success. Initial login and real sending remain closed. Local Flutter 3.47.5 source checkout succeeded, but the official Dart download returned regional AccessDenied; local Flutter execution is unavailable. Node 24.22.3 and pnpm 11.25.0 are available.

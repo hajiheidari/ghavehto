@@ -18,7 +18,7 @@ const outputs = [['packages/contracts/generated.ts',ts], ['apps/mobile/lib/gener
 for (const [path, content] of outputs) {
   const target = new URL(path,root);
   if (process.argv.includes('--check')) {
-    if (await readFile(target,'utf8') !== content) throw new Error(`Generated client drift: ${path}`);
+    if ((await readFile(target,'utf8')).replace(/\r\n/g,'\n') !== content) throw new Error(`Generated client drift: ${path}`);
   } else { await mkdir(new URL('./',target), { recursive:true }); await writeFile(target,content); }
 }
 await import('./generate-access-clients.mjs');

@@ -18,6 +18,10 @@ Current scope is loopback development, with real transactional identity/session/
 
 The production audit reported 11 advisories in the previous lock (6 high, 4 moderate, 1 low). The compatible Nest 11.1.18 patch addresses GHSA-36xv-jgw5-4q75; targeted same-major overrides select path-to-regexp 8.4.2, multer 2.5.0, body-parser 2.4.0 and js-yaml 5.4.1 for affected ranges. A repeat production audit reported no known vulnerabilities and all 65 compiled API/database tests passed on pinned Node 24.19.0 after the changes. The Foundation workflow enforces the high-severity production audit. Advisory scan scope is production dependencies; operational, device, privacy and independent security review remain M6 gates.
 
+## Production dependency follow-up · 2026-11-28
+
+Dependency follow-up (2026-11-28): a fresh local audit found seven moderate advisories for Next 16.4.2. The web dependency is now pinned to 16.4.5, the patched version in the [official November release](https://nextjs.org/blog/november-2026-security-release). A repeated production audit returned zero known advisories. Foundation now rejects moderate-or-higher production advisories. This is dependency-scan evidence, not an independent application security review.
+
 ## Tracking retention decision
 
 Tracking remains private and opt-in. Retention for quota buckets, consent receipts, touches and identity-linked attribution has different effects on replay and reporting.

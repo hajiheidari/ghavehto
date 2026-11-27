@@ -1,5 +1,9 @@
 # Changelog
 
+## Dependency and Windows validation hardening · 2026-11-28
+
+Patch Next to 16.4.5, enforce moderate production advisory failures and make generated-client drift checks work with Windows CRLF checkout.
+
 ## Private browser logout · 2026-11-28
 
 Add same-origin browser logout with server family revocation, confirmed secure-cookie removal and retryable failures. Correct recent Markdown heading levels.
