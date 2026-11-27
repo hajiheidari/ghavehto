@@ -36,6 +36,7 @@ export default async function Loyalty({searchParams}:{searchParams:Promise<{ledg
         <p>{kinds[entry.kind]}: <bdi>{numbers.format(entry.units)}</bdi></p>
         <p>زمان ثبت: <time dateTime={entry.recordedAt}>{dates.format(new Date(entry.recordedAt))}</time></p>
         {kind==='stamp'&&<p>شناسهٔ کافه: <bdi>{entry.cafeId}</bdi> · نسخهٔ برنامه: {numbers.format(entry.programVersion!)}</p>}
+        {kind==='stamp'&&<Link href={{pathname:'/dashboard/loyalty/stamp',query:{cafeId:entry.cafeId,programId:entry.programId,version:entry.programVersion}}}>مشاهدهٔ دفتر این برنامه</Link>}
         {kind==='tier'&&<p>سال احراز میلادی: <bdi>{numbers.format(entry.qualificationYear!)}</bdi></p>}
         {entry.expiresAt&&<p>زمان انقضا: <time dateTime={entry.expiresAt}>{dates.format(new Date(entry.expiresAt))}</time></p>}
         {entry.reversalOf&&<p>ارجاع برگشت: <bdi>{entry.reversalOf}</bdi></p>}

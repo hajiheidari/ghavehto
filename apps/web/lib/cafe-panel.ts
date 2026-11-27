@@ -326,6 +326,15 @@ export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
 
 type NotificationPreferences={revision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number};
 export type LoyaltyLedger='stamp'|'star'|'tier';
+export function getStampSummary(cafeId:string,programId:string,version:number) {
+  return read('/v1/internal/loyalty-history/stamp-summary?'+new URLSearchParams({cafeId,programId,version:String(version)}),input=>{
+    if(!object(input)||input.cafeId!==cafeId.toLowerCase()||input.programId!==programId.toLowerCase()||input.programVersion!==version||
+      !Number.isInteger(input.stampsRequired)||Number(input.stampsRequired)<1||
+      !(input.availableUnits===null||typeof input.availableUnits==='string'&&/^(0|[1-9][0-9]*)$/.test(input.availableUnits))||
+      typeof input.asOf!=='string'||!Number.isFinite(Date.parse(input.asOf))) throw new Error('Invalid stamp summary');
+    return input as {cafeId:string;programId:string;programVersion:number;stampsRequired:number;availableUnits:string|null;asOf:string};
+  });
+}
 export function getLoyaltySummary() {
   return read('/v1/internal/loyalty-history/summary',input=>{
     const count=(value:unknown)=>value===null||typeof value==='string'&&/^(0|[1-9][0-9]*)$/.test(value);

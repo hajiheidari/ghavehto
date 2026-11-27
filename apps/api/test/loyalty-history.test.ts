@@ -95,6 +95,16 @@ test('private loyalty history keeps all three immutable journals separate and sc
     assert.deepEqual(await (await request('ledger=stamp',other.accessToken)).json(),{ledger:'stamp',items:[],nextCursor:null});
     const otherStars=await (await request('ledger=star',other.accessToken)).json();
     assert.deepEqual(otherStars.items.map((row:{id:string})=>row.id),[foreign]);
+    const stampQuery=new URLSearchParams({cafeId:cafe,programId:program,version:'1'});
+    const stampSummary=(token=own.accessToken,query=stampQuery)=>fetch(path+'/stamp-summary?'+query,{headers:{authorization:'Bearer '+token}});
+    const firstStampResponse=await stampSummary();
+    assert.equal(firstStampResponse.status,200);assert.equal(firstStampResponse.headers.get('cache-control'),'no-store');
+    const firstStamp=await firstStampResponse.json();
+    assert.equal(firstStamp.availableUnits,'2');assert.equal(firstStamp.stampsRequired,5);
+    assert.equal((await stampSummary(other.accessToken)).status,404);
+    assert.equal((await stampSummary(own.accessToken,new URLSearchParams({cafeId:cafe,programId:randomUUID(),version:'1'}))).status,404);
+    assert.equal((await stampSummary(own.accessToken,new URLSearchParams({...Object.fromEntries(stampQuery),userId:b}))).status,400);
+    assert.equal((await stampSummary(own.accessToken,new URLSearchParams({...Object.fromEntries(stampQuery),version:'2147483648'}))).status,400);
     const web=await startWebPanel(api,false,false,false,false,true);
     try {
       const get=(query:string,token?:string)=>fetch(web.url+'/dashboard/loyalty?'+query,{headers:token?{Cookie:'__Host-ghahvehto-access='+token}:{}});
@@ -113,7 +123,30 @@ test('private loyalty history keeps all three immutable journals separate and sc
       assert.equal((await get('ledger=star&after=bad',own.accessToken)).status,404);
       assert.match(await (await get('ledger=stamp',other.accessToken)).text(),/هنوز سابقه‌ای/);
       assert.match(await (await get('ledger=star',funded.accessToken)).text(),/ستارهٔ معتبر در زمان بررسی/);
+      const stampHtml=await (await fetch(web.url+'/dashboard/loyalty/stamp?'+stampQuery,{headers:{Cookie:'__Host-ghahvehto-access='+own.accessToken}})).text();
+      assert.match(stampHtml,/مهر معتبر در زمان بررسی/);assert.match(stampHtml,/مهر لازم در این نسخه/);
+      assert.ok(!stampHtml.includes(own.accessToken));
     } finally {await web.close();}
+    await pool.query('INSERT INTO stamp_program_versions(program_id,cafe_id,version,stamps_required) VALUES($1,$2,2,8)',[program,cafe]);
+    const newerVersion=(await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,2,$4,8,'award','TEST separate version',clock_timestamp()) RETURNING id`,[a,cafe,program,randomUUID()])).rows[0].id;
+    assert.equal((await (await stampSummary()).json()).availableUnits,'2','Program versions must never share a balance');
+    await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at,expires_at)
+      VALUES($1,$2,$3,1,$4,4,'award','TEST expired stamp',clock_timestamp()-interval '2 days',clock_timestamp()-interval '1 day')`,[a,cafe,program,randomUUID()]);
+    assert.equal((await (await stampSummary()).json()).availableUnits,'2');
+    const spentStamp=(await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,$4,-1,'spend','TEST allocated stamp',clock_timestamp()) RETURNING id`,[a,cafe,program,randomUUID()])).rows[0].id;
+    await pool.query('INSERT INTO stamp_spend_allocations(debit_id,award_id,units) VALUES($1,$2,1)',[spentStamp,stamp]);
+    assert.equal((await (await stampSummary()).json()).availableUnits,'1');
+    await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,1,$4,-1,'spend','TEST unsupported legacy stamp',clock_timestamp())`,[a,cafe,program,randomUUID()]);
+    assert.equal((await (await stampSummary()).json()).availableUnits,null);
+    const versionTwo=new URLSearchParams({...Object.fromEntries(stampQuery),version:'2'});
+    assert.equal((await (await stampSummary(own.accessToken,versionTwo)).json()).availableUnits,'8');
+    const tamperedForeign=(await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
+      VALUES($1,$2,$3,2,$4,-1,'spend','TEST foreign allocation',clock_timestamp()) RETURNING id`,[b,cafe,program,randomUUID()])).rows[0].id;
+    await pool.query('INSERT INTO stamp_spend_allocations(debit_id,award_id,units) VALUES($1,$2,1)',[tamperedForeign,newerVersion]);
+    assert.equal((await (await stampSummary(own.accessToken,versionTwo)).json()).availableUnits,null);
     for(const table of ['stamp_entries','star_entries','tier_entries']) {
       await assert.rejects(pool.query('DELETE FROM '+table),{code:'55000'});
       const client=await runtime.connect();
@@ -125,6 +158,7 @@ test('private loyalty history keeps all three immutable journals separate and sc
     await sessions.revoke(own.accessToken);
     assert.equal((await request('ledger=star')).status,401);
     assert.equal((await summary(own.accessToken)).status,401);
+    assert.equal((await stampSummary()).status,401);
     await pool.query('UPDATE users SET deleted_at=clock_timestamp() WHERE id=$1',[b]);
     assert.equal((await request('ledger=star',other.accessToken)).status,401);
   } finally {

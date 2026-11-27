@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private program-scoped stamp summary · 2026-11-28
+
+Windows full build, workspace typechecks, 12 API tests and one loopback probe passed. Added disposable API/Next checks for a known stamp lot, program-version separation, expired award exclusion, allocated spend, unknown legacy spend, corrupt cross-account allocation, foreign/invalid/spoofed scopes, private rendering and revocation. Database execution awaits exact-head CI. The prior c6de724 web/database and mobile-source jobs passed in 46070837308; their success does not cover migration 088.
+
 ## Private star and tier summaries · 2026-11-28
 
 Windows executed 12 passing API tests, one passing loopback probe, passing workspace typechecks and a passing full build. Added PostgreSQL/API/Next summary assertions for funded spend-aware star balance, unknown legacy history, genuine zero, separate annual tier counts, server time, invalid/spoofed year or identity/time input, private rendering and revocation. Exact-head database execution is pending. On prior 46ba889, web/database, backup restoration and mobile-source passed in 46070409726; the new fixture now supplies normalized cafe identity and uses non-forced teardown.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Private program-scoped stamp summary · 2026-11-28
+
+Add a read-only Persian stamp program view with reconciled, expiry-aware units and exact member/cafe/program/version scope. Preserve unknown balances for unsupported history.
+
 ## Private star and tier summaries · 2026-11-28
 
 Expose separate session-scoped funded-star and annual membership summaries using existing accounting. Preserve unknown historical balances and the founder's final-expiry policy.

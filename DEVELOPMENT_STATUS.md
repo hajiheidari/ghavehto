@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private program-scoped stamp summary · 2026-11-28
+
+Migration 088 adds a member-only stamp summary for one cafe/program/version already present in that member's history. Valid non-expired lot movements are counted; unsupported, overdrawn or cross-account allocations return unknown. The private program page links from stamp history and separates program cost from reward availability. No redemption route is activated. Local full build, workspace typechecks, 12 API tests and one probe passed. Prior c6de724 web/database and mobile-source passed in run 46070837308, while remaining jobs were still running. Next: validate the pushed head, then bounded member history filtering/recovery and remaining roadmap acceptance; expired-star replacement remains forbidden.
+
 ## Private star and tier summaries · 2026-11-28
 
 Migration 087 adds read-only live-member summaries through the existing restricted loyalty reader. Funded-star lot accounting returns decimal strings or unknown for unsupported history; annual non-spendable tier points remain separate and use the UTC qualification year. The private views show server evaluation time. No award/spend, replacement credit or expiry extension is enabled. Head 46ba889 recovered the database/history/preferences tests and backup restoration in run 46070409726; native/cloud jobs were still running at read-back. Next: verify this head, then program-scoped stamp reconciliation and other independent milestone acceptance. Founder expiry decision remains binding.
