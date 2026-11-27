@@ -219,6 +219,35 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
             const queueHtml=await (await queuePage(queueAdmin.accessToken)).text();
             assert.match(queueHtml,/پیش‌نویس‌های در انتظار بازبینی/);
             assert.match(queueHtml,/job=/);
+            const {rows:[agentDraft]}=await db.query("SELECT id FROM agent_jobs WHERE state='awaiting_review' AND NOT EXISTS(SELECT 1 FROM operation_reviews WHERE job_id=agent_jobs.id) LIMIT 1");
+            const draftPage=async(token:string)=>fetch(web.url+'/dashboard/editorial/jobs?job='+agentDraft.id,{headers:{Cookie:'__Host-ghahvehto-access='+token}});
+            const draftHtml=await (await draftPage(queueAdmin.accessToken)).text();
+            const agentReviewOperation=/<input(?=[^>]*name="operationId")[^>]*value="([^"]+)"/.exec(draftHtml)?.[1];
+            assert.ok(agentReviewOperation);
+            const agentReviewForm=new URLSearchParams({jobId:agentDraft.id,operationId:agentReviewOperation,
+              decision:'approved',lifetimeSeconds:'3600',reason:'TEST reviewed private agent packet'});
+            const reviewAgent=(token:string,origin?:string)=>fetch(web.url+'/dashboard/editorial/jobs/review',{
+              method:'POST',redirect:'manual',headers:{Cookie:'__Host-ghahvehto-access='+token,...(origin?{Origin:origin}:{})},
+              body:agentReviewForm,
+            });
+            assert.equal((await reviewAgent(queueAdmin.accessToken)).status,403);
+            assert.match((await reviewAgent(author.accessToken,'https://panel.example.test')).headers.get('location')??'',/review=unconfirmed/);
+            for(const response of await Promise.all([reviewAgent(queueAdmin.accessToken,'https://panel.example.test'),reviewAgent(queueAdmin.accessToken,'https://panel.example.test')])){
+              assert.equal(response.status,303);
+              assert.match(response.headers.get('location')??'',/review=saved/);
+            }
+            const approvedHtml=await (await draftPage(queueAdmin.accessToken)).text();
+            assert.match(approvedHtml,/تصمیم ثبت‌شده/);
+            assert.ok(!approvedHtml.includes('action="/dashboard/editorial/jobs/review"'));
+            const agentStatusPath='jobs/'+agentDraft.id+'/review';
+            assert.equal((await get(agentStatusPath,author.accessToken)).status,403);
+            const approval=await (await get(agentStatusPath,queueAdmin.accessToken)).json() as {receipt:{usable:boolean}};
+            assert.equal(approval.receipt.usable,true);
+            const {rows:[kind]}=await db.query('SELECT kind FROM agent_jobs WHERE id=$1',[agentDraft.id]);
+            await db.query('SELECT public.pause_agent($1,true,$2)',[kind.kind,'TEST pause reviewed work']);
+            const pausedApproval=await (await get(agentStatusPath,queueAdmin.accessToken)).json() as typeof approval;
+            assert.equal(pausedApproval.receipt.usable,false);
+            await db.query('SELECT public.pause_agent($1,false,$2)',[kind.kind,'TEST restore internal control']);
             const inventoryHtml=await (await page('',author.accessToken)).text();
             const newDocument=/<input(?=[^>]*name="documentId")[^>]*value="([^"]+)"/.exec(inventoryHtml)?.[1];
             assert.ok(newDocument);

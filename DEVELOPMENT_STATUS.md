@@ -1,4 +1,8 @@
-# Development status · 2026-11-18
+# Development status · 2026-11-28
+
+## Agent decision workflow · 2026-11-28
+
+Migration 080 and the private agent panel add admin decisions and review receipts with current validity. Existing payload hash, expiry, pause and reviewer-role checks determine usability. Same-origin forms keep retries exact. Next independent increment is private control administration. Work continues across increments until an actual decision or access blocker.
 
 ## Private agent review queue · 2026-11-21
 

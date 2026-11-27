@@ -62,6 +62,11 @@ export class PrivateEditorial {
   constructor(pool: Pool) {this.database=new PrivateSessionDatabase(pool,'ghahvehto_editorial');}
   validateRuntime() {return this.database.validateRuntime();}
 
+  agentReviewReceipt(header: string | undefined, jobId: string) {
+    return this.database.run<{receipt:Record<string,unknown>|null}>(header,
+      'SELECT public.read_private_agent_review($1,$2) AS receipt',[jobId]);
+  }
+
   reviewReceipt(header: string | undefined, revisionId: string) {
     return this.database.run<{receipt:Record<string,unknown>|null}>(header,
       'SELECT public.read_private_content_review($1,$2) AS receipt',[revisionId]);
@@ -153,6 +158,11 @@ export class PrivateEditorialController {
   @Post('jobs') @Header('Cache-Control','no-store')
   submitDraft(@Headers('authorization') header: string | undefined, @Body() input: DraftInput) {
     return this.editorial.submitDraft(header,input);
+  }
+
+  @Get('jobs/:id/review') @Header('Cache-Control','no-store')
+  agentReviewReceipt(@Headers('authorization') header: string | undefined, @Param('id',ParseUUIDPipe) id: string) {
+    return this.editorial.agentReviewReceipt(header,id);
   }
 
   @Get('jobs/:id') @Header('Cache-Control','no-store')

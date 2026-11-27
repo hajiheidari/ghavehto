@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Agent decision workflow · 2026-11-28
+
+The Next/Nest/PostgreSQL fixture checks admin-only decisions, exact concurrent replay, one receipt, hidden repeated-decision form and approval invalidation after pausing the agent. Local unit/type results are recorded separately.
+
 ## Private agent review queue · 2026-11-21
 
 Windows pnpm test passed 12 API tests and one loopback probe; API typecheck and test compilation passed. The database fixture checks admin-only queue access, pagination without duplicates and removal after a review. The built web case checks editor denial and admin queue rendering.
@@ -436,3 +440,5 @@ CI 44546681504 برای 8f9d398 آزمون جدید توقف پیوند را گ�
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe را با موفقیت گذراند.
 
 اجرای محلی 2026-11-21 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe را با موفقیت گذراند.
+
+اجرای 2026-11-28 روی Node 24.22.3 ویندوز، ۱۲ آزمون API و یک probe و بررسی نوع API موفق شدند. خطای اولیهٔ نام متغیر تکراری در fixture پیش از این اجرای موفق اصلاح شد.

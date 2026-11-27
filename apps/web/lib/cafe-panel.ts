@@ -223,8 +223,8 @@ export function saveEditorialRevision(input:{documentId:string;operationId:strin
 }
 
 type EditorialReview={reviewId:string;decision:'approved'|'rejected';reason:string;createdAt:string;expiresAt:string;usable:boolean};
-export function getEditorialReview(revisionId:string) {
-  return read('/v1/internal/editorial/revisions/'+revisionId+'/review',input=>{
+function reviewReceipt(path:string) {
+  return read(path,input=>{
     if(!object(input)) throw new Error('Invalid review response');
     const row=input.receipt;
     if(row===null) return null;
@@ -236,6 +236,18 @@ export function getEditorialReview(revisionId:string) {
   });
 }
 
+export function getEditorialReview(revisionId:string) {
+  return reviewReceipt('/v1/internal/editorial/revisions/'+revisionId+'/review');
+}
+export function getAgentReview(jobId:string) {
+  return reviewReceipt('/v1/internal/editorial/jobs/'+jobId+'/review');
+}
+export function reviewAgentDraft(input:{jobId:string;operationId:string;decision:'approved'|'rejected';lifetimeSeconds:number;reason:string}) {
+  return read('/v1/internal/editorial/reviews',receipt=>{
+    if(!object(receipt)||!panelId(receipt.id)) throw new Error('Invalid agent review receipt');
+    return receipt.id;
+  },{method:'POST',body:input});
+}
 type PendingAgentReview={jobId:string;kind:string;createdAt:string;paused:boolean};
 export function getPendingAgentReviews(after?:string) {
   return read('/v1/internal/editorial/jobs'+(after?'?after='+encodeURIComponent(after):''),input=>{

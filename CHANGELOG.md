@@ -1,5 +1,9 @@
 # Changelog
 
+## Agent decision workflow · 2026-11-28
+
+Add admin review decisions and current receipt validity to private agent drafts.
+
 ## Private agent review queue · 2026-11-21
 
 Add a private agent draft review queue and Persian request/result reader for internal admins.
