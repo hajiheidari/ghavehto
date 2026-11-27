@@ -278,6 +278,24 @@ test('real HTTP tenant authorization uses verified sessions and restricted runti
       assert.match((await submit(withdraw)).headers.get('location')??'',/result=unconfirmed/);
       const history=await (await get()).text();assert.match(history,/پس‌گرفته‌شده/);
       assert.equal((await admin.query("SELECT id FROM audit_events WHERE actor_id=$1 AND action='ownership.claim_withdrawn'",[claimant])).rowCount,1);
+      const oldClaims:string[]=[];
+      for(let index=0;index<51;index++) oldClaims.push((await admin.query(`INSERT INTO ownership_claims(user_id,cafe_id,branch_id,created_at,withdrawn_at)
+        VALUES($1,$2,$3,'2020-01-01T00:00:00.123456Z','2020-01-02T00:00:00Z') RETURNING id`,[claimant,cafeA,branchA])).rows[0].id);
+      oldClaims.sort().reverse();
+      const historyRequest=(after?:string,token=claimantTokens.accessToken)=>request('/v1/ownership-claims/history'+(after?'?after='+after:''),token);
+      const historyPage=await (await historyRequest()).json();
+      assert.equal(historyPage.items.length,50);
+      assert.deepEqual(historyPage.items.map((row:{claimId:string})=>row.claimId),[pending.claimId,...oldClaims.slice(0,49)]);
+      assert.equal(historyPage.nextCursor,oldClaims[48]);
+      const older=await (await historyRequest(historyPage.nextCursor)).json();
+      assert.deepEqual(older.items.map((row:{claimId:string})=>row.claimId),oldClaims.slice(49));
+      assert.equal(older.nextCursor,null);
+      assert.equal((await historyRequest(pending.claimId,staff.tokens.accessToken)).status,400);
+      assert.equal((await historyRequest('bad')).status,400);
+      const paginated=await (await get()).text();assert.match(paginated,/درخواست‌های قدیمی‌تر/);
+      const olderHtml=await (await fetch(claimsWeb.url+'/dashboard/ownership?after='+historyPage.nextCursor,{headers:{Cookie:cookie}})).text();
+      for(const id of oldClaims.slice(49)) assert.ok(olderHtml.includes(id));
+      assert.ok(!olderHtml.includes(pending.claimId));
       await claimantSessions.revoke(claimantTokens.accessToken);
       assert.equal((await submit(form)).status,401);
     } finally {await claimsWeb.close();}

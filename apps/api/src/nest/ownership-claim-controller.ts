@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Header, Headers, HttpException, HttpStatus, Inject, NotFoundException, Param, ParseUUIDPipe, Post, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Header, Headers, HttpException, HttpStatus, Inject, NotFoundException, Param, ParseUUIDPipe, Post, Query, UnauthorizedException } from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { TenantAccessService } from './tenant-access.js';
 
 class ClaimRequestDto {
@@ -15,6 +15,13 @@ class ClaimSummaryDto extends ClaimReceiptDto {
 }
 class ClaimWithdrawalDto {
   @ApiProperty({type:Boolean,enum:[true]}) withdrawn!: true;
+}
+class ClaimHistoryInput {
+  @ApiProperty({type:String,format:'uuid',required:false}) @IsOptional() @IsUUID() after?:string;
+}
+class ClaimHistoryPageDto {
+  @ApiProperty({type:[ClaimSummaryDto],maxItems:50}) items!:ClaimSummaryDto[];
+  @ApiProperty({type:String,format:'uuid',nullable:true}) nextCursor!:string|null;
 }
 
 @ApiTags('ownership claims') @ApiBearerAuth() @Controller('v1/ownership-claims')
@@ -33,6 +40,25 @@ export class OwnershipClaimController {
     return access.withVerifiedActor(token,async client => (await client.query<ClaimSummaryDto>(
       `SELECT id AS "claimId",branch_id AS "branchId",coalesce(decision, CASE WHEN withdrawn_at IS NULL THEN 'pending' ELSE 'withdrawn' END) AS status
        FROM ownership_claims ORDER BY created_at DESC,id LIMIT 50`)).rows);
+  }
+
+  @Get('history') @Header('Cache-Control','no-store')
+  @ApiResponse({status:200,type:ClaimHistoryPageDto})
+  history(@Query() input:ClaimHistoryInput,@Headers('authorization') header?:string):Promise<ClaimHistoryPageDto> {
+    const {access,token}=this.bearer(header);
+    return access.withVerifiedActor(token,async client=>{
+      let recorded:string|null=null;
+      if(input.after) {
+        const {rows:[cursor]}=await client.query('SELECT created_at::text AS created_at FROM ownership_claims WHERE id=$1',[input.after]);
+        if(!cursor) throw new BadRequestException();
+        recorded=cursor.created_at;
+      }
+      const {rows}=await client.query<ClaimSummaryDto>(`SELECT id AS "claimId",branch_id AS "branchId",
+        coalesce(decision,CASE WHEN withdrawn_at IS NULL THEN 'pending' ELSE 'withdrawn' END) AS status
+        FROM ownership_claims WHERE $1::uuid IS NULL OR (created_at,id)<($2::timestamptz,$1)
+        ORDER BY created_at DESC,id DESC LIMIT 51`,[input.after??null,recorded]);
+      return {items:rows.slice(0,50),nextCursor:rows.length>50?rows[49].claimId:null};
+    });
   }
 
   @Post() @Header('Cache-Control','no-store')

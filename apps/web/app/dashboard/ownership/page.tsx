@@ -5,11 +5,11 @@ import {getOwnershipClaims,panelId,staffPanelOrigin} from '../../../lib/cafe-pan
 export const dynamic='force-dynamic';
 export const metadata={title:'درخواست مالکیت کافه',robots:{index:false,follow:false},referrer:'no-referrer' as const};
 const labels={pending:'در انتظار بررسی',withdrawn:'پس‌گرفته‌شده',verified:'تأیید بررسی',rejected:'ردشده'};
-export default async function Ownership({searchParams}:{searchParams:Promise<{branch?:string|string[];result?:string|string[]}>}) {
+export default async function Ownership({searchParams}:{searchParams:Promise<{branch?:string|string[];result?:string|string[];after?:string|string[]}>}) {
   if(process.env.PRIVATE_OWNERSHIP_CLAIMS_VIEW!=='1') notFound();
-  const {branch,result:feedback}=await searchParams;
-  if(branch!==undefined&&!panelId(branch)) notFound();
-  const result=await getOwnershipClaims();
+  const {branch,result:feedback,after}=await searchParams;
+  if((branch!==undefined&&!panelId(branch))||(after!==undefined&&!panelId(after))) notFound();
+  const result=await getOwnershipClaims(after as string|undefined);
   const writable=!!staffPanelOrigin();
   return <section className="section empty"><h1>درخواست مالکیت کافه</h1>
     <p>درخواست و بررسی مدارک از اعطای دسترسی مدیریتی جداست. ثبت یا تأیید درخواست به‌تنهایی دسترسی کافه ایجاد نمی‌کند.</p>
@@ -24,8 +24,8 @@ export default async function Ownership({searchParams}:{searchParams:Promise<{br
           <input id="branchId" name="branchId" defaultValue={branch} maxLength={36} dir="ltr" required/>{' '}
           <button type="submit">ثبت درخواست بررسی</button>
         </form>}
-        <h2>آخرین درخواست‌های شما</h2>
-        {result.data.length===0?<p>هنوز درخواستی ثبت نکرده‌اید.</p>:<ul>{result.data.map(claim=><li key={claim.claimId}>
+        <h2>تاریخچهٔ درخواست‌های شما</h2>
+        {result.data.items.length===0?<p>{after?'درخواست قدیمی‌تری در این صفحه نیست.':'هنوز درخواستی ثبت نکرده‌اید.'}</p>:<ul>{result.data.items.map(claim=><li key={claim.claimId}>
           <p>شناسهٔ درخواست: <bdi>{claim.claimId}</bdi></p>
           <p>{labels[claim.status]} · <Link href={'/cafes/'+claim.branchId}>اطلاعات شعبه</Link></p>
           {writable&&claim.status==='pending'&&<form method="post" action="/dashboard/ownership/change">
@@ -33,7 +33,7 @@ export default async function Ownership({searchParams}:{searchParams:Promise<{br
             <button type="submit">پس‌گرفتن درخواست</button>
           </form>}
         </li>)}</ul>}
-        <p>حداکثر پنجاه درخواست اخیر نمایش داده می‌شود.</p>
+        {result.data.nextCursor&&<Link href={{pathname:'/dashboard/ownership',query:{after:result.data.nextCursor}}}>درخواست‌های قدیمی‌تر</Link>}
       </>}
   </section>;
 }

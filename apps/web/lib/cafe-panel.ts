@@ -37,11 +37,12 @@ export function logoutPanelSession() {
     return true;
   },{method:'POST',body:{}});
 }
-export function getOwnershipClaims() {
-  return read('/v1/ownership-claims',input=>{
-    if(!Array.isArray(input)||input.length>50||!input.every(row=>object(row)&&panelId(row.claimId)&&panelId(row.branchId)&&
+export function getOwnershipClaims(after?:string) {
+  return read('/v1/ownership-claims/history'+(after?'?after='+encodeURIComponent(after):''),input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length>50||!(input.nextCursor===null||panelId(input.nextCursor))||
+      !input.items.every(row=>object(row)&&panelId(row.claimId)&&panelId(row.branchId)&&
       ['pending','withdrawn','verified','rejected'].includes(String(row.status)))) throw new Error('Invalid ownership claims');
-    return input as {claimId:string;branchId:string;status:'pending'|'withdrawn'|'verified'|'rejected'}[];
+    return input as {items:{claimId:string;branchId:string;status:'pending'|'withdrawn'|'verified'|'rejected'}[];nextCursor:string|null};
   });
 }
 export function submitOwnershipClaim(branchId:string) {

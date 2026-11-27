@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Complete claimant history pagination · 2026-11-28
+
+The new compatible ownership history endpoint and private panel now page beyond the original latest-50 list. RLS scopes both cursor lookup and rows to the live claimant, and timestamp text preserves PostgreSQL microseconds. Migration 089 supports the descending page order. Windows full build, typechecks, 12 API tests, one probe, OpenAPI export and generated-client checks passed. Previous b553c95 web/database and mobile-source passed in 46071933472, including private deadlines. Next: exact-head pagination CI and remaining roadmap/security acceptance; public activation gates remain closed.
+
 ## Bounded private database operations · 2026-11-28
 
 PrivateSessionDatabase now applies transaction-local statement/lock deadlines and returns sanitized temporary unavailability after rollback. Runtime role and timeout settings must reset before pool reuse. This covers explicit private capability pools; ingress and connection-pool queue controls remain separate acceptance work. Windows 12 API tests, one probe and workspace typechecks passed. Prior e5da5ed web/database and mobile-source succeeded in 46071646821, including the claimant UI; remaining jobs were still running. Next: exact-head timeout/recovery CI, then remaining security/roadmap work.

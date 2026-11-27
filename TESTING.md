@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Complete claimant history pagination · 2026-11-28
+
+Windows full build, workspace typechecks, 12 API tests, one probe, OpenAPI export and client drift checks passed. The real claimant fixture now includes 51 historical withdrawn requests sharing an identical microsecond timestamp, verifies exclusive page boundaries and remaining records, rejects foreign/invalid cursors and renders the older page. Database execution awaits this pushed head's CI. Prior b553c95 web/database and mobile-source succeeded in 46071933472; no native completion is inferred from those results.
+
 ## Bounded private database operations · 2026-11-28
 
 Windows executed 12 passing API tests, one passing probe and passing workspace typechecks. Added real PostgreSQL cases for a held session-family lock returning HTTP 503 without preference/audit writes, a canceled long statement, and reuse of a single-connection pool with original role/timeouts restored. These assertions await exact-head CI. Prior e5da5ed web/database and mobile-source jobs passed in 46071646821; native/cloud completion was not yet observed.

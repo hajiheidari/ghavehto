@@ -1,5 +1,9 @@
 # Changelog
 
+## Complete claimant history pagination · 2026-11-28
+
+Add backward-compatible member-scoped ownership history pages and private panel pagination, preserving timestamp precision and the original array API.
+
 ## Bounded private database operations · 2026-11-28
 
 Bound private capability statements and lock waits, roll back canceled operations and return generic temporary unavailability while preserving retry safety.
