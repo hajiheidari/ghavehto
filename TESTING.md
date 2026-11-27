@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Disposable database cleanup recovery · 2026-11-28
+
+Observed run 46069927549 on 4d7a1d1: database 74 passed, 2 failed with administrator connection termination; restore step did not run after that failure. Replaced forced teardown in history, preference and restoration fixtures with bounded retry of ordinary DROP after pool shutdown. Windows TypeScript test compilation and whitespace checks passed. Successful database execution is not yet claimed.
+
 ## Private member loyalty history · 2026-11-28
 
 Windows passed 12 API tests, one loopback probe, workspace typechecks and full build. Added isolated PostgreSQL/Nest/Next coverage for own-user scope, three separate journals, same-timestamp pagination, a concurrent new row between pages, expired history, foreign/cross-ledger cursors, private-field omission, default-off views, restricted SQL, immutable triggers, revocation and deleted identities. PostgreSQL execution awaits the pushed head's CI. Previous 9c00f89 passed all five Foundation jobs and the independent connectivity workflow; database suite: 75 passed/0 failed, restoration drill: 1 passed/0 failed.

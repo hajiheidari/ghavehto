@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Disposable database cleanup recovery · 2026-11-28
+
+Head 4d7a1d1 failed its PostgreSQL job: 74 of 76 database tests passed; two fixtures reported connection termination during forced teardown. New isolated fixtures now use bounded non-forced database removal after ending pools. Local test compilation passed; rerun CI before claiming recovery. Founder confirmed that expired stars are final and must not regain spendability or a new expiry through cancellation. Keep the existing refusal closed until atomic stock/accounting recovery follows that rule.
+
 ## Private member loyalty history · 2026-11-28
 
 Migration 086 exposes separate stamp/star/tier journal pages only to the live session's member through a dedicated read-only capability. The private Persian panel has keyset pagination and omits internal reasons/operation IDs. Historical units are not presented as a spendable balance. Default startup and the private view remain disabled. Previous head 9c00f89 passed all five Foundation jobs in run 46068881387, including 75 database tests and the backup/restore drill. Next: execute this increment's PostgreSQL/Next fixture in exact-head CI, then remaining member balance/recovery and milestone acceptance work.

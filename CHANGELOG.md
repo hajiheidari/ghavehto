@@ -1,5 +1,9 @@
 # Changelog
 
+## Disposable database cleanup recovery · 2026-11-28
+
+Wait for disposable PostgreSQL disconnects rather than forcibly terminating sockets during cleanup. Record the founder's final-expiry rule for stars.
+
 ## Private member loyalty history · 2026-11-28
 
 Add session-scoped, read-only journal history for stamps, stars and membership points, with separate private Persian views and bounded chronological pagination. No public earning/spending or payout is enabled.

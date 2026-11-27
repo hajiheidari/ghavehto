@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {dropDisposableDatabase} from './disposable-database.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
@@ -81,8 +82,8 @@ test('a disposable PostgreSQL backup restores migrations, independent journals a
       await command(['rm','-f','--',archive]);
     } finally {
       try {
-        if(targetCreated) await host.query('DROP DATABASE '+targetName+' WITH (FORCE)');
-        if(sourceCreated) await host.query('DROP DATABASE '+sourceName+' WITH (FORCE)');
+        if(targetCreated) await dropDisposableDatabase(host,targetName);
+        if(sourceCreated) await dropDisposableDatabase(host,sourceName);
       } finally {await host.end();}
     }
   }

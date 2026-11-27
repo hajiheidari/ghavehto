@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {dropDisposableDatabase} from './disposable-database.js';
 import {randomBytes} from 'node:crypto';
 import {test} from 'node:test';
 import pg from 'pg';
@@ -81,7 +82,7 @@ test('private in-app preferences use live user scope, exact state retry and audi
     assert.equal((await request(first.accessToken)).status,401);
   } finally {
     await server?.app.close();await runtime?.end();await db?.end();
-    if(created) await host.query('DROP DATABASE '+database+' WITH (FORCE)');
+    if(created) await dropDisposableDatabase(host,database);
     if(roleCreated) await host.query('DROP ROLE '+login);
     await host.end();
   }

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {dropDisposableDatabase} from './disposable-database.js';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {test} from 'node:test';
 import pg from 'pg';
@@ -105,7 +106,7 @@ test('private loyalty history keeps all three immutable journals separate and sc
     assert.equal((await request('ledger=star',other.accessToken)).status,401);
   } finally {
     await server?.app.close();await runtime?.end();await db?.end();
-    if(created) await host.query('DROP DATABASE '+database+' WITH (FORCE)');
+    if(created) await dropDisposableDatabase(host,database);
     if(roleCreated) await host.query('DROP ROLE '+login);
     await host.end();
   }

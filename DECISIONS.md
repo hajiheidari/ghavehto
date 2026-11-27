@@ -18,3 +18,5 @@
 Founder confirmed repository: https://github.com/hajiheidari/ghavehto. Public café contact numbers are within the authorized directory scope and are not treated as a legal blocker. Record provenance and support correction/removal; private consumer numbers remain protected. This decision does not waive store enrollment or provider requirements.
 
 Founder decisions pending: real legal publishing entity and support confirmation; permitted data sources; SMS/maps/hosting quotes; reward funding and tier policies; retention/privacy legal review. Defaults remain disabled where approval is required.
+
+- Founder decision (2026-11-28): «نه دیگه اگه منقضی بشه تمومه». Expired stars must never become spendable again or receive a fresh expiry through reservation cancellation. Stock/accounting recovery must preserve this boundary; no replacement credit or budget is authorized.
