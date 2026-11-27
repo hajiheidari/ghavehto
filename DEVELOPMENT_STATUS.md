@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private internal administration · 2026-11-28
+
+Migration 081 adds admin-only readback of all four internal controls. The private operations page configures research/content pause and retry limits and delegates editor/operator access through existing audited routines. Discovery/outreach remain read-only in this page. Next independent work: private draft intake/status workflow, then remaining M3/M4/M6 acceptance and retention decision.
+
 ## Agent decision workflow · 2026-11-28
 
 Migration 080 and the private agent panel add admin decisions and review receipts with current validity. Existing payload hash, expiry, pause and reviewer-role checks determine usability. Same-origin forms keep retries exact. Next independent increment is private control administration. Work continues across increments until an actual decision or access blocker.

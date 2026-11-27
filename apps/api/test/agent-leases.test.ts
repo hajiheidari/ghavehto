@@ -492,6 +492,60 @@ test('internal agent leases fence stale workers, honor pause and bound retries w
         await runtime.end();await db.query(`DROP OWNED BY ${login}`);await host.query(`DROP ROLE ${login}`);
       }
     });
+    await t.test('private operations panel enforces admin access and audits effective changes once',async()=>{
+      const login='gh_ops_'+randomBytes(8).toString('hex'),password=randomBytes(24).toString('hex');
+      await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);
+      await host.query(`GRANT ghahvehto_editorial TO ${login}`);
+      const address=new URL(base);address.username=login;address.password=password;
+      const runtime=new pg.Pool({connectionString:address.toString()});
+      try {
+        const {app}=await createApp({editorialPool:runtime});
+        try {
+          await app.listen(0,'127.0.0.1');
+          const sessions=new SessionService(db);
+          const [adminSession,editorSession]=await Promise.all([sessions.issue(admin),sessions.issue(editor)]);
+          const url=await app.getUrl();
+          const get=(token:string)=>fetch(url+'/v1/internal/editorial/controls',{headers:{authorization:'Bearer '+token}});
+          assert.equal((await get(editorSession.accessToken)).status,403);
+          const controls=await (await get(adminSession.accessToken)).json() as {items:unknown[]};
+          assert.equal(controls.items.length,4);
+          const web=await startWebPanel(url,false,false,true);
+          try {
+            const page=(token:string)=>fetch(web.url+'/dashboard/editorial/operations',{headers:{Cookie:'__Host-ghahvehto-access='+token}});
+            assert.match(await (await page(editorSession.accessToken)).text(),/مجوز مدیر ندارید/);
+            const html=await (await page(adminSession.accessToken)).text();
+            assert.match(html,/سقف تلاش کارهای تازه/);
+            assert.ok(!html.includes(adminSession.accessToken));
+            const submit=(action:string,body:URLSearchParams,token=adminSession.accessToken,origin='https://panel.example.test')=>fetch(
+              web.url+'/dashboard/editorial/operations/'+action,{method:'POST',redirect:'manual',
+                headers:{Cookie:'__Host-ghahvehto-access='+token,Origin:origin},body});
+            const body=new URLSearchParams({kind:'research',paused:'true',attemptLimit:'7',reason:'TEST operations panel control'});
+            assert.equal((await submit('control',body,adminSession.accessToken,'https://foreign.invalid')).status,403);
+            assert.match((await submit('control',body,editorSession.accessToken)).headers.get('location')??'',/result=unconfirmed/);
+            for(const response of await Promise.all([submit('control',body),submit('control',body)])) {
+              assert.equal(response.status,303);
+              assert.match(response.headers.get('location')??'',/result=saved/);
+            }
+            assert.deepEqual((await db.query("SELECT paused,attempt_limit FROM agent_controls WHERE kind='research'")).rows,
+              [{paused:true,attempt_limit:7}]);
+            assert.equal((await db.query("SELECT 1 FROM audit_events WHERE actor_id=$1 AND action='agent.control_changed' AND reason=$2",
+              [admin,'TEST operations panel control'])).rowCount,1);
+            const target=await user(),roleForm=new URLSearchParams({userId:target,role:'editor',enabled:'true',reason:'TEST operations panel role'});
+            for(const response of await Promise.all([submit('role',roleForm),submit('role',roleForm)])) {
+              assert.match(response.headers.get('location')??'',/result=saved/);
+            }
+            assert.equal((await db.query('SELECT 1 FROM operations_access WHERE user_id=$1 AND role=$2 AND revoked_at IS NULL',[target,'editor'])).rowCount,1);
+            roleForm.set('enabled','false');
+            await submit('role',roleForm);
+            assert.equal((await db.query('SELECT 1 FROM operations_access WHERE user_id=$1 AND role=$2 AND revoked_at IS NOT NULL',[target,'editor'])).rowCount,1);
+            roleForm.set('role','admin');
+            assert.equal((await submit('role',roleForm)).status,400);
+            body.set('kind','outreach');
+            assert.equal((await submit('control',body)).status,400);
+          } finally {await web.close();}
+        } finally {await app.close();}
+      } finally {await runtime.end();await host.query(`DROP ROLE ${login}`);}
+    });
   }finally {
     await pool?.end();if(created)for(let attempt=0;;attempt++){
       try{await host.query(`DROP DATABASE ${database}`);break;}

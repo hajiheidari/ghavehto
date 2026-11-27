@@ -264,3 +264,27 @@ export function getAgentReviewSubject(jobId:string) {
     return {kind:input.kind,payload:input.payload,result:input.result};
   });
 }
+
+type AgentControl={kind:'research'|'content'|'discovery'|'outreach';configured:boolean;paused:boolean;attemptLimit:number};
+export function getAgentControls() {
+  return read('/v1/internal/editorial/controls',input=>{
+    if(!object(input)||!Array.isArray(input.items)||input.items.length!==4||
+      !input.items.every((row):row is AgentControl=>object(row)&&['research','content','discovery','outreach'].includes(String(row.kind))&&
+        typeof row.configured==='boolean'&&typeof row.paused==='boolean'&&Number.isInteger(row.attemptLimit)&&
+        Number(row.attemptLimit)>=1&&Number(row.attemptLimit)<=10)||
+      new Set(input.items.map(row=>row.kind)).size!==4) throw new Error('Invalid agent controls');
+    return input.items;
+  });
+}
+export function changeAgentControl(input:{kind:'research'|'content';paused:boolean;attemptLimit:number;reason:string}) {
+  return read('/v1/internal/editorial/controls',result=>{
+    if(!object(result)||typeof result.changed!=='boolean') throw new Error('Invalid control receipt');
+    return result.changed;
+  },{method:'PUT',body:input});
+}
+export function changeInternalRole(input:{userId:string;role:'editor'|'operator';enabled:boolean;reason:string}) {
+  return read('/v1/internal/editorial/roles',result=>{
+    if(!object(result)||typeof result.changed!=='boolean') throw new Error('Invalid role receipt');
+    return result.changed;
+  },{method:'PUT',body:input});
+}

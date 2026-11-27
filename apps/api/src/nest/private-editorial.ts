@@ -104,6 +104,12 @@ export class PrivateEditorial {
       [input.userId,input.role,input.enabled,input.reason]);
   }
 
+  async controls(header: string | undefined) {
+    const {controls}=await this.database.run<{controls:Record<string,unknown>}>(header,
+      'SELECT public.read_private_agent_controls($1) AS controls',[]);
+    return controls;
+  }
+
   control(header: string | undefined, input: ControlInput) {
     return this.database.run<{changed:boolean}>(header,'SELECT public.set_private_draft_control($1,$2,$3,$4,$5) AS changed',
       [input.kind,input.paused,input.attemptLimit,input.reason]);
@@ -138,6 +144,11 @@ export class PrivateEditorialController {
   @Put('roles') @Header('Cache-Control','no-store')
   role(@Headers('authorization') header: string | undefined, @Body() input: RoleInput) {
     return this.editorial.role(header,input);
+  }
+
+  @Get('controls') @Header('Cache-Control','no-store')
+  controls(@Headers('authorization') header: string | undefined) {
+    return this.editorial.controls(header);
   }
 
   @Put('controls') @Header('Cache-Control','no-store')

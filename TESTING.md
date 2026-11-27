@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private internal administration · 2026-11-28
+
+Windows 12 API tests, one loopback probe, API typecheck and whitespace checks passed. The disposable HTTP/web fixture checks admin/editor isolation, same-origin control changes, concurrent no-op audit behavior, role grant/revoke and refusal of admin grants or outreach activation.
+
 ## Agent decision workflow · 2026-11-28
 
 The Next/Nest/PostgreSQL fixture checks admin-only decisions, exact concurrent replay, one receipt, hidden repeated-decision form and approval invalidation after pausing the agent. Local unit/type results are recorded separately.

@@ -1,5 +1,9 @@
 # Changelog
 
+## Private internal administration · 2026-11-28
+
+Add private admin control readback, reasoned control forms and internal role delegation.
+
 ## Agent decision workflow · 2026-11-28
 
 Add admin review decisions and current receipt validity to private agent drafts.

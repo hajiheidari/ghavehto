@@ -40,7 +40,7 @@ export default async function AgentReviews({searchParams}:{searchParams:Promise<
     </section>;
   }
   const result=await getPendingAgentReviews(after);
-  return <section className="section empty"><Link href="/dashboard/editorial">اسناد محتوا</Link><h1>پیش‌نویس‌های در انتظار بازبینی</h1>
+  return <section className="section empty"><Link href="/dashboard/editorial">اسناد محتوا</Link><h1>پیش‌نویس‌های در انتظار بازبینی</h1><Link href="/dashboard/editorial/operations">کنترل‌های داخلی</Link>
     {result.state==='signed-out'?<p>نشست معتبر لازم است.</p>:result.state==='unavailable'?<p role="status">صف در دسترس نیست یا مجوز مدیر ندارید.</p>:
       <>{result.data.items.length===0?<p>پیش‌نویسی در انتظار بازبینی نیست.</p>:<ul>{result.data.items.map(item=><li key={item.jobId}>
         <Link href={{pathname:'/dashboard/editorial/jobs',query:{job:item.jobId}}}>{kinds[item.kind]??item.kind} · <bdi>{item.jobId}</bdi></Link>
