@@ -41,7 +41,8 @@ test('private reward receipt recovery reads historical units and cancellation wi
     await pool.query(`INSERT INTO stamp_entries(user_id,cafe_id,program_id,program_version,operation_id,units,kind,reason,effective_at)
       VALUES($1,$2,$3,1,$4,2,'award','TEST receipt source',clock_timestamp())`,[a,cafe,program,randomUUID()]);
     const stampReward=(await pool.query('INSERT INTO stamp_rewards(cafe_id,program_id,program_version,stock,active) VALUES($1,$2,1,1,true) RETURNING id',[cafe,program])).rows[0].id;
-    const stampOperation=randomUUID(),stampReceipt=(await pool.query('SELECT public.redeem_stamp_reward($1,$2,$3) AS id',[a,stampReward,stampOperation])).rows[0].id;
+    // The two independent journals may use the same operation UUID without mixing receipts.
+    const stampOperation=operations[1],stampReceipt=(await pool.query('SELECT public.redeem_stamp_reward($1,$2,$3) AS id',[a,stampReward,stampOperation])).rows[0].id;
     await host.query(`CREATE ROLE ${login} LOGIN NOINHERIT PASSWORD '${password}'`);roleCreated=true;
     await host.query(`GRANT ghahvehto_loyalty_reader TO ${login}`);
     url.username=login;url.password=password;runtime=new pg.Pool({connectionString:url.toString(),connectionTimeoutMillis:2000});
@@ -56,7 +57,8 @@ test('private reward receipt recovery reads historical units and cancellation wi
     assert.equal((await get('/reservations?ledger=star&after='+stampReceipt)).status,400);
     assert.equal((await recover('star',foreignOperation)).status,404);
     assert.equal((await recover('star',randomUUID())).status,404);
-    assert.equal((await recover('star',stampOperation)).status,404);
+    assert.equal((await recover('stamp',operations[0])).status,404);
+    assert.equal((await (await recover('star',stampOperation)).json()).id,receipts[1]);
     const firstResponse=await get('/reservations?ledger=star');
     assert.equal(firstResponse.headers.get('cache-control'),'no-store');
     const first=await firstResponse.json();
@@ -76,6 +78,7 @@ test('private reward receipt recovery reads historical units and cancellation wi
     assert.equal(stamp.reservedUnits,1);assert.equal(stamp.state,'reserved');assert.equal(stamp.cancellationId,null);
     assert.deepEqual(await (await get('/reservations?ledger=star',unused.accessToken)).json(),{ledger:'star',items:[],nextCursor:null});
     const snapshot=async()=>(await pool.query(`SELECT (SELECT sum(units)::text FROM star_entries) AS star_units,
+      (SELECT sum(units)::text FROM stamp_entries) AS stamp_units,(SELECT count(*)::int FROM tier_entries) AS tier_entries,
       (SELECT count(*)::int FROM audit_events) AS audits,(SELECT count(*)::int FROM star_redemptions) AS reservations,
       (SELECT stock FROM star_rewards WHERE id=$1) AS stock`,[reward])).rows[0];
     const before=await snapshot();
@@ -98,6 +101,7 @@ test('private reward receipt recovery reads historical units and cancellation wi
     try {
       await restricted.query('BEGIN');await restricted.query('SET LOCAL ROLE ghahvehto_loyalty_reader');
       assert.equal((await restricted.query("SELECT has_function_privilege(current_user,'public.redeem_star_reward(uuid,uuid,uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
+      assert.equal((await restricted.query("SELECT has_function_privilege(current_user,'public.redeem_stamp_reward(uuid,uuid,uuid)','EXECUTE') AS allowed")).rows[0].allowed,false);
       await assert.rejects(restricted.query('SELECT * FROM private_reward_receipts'),{code:'42501'});
     } finally {await restricted.query('ROLLBACK');restricted.release();}
     await sessions.revoke(own.accessToken);
