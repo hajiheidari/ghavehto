@@ -7,6 +7,9 @@ export const LOYALTY_READER_DB=Symbol('LOYALTY_READER_DB');
 class HistoryInput {
   @IsIn(['stamp','star','tier']) ledger!:string;
   @IsOptional() @IsUUID() after?:string;
+  @IsOptional() @IsUUID() cafeId?:string;
+  @IsOptional() @IsUUID() programId?:string;
+  @IsOptional() @Matches(/^[1-9][0-9]{0,9}$/) version?:string;
 }
 class SummaryInput {
   @IsOptional() @Matches(/^[2-9][0-9]{3}$/) year?:string;
@@ -30,6 +33,14 @@ export class PrivateLoyaltyHistoryController {
   constructor(@Inject(LOYALTY_READER_DB) private readonly database:PrivateSessionDatabase) {}
   @Get() @Header('Cache-Control','no-store')
   async read(@Headers('authorization') header:string|undefined,@Query() input:HistoryInput) {
+    if(input.cafeId!==undefined||input.programId!==undefined||input.version!==undefined) {
+      if(input.ledger!=='stamp'||!input.cafeId||!input.programId||!input.version||Number(input.version)>2147483647) throw new BadRequestException();
+      const {page}=await this.database.run<{page:Record<string,unknown>|null}>(header,
+        'SELECT public.read_private_stamp_program_history($1,$2,$3,$4,$5) AS page',
+        [input.cafeId,input.programId,Number(input.version),input.after??null]);
+      if(!page) throw new NotFoundException();
+      return page;
+    }
     const {page}=await this.database.run<{page:Record<string,unknown>}>(header,
       'SELECT public.read_private_loyalty_history($1,$2,$3) AS page',[input.ledger,input.after??null]);
     return page;

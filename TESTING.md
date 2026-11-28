@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private stamp program history · 2026-11-28
+
+Windows full build, workspace typechecks, 12 API tests, one loopback probe and whitespace checks passed. Added PostgreSQL/Next cases for exact program scope, unseen/foreign scopes, partial/cross-ledger input, cross-program cursor refusal, 21 rows sharing a microsecond timestamp, exclusive page boundaries, private/default-off rendering and revoked sessions. Database execution awaits this pushed head's CI. Prior 5748881 web/database and mobile-source jobs succeeded in 46108121897; native/cloud completion had not yet been observed.
+
 ## Private reward reservation recovery · 2026-11-28
 
 Windows full build, workspace typechecks, 12 API tests and one loopback probe passed. Added disposable PostgreSQL/Nest/Next checks for immutable historical cost, exact operation recovery, live cancellation, stamp/star separation, 20-item pagination across a new insertion, foreign/malformed cursor denial, no write authority, read-only accounting/stock/audit snapshots, private/default-off rendering, revocation and deletion. PostgreSQL execution awaits this pushed head's CI. Baseline e1c0378 completed all five Foundation jobs in 46072250768, with 76 database tests and one actual backup/restore drill passing.

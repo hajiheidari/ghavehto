@@ -20,6 +20,7 @@ export default async function Stamp({searchParams}:{searchParams:Promise<{cafeId
         <p>امکان دریافت پاداش هنگام درخواست و با بررسی موجودی و اعتبار برنامه تعیین می‌شود.</p>
         <p>زمان بررسی: <time dateTime={result.data.asOf}>{new Intl.DateTimeFormat('fa-IR',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Tehran'}).format(new Date(result.data.asOf))}</time></p>
       </>}
-    <Link href="/dashboard/loyalty?ledger=stamp">تاریخچهٔ مهرها</Link>
+    <p><Link href={{pathname:'/dashboard/loyalty/stamp/history',query:{cafeId,programId,version}}}>سوابق مهر این برنامه</Link></p>
+    <Link href="/dashboard/loyalty?ledger=stamp">تاریخچهٔ همهٔ مهرها</Link>
   </section>;
 }

@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private stamp program history · 2026-11-28
+
+Migration 091 adds 20-item member/cafe/program/version history pages with a matching index and native-precision cursor lookup. The existing unscoped API remains compatible; partial scope, other ledgers and foreign/cross-program cursors fail closed. The Persian program summary links to the exact program's history. Windows full build, workspace typechecks, 12 API tests and one probe passed. Prior 5748881 web/database and mobile-source passed in 46108121897, covering reward receipt recovery; remaining jobs were still running. Next: exact-head scoped history CI and remaining member recovery/security acceptance. No public earning, spending, sending or release is enabled.
+
 ## Private reward reservation recovery · 2026-11-28
 
 Migration 090 adds own-member stamp/star receipt history and recovery by the original operation ID through the existing read-only loyalty capability. The Persian private page distinguishes reservation from cancellation and explicitly does not claim delivery/payment. Historical units come from the immutable debit, not current price; reasons and stock stay private. No redemption/cancellation write permission is granted. Windows full build, workspace typechecks, 12 API tests and one probe passed. Baseline e1c0378 passed all five Foundation jobs in 46072250768 (76 database tests plus restore). Next: exact-head receipt CI, then program-scoped member history/recovery and remaining roadmap acceptance. Public activation remains closed.

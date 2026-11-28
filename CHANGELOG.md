@@ -1,5 +1,9 @@
 # Changelog
 
+## Private stamp program history · 2026-11-28
+
+Add precise member/cafe/program/version stamp history and private Persian pagination while preserving unscoped history compatibility and immutable records.
+
 ## Private reward reservation recovery · 2026-11-28
 
 Add session-scoped read-only receipt history and operation recovery for stamp/star reservations, with historical debit units, cancellation facts and a private Persian reader. No fulfillment, payment or expired-credit restoration is enabled.
