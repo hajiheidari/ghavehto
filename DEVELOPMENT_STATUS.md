@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private pool checkout deadline · 2026-11-28
+
+Private capability requests now stop waiting for checkout after 500 ms and return sanitized 503. A late client is immediately released without starting the expired operation; connection failure is also temporary unavailability. SQL/lock deadlines remain transaction-local. Driver connection deadlines, queue cardinality and ingress controls remain separate. Windows 12 API tests, one probe and workspace typechecks passed. Next: exact-head held-pool/late-release integration and final CI; preserve the unrelated local dxbfix directory outside commits. Public activation gates stay closed.
+
 ## Private stamp program history · 2026-11-28
 
 Migration 091 adds 20-item member/cafe/program/version history pages with a matching index and native-precision cursor lookup. The existing unscoped API remains compatible; partial scope, other ledgers and foreign/cross-program cursors fail closed. The Persian program summary links to the exact program's history. Windows full build, workspace typechecks, 12 API tests and one probe passed. Prior 5748881 web/database and mobile-source passed in 46108121897, covering reward receipt recovery; remaining jobs were still running. Next: exact-head scoped history CI and remaining member recovery/security acceptance. No public earning, spending, sending or release is enabled.

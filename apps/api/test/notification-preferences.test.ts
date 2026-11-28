@@ -44,6 +44,17 @@ test('private in-app preferences use live user scope, exact state retry and audi
     assert.deepEqual(await (await request(first.accessToken)).json(),initial);
     assert.equal((await pool.query('SELECT 1 FROM notification_preferences')).rowCount,0);
     const change={expectedRevision:0,loyalty:true,experiences:false,editorial:false,dailyLimit:3};
+    const occupied=await runtime.connect();
+    try {
+      const queued=await request(first.accessToken,change);
+      assert.equal(queued.status,503);
+      assert.equal((await queued.json()).code,'unavailable');
+      assert.equal((await pool.query('SELECT 1 FROM notification_preferences')).rowCount,0);
+    } finally {occupied.release();}
+    // The expired request must return its late checkout before the next operation can use this one-connection pool.
+    const reused=(await runtime.query('SELECT current_user')).rows[0];
+    assert.equal(reused.current_user,login);assert.equal(runtime.waitingCount,0);assert.equal(runtime.totalCount,1);
+    assert.deepEqual(await (await request(first.accessToken)).json(),initial,'A late checkout must never execute the expired write');
     const blocker=await pool.connect();
     try {
       await blocker.query('BEGIN');
@@ -63,6 +74,11 @@ test('private in-app preferences use live user scope, exact state retry and audi
     const reset=(await runtime.query("SELECT current_user,current_setting('statement_timeout') AS statement_timeout,current_setting('lock_timeout') AS lock_timeout")).rows[0];
     assert.deepEqual(reset,{current_user:login,statement_timeout:'0',lock_timeout:'0'});
     assert.deepEqual(await (await request(first.accessToken)).json(),initial,'Pool and session remain reusable after canceled statements');
+    const unreachable=new pg.Pool({connectionString:'postgresql://unused@127.0.0.1:1/unavailable',connectionTimeoutMillis:100});
+    try {
+      await assert.rejects(new PrivateSessionDatabase(unreachable,'ghahvehto_preferences').run('Bearer '+first.accessToken,
+        'SELECT $1::bytea AS digest',[]),ServiceUnavailableException);
+    } finally {await unreachable.end();}
     assert.equal((await request(first.accessToken,{...change,userId:b})).status,400);
     assert.equal((await request(first.accessToken,{...change,dailyLimit:0})).status,400);
     const duplicates=await Promise.all([request(first.accessToken,change),request(first.accessToken,change)]);

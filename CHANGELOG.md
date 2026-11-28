@@ -1,5 +1,9 @@
 # Changelog
 
+## Private pool checkout deadline · 2026-11-28
+
+Bound private pool checkout response waits, drain late connections without executing expired operations and sanitize connection failures as temporary unavailability.
+
 ## Private stamp program history · 2026-11-28
 
 Add precise member/cafe/program/version stamp history and private Persian pagination while preserving unscoped history compatibility and immutable records.

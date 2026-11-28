@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {BadRequestException,ConflictException,ForbiddenException,ServiceUnavailableException,UnauthorizedException} from '@nestjs/common';
-import type {Pool} from 'pg';
+import type {Pool,PoolClient} from 'pg';
 
 export class PrivateSessionDatabase {
   constructor(private readonly pool: Pool, private readonly role: 'ghahvehto_editorial' | 'ghahvehto_participation' | 'ghahvehto_tracking_owner' | 'ghahvehto_preferences' | 'ghahvehto_loyalty_reader') {}
@@ -19,7 +19,7 @@ export class PrivateSessionDatabase {
   async run<T extends Record<string,unknown>>(header: string | undefined, sql: string, values: unknown[]): Promise<T> {
     const token=/^Bearer ([A-Za-z0-9_-]{43})$/.exec(header ?? '')?.[1];
     if(!token) throw new UnauthorizedException();
-    const client=await this.pool.connect();
+    const client=await this.checkout();
     try {
       await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
       await client.query("SET LOCAL statement_timeout = '2s'");
@@ -38,5 +38,23 @@ export class PrivateSessionDatabase {
       if(code==='57014'||code==='55P03') throw new ServiceUnavailableException();
       throw error;
     } finally {client.release();}
+  }
+
+  private checkout():Promise<PoolClient> {
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const deadline=setTimeout(()=>{
+        settled=true;
+        reject(new ServiceUnavailableException());
+      },500);
+      // pg cannot cancel an individual queued checkout. Drain a late arrival without using it.
+      Promise.resolve().then(()=>this.pool.connect()).then(client=>{
+        if(settled) {client.release();return;}
+        settled=true;clearTimeout(deadline);resolve(client);
+      },()=>{
+        if(settled) return;
+        settled=true;clearTimeout(deadline);reject(new ServiceUnavailableException());
+      });
+    });
   }
 }

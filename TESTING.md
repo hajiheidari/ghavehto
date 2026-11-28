@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private pool checkout deadline · 2026-11-28
+
+Windows ran 12 passing API tests, one passing loopback probe and passing workspace typechecks. The PostgreSQL fixture now holds the only runtime connection, checks HTTP 503 without a preference write, releases the blocker, proves late-checkout drain and reuse, verifies no expired write executes, and checks sanitized failure against an unreachable loopback pool. These new database assertions await exact-head CI. No local PostgreSQL/Flutter execution is claimed.
+
 ## Private stamp program history · 2026-11-28
 
 Windows full build, workspace typechecks, 12 API tests, one loopback probe and whitespace checks passed. Added PostgreSQL/Next cases for exact program scope, unseen/foreign scopes, partial/cross-ledger input, cross-program cursor refusal, 21 rows sharing a microsecond timestamp, exclusive page boundaries, private/default-off rendering and revoked sessions. Database execution awaits this pushed head's CI. Prior 5748881 web/database and mobile-source jobs succeeded in 46108121897; native/cloud completion had not yet been observed.
