@@ -1,0 +1,34 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".test-build"
+  },
+  "include": [
+    "src/nest/**/*.ts",
+    "test/nest.test.ts",
+    "test/domain.test.ts",
+    "test/database.test.ts",
+    "test/backup-restore.test.ts",
+    "test/sessions.test.ts",
+    "test/otp.test.ts",
+    "test/otp-challenges.test.ts",
+    "test/phone-vault.test.ts",
+    "test/identity.test.ts",
+    "test/tenant-api.test.ts",
+    "test/stamp-qr-http.test.ts",
+    "test/star-spending.test.ts",
+    "test/referral-rewards.test.ts",
+    "test/experiences.test.ts",
+    "test/agent-leases.test.ts",
+    "test/notification-preferences.test.ts",
+    "test/loyalty-history.test.ts",
+    "test/reward-receipts.test.ts",
+    "test/founders.test.ts",
+    "test/cafe-tracking.test.ts",
+    "test/cafe-tracking-qr.test.ts",
+    "test/experience-preview-http.test.ts",
+    "test/auth-operations.test.ts",
+    "test/smsir-otp-provider.test.ts"
+  ]
+}

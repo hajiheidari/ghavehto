@@ -1,0 +1,12 @@
+# Development only. Native Android and iOS remain separate CI jobs.
+FROM node:24.19.0-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates git curl unzip xz-utils zip libglu1-mesa \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm install --global pnpm@11.25.0 --ignore-scripts
+ARG FLUTTER_VERSION=3.47.5
+RUN git clone --depth 1 --branch "${FLUTTER_VERSION}" https://github.com/flutter/flutter.git /opt/flutter
+ENV PATH="/opt/flutter/bin:${PATH}" CI=true NEXT_TELEMETRY_DISABLED=1
+RUN flutter config --no-analytics && dart --disable-analytics && flutter --version
+WORKDIR /workspace/ghavehto
+CMD ["sleep", "infinity"]

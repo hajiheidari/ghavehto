@@ -1,3 +1,3 @@
-# Next.js workspace reserved
+# Next.js public web and dashboard shells
 
-Target: Persian RTL SSR public site plus guarded café/admin/agent route groups. No Next dependencies are installed, and no web framework build is claimed. Current browser connectivity harness is served by apps/api only. After package tooling is available, generate a supported Next app with locked dependencies, server-side API client, noindex development metadata and real auth before exposing protected routes.
+Persian RTL SSR home calls the real Nest API through the generated shared client, with an honest unavailable state. Directory remains empty until M2. Café/admin/agent shells expose no data, and corresponding backend routes return 401 until real identity is implemented. Development metadata and robots block indexing. No public deployment or app download claims. Run `pnpm dev:web` after building contracts, with the API running on 4101.

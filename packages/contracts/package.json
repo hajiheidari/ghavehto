@@ -1,0 +1,6 @@
+{
+  "name": "@ghahvehto/contracts", "version": "0.0.1", "private": true, "type": "module",
+  "exports": { ".": { "types": "./dist/bootstrap.d.ts", "default": "./dist/bootstrap.js" }, "./client": { "types": "./dist/generated.d.ts", "default": "./dist/generated.js" }, "./access-client": { "types": "./dist/access-generated.d.ts", "default": "./dist/access-generated.js" } },
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "devDependencies": { "typescript": "^5.9.0" }
+}
