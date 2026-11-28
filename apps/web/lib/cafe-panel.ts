@@ -346,6 +346,30 @@ export function getOwnerTrackingMetrics(cafeId:string,linkId:string) {
 
 type NotificationPreferences={revision:number;loyalty:boolean;experiences:boolean;editorial:boolean;dailyLimit:number};
 export type LoyaltyLedger='stamp'|'star'|'tier';
+export type RewardLedger='stamp'|'star';
+type RewardReceipt={id:string;rewardId:string;entryId:string;reservedUnits:number;recordedAt:string;state:'reserved'|'cancelled';
+  cancellationId:string|null;cancelledAt:string|null;reversalEntryId:string|null;cafeId?:string;programId?:string;programVersion?:number};
+function rewardReceipt(input:unknown,ledger:RewardLedger):RewardReceipt {
+  const date=(value:unknown)=>typeof value==='string'&&Number.isFinite(Date.parse(value));
+  if(!object(input)||!panelId(input.id)||!panelId(input.rewardId)||!panelId(input.entryId)||
+    !Number.isInteger(input.reservedUnits)||Number(input.reservedUnits)<1||Number(input.reservedUnits)>1000000000||!date(input.recordedAt)||
+    !(input.state==='reserved'&&input.cancellationId===null&&input.cancelledAt===null&&input.reversalEntryId===null||
+      ledger==='star'&&input.state==='cancelled'&&panelId(input.cancellationId)&&date(input.cancelledAt)&&panelId(input.reversalEntryId))||
+    ledger==='stamp'&&(!panelId(input.cafeId)||!panelId(input.programId)||!Number.isInteger(input.programVersion)||Number(input.programVersion)<1)) {
+    throw new Error('Invalid reward receipt');
+  }
+  return input as RewardReceipt;
+}
+export function getRewardReceipts(ledger:RewardLedger,after?:string) {
+  return read('/v1/internal/loyalty-history/reservations?'+new URLSearchParams({ledger,...(after?{after}:{})}),input=>{
+    if(!object(input)||input.ledger!==ledger||!Array.isArray(input.items)||input.items.length>20||
+      !(input.nextCursor===null||panelId(input.nextCursor))) throw new Error('Invalid receipt page');
+    return {items:input.items.map(item=>rewardReceipt(item,ledger)),nextCursor:input.nextCursor as string|null};
+  });
+}
+export function recoverRewardReceipt(ledger:RewardLedger,operationId:string) {
+  return read('/v1/internal/loyalty-history/reservation?'+new URLSearchParams({ledger,operationId}),input=>rewardReceipt(input,ledger));
+}
 export function getStampSummary(cafeId:string,programId:string,version:number) {
   return read('/v1/internal/loyalty-history/stamp-summary?'+new URLSearchParams({cafeId,programId,version:String(version)}),input=>{
     if(!object(input)||input.cafeId!==cafeId.toLowerCase()||input.programId!==programId.toLowerCase()||input.programVersion!==version||

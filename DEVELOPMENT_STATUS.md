@@ -1,5 +1,9 @@
 # Development status · 2026-11-28
 
+## Private reward reservation recovery · 2026-11-28
+
+Migration 090 adds own-member stamp/star receipt history and recovery by the original operation ID through the existing read-only loyalty capability. The Persian private page distinguishes reservation from cancellation and explicitly does not claim delivery/payment. Historical units come from the immutable debit, not current price; reasons and stock stay private. No redemption/cancellation write permission is granted. Windows full build, workspace typechecks, 12 API tests and one probe passed. Baseline e1c0378 passed all five Foundation jobs in 46072250768 (76 database tests plus restore). Next: exact-head receipt CI, then program-scoped member history/recovery and remaining roadmap acceptance. Public activation remains closed.
+
 ## Complete claimant history pagination · 2026-11-28
 
 The new compatible ownership history endpoint and private panel now page beyond the original latest-50 list. RLS scopes both cursor lookup and rows to the live claimant, and timestamp text preserves PostgreSQL microseconds. Migration 089 supports the descending page order. Windows full build, typechecks, 12 API tests, one probe, OpenAPI export and generated-client checks passed. Previous b553c95 web/database and mobile-source passed in 46071933472, including private deadlines. Next: exact-head pagination CI and remaining roadmap/security acceptance; public activation gates remain closed.

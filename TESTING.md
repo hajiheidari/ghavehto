@@ -1,5 +1,9 @@
 # Test plan and execution
 
+## Private reward reservation recovery · 2026-11-28
+
+Windows full build, workspace typechecks, 12 API tests and one loopback probe passed. Added disposable PostgreSQL/Nest/Next checks for immutable historical cost, exact operation recovery, live cancellation, stamp/star separation, 20-item pagination across a new insertion, foreign/malformed cursor denial, no write authority, read-only accounting/stock/audit snapshots, private/default-off rendering, revocation and deletion. PostgreSQL execution awaits this pushed head's CI. Baseline e1c0378 completed all five Foundation jobs in 46072250768, with 76 database tests and one actual backup/restore drill passing.
+
 ## Complete claimant history pagination · 2026-11-28
 
 Windows full build, workspace typechecks, 12 API tests, one probe, OpenAPI export and client drift checks passed. The real claimant fixture now includes 51 historical withdrawn requests sharing an identical microsecond timestamp, verifies exclusive page boundaries and remaining records, rejects foreign/invalid cursors and renders the older page. Database execution awaits this pushed head's CI. Prior b553c95 web/database and mobile-source succeeded in 46071933472; no native completion is inferred from those results.

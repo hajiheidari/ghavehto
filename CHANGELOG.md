@@ -1,5 +1,9 @@
 # Changelog
 
+## Private reward reservation recovery · 2026-11-28
+
+Add session-scoped read-only receipt history and operation recovery for stamp/star reservations, with historical debit units, cancellation facts and a private Persian reader. No fulfillment, payment or expired-credit restoration is enabled.
+
 ## Complete claimant history pagination · 2026-11-28
 
 Add backward-compatible member-scoped ownership history pages and private panel pagination, preserving timestamp precision and the original array API.

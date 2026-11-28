@@ -21,6 +21,7 @@ export default async function Loyalty({searchParams}:{searchParams:Promise<{ledg
     <nav aria-label="دفترهای مستقل وفاداری"><ul>{Object.entries(names).map(([key,title])=>
       <li key={key}><Link href={{pathname:'/dashboard/loyalty',query:{ledger:key}}} aria-current={key===kind?'page':undefined}>{title}</Link></li>)}</ul></nav>
     <h2>{names[kind]}</h2>
+    {kind!=='tier'&&<Link href={{pathname:'/dashboard/loyalty/reservations',query:{ledger:kind}}}>رسیدهای رزرو پاداش</Link>}
     {summary?.state==='ready'&&<aside aria-label="خلاصهٔ دفتر">
       {kind==='star'?(summary.data.stars.availableUnits===null?<p>ماندهٔ ستاره فعلاً قابل‌نمایش نیست.</p>:
         <p>ستارهٔ معتبر در زمان بررسی: <bdi>{numbers.format(BigInt(summary.data.stars.availableUnits))}</bdi></p>):
